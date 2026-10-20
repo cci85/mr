@@ -1,0 +1,1735 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>問卷資料整理器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#f5f3ee;
+    --surface:#ffffff;
+    --surface-2:#faf8f3;
+    --border:#ddd7c9;
+    --border-strong:#c7bea9;
+    --ink:#232019;
+    --ink-soft:#655e4d;
+    --ink-faint:#8f886f;
+    --accent:#28594f;
+    --accent-strong:#1b4139;
+    --accent-soft:#e1ece7;
+    --accent-contrast:#ffffff;
+    --warn:#95591b;
+    --warn-soft:#f6ecda;
+    --danger:#9c3b3b;
+    --danger-soft:#f7e6e4;
+    --good:#3c6e3f;
+    --good-soft:#e7f0e2;
+    --shadow: 0 1px 2px rgba(35,32,25,.06), 0 6px 20px -8px rgba(35,32,25,.12);
+    --font-display:'Noto Serif TC','Songti TC',serif;
+    --font-body:'Noto Sans TC',system-ui,-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141612;
+      --surface:#1c1f1a;
+      --surface-2:#20241e;
+      --border:#373d33;
+      --border-strong:#4a5140;
+      --ink:#eae7dc;
+      --ink-soft:#b7b3a1;
+      --ink-faint:#847e69;
+      --accent:#79bda7;
+      --accent-strong:#9bd2bf;
+      --accent-soft:#213b34;
+      --accent-contrast:#0c1210;
+      --warn:#dba064;
+      --warn-soft:#3b2c19;
+      --danger:#e08e8e;
+      --danger-soft:#3c2320;
+      --good:#94c286;
+      --good-soft:#25361f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141612;
+    --surface:#1c1f1a;
+    --surface-2:#20241e;
+    --border:#373d33;
+    --border-strong:#4a5140;
+    --ink:#eae7dc;
+    --ink-soft:#b7b3a1;
+    --ink-faint:#847e69;
+    --accent:#79bda7;
+    --accent-strong:#9bd2bf;
+    --accent-soft:#213b34;
+    --accent-contrast:#0c1210;
+    --warn:#dba064;
+    --warn-soft:#3b2c19;
+    --danger:#e08e8e;
+    --danger-soft:#3c2320;
+    --good:#94c286;
+    --good-soft:#25361f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.6;
+  }
+  .page{
+    max-width:880px;
+    margin:0 auto;
+    padding:40px 20px 80px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .hero{ padding-block:8px 4px; }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-size:clamp(26px,4vw,34px);
+    font-weight:700;
+    margin:0 0 12px;
+    color:var(--ink);
+    text-wrap:balance;
+  }
+  .lede{
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:64ch;
+    margin:0;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:22px 22px 24px;
+  }
+  .card-head{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .step-badge{
+    flex:0 0 auto;
+    width:28px;height:28px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+    font-family:var(--font-mono);
+    font-weight:600;
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:2px;
+  }
+  .card-head h2{
+    font-family:var(--font-display);
+    font-size:18px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card-head .hint, .hint{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    margin:0;
+  }
+  .hint.small{ font-size:12.5px; margin:4px 0 12px; }
+  .empty-hint{ color:var(--ink-faint); font-size:13.5px; padding:10px 0; }
+  .empty-hint.small{ padding:2px 0; }
+
+  /* question cards */
+  #questions-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+  .q-card{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 14px 12px;
+  }
+  .q-card-head{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .q-name-input{
+    flex:1;
+    font-family:var(--font-body);
+    font-size:15px;
+    font-weight:500;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .q-name-input:focus, select:focus, .opt-input:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+    min-height:26px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+    border-radius:999px;
+    padding:4px 6px 4px 12px;
+    font-size:13px;
+  }
+  .chip-x{
+    background:none;border:none;cursor:pointer;
+    color:var(--accent-strong);
+    font-size:14px;
+    line-height:1;
+    padding:2px 4px;
+    border-radius:50%;
+  }
+  .chip-x:hover{ background:rgba(0,0,0,.08); }
+  .opt-add-row{ display:flex; gap:8px; }
+  .opt-input{
+    flex:1;
+    padding:7px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:13.5px;
+  }
+
+  .row-actions{ display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; }
+
+  /* buttons */
+  .btn{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    font-weight:500;
+    border-radius:8px;
+    padding:9px 16px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:filter .15s, background .15s;
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-primary{ background:var(--accent); color:var(--accent-contrast); }
+  .btn-primary:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-secondary{ background:var(--surface); color:var(--accent-strong); border-color:var(--accent); }
+  .btn-secondary:hover:not(:disabled){ background:var(--accent-soft); }
+  .btn-ghost{ background:var(--surface-2); color:var(--ink); border-color:var(--border-strong); }
+  .btn-ghost:hover{ background:var(--accent-soft); }
+  .btn-ghost.small{ padding:7px 12px; font-size:13px; }
+  .btn-text{ background:none; border:none; color:var(--ink-soft); padding:6px 4px; text-decoration:underline; text-underline-offset:3px; }
+  .btn-text:hover{ color:var(--accent-strong); }
+  .btn-text.danger{ color:var(--danger); }
+  .btn-icon{
+    width:26px;height:26px;flex:0 0 auto;
+    border:none; background:var(--danger-soft); color:var(--danger);
+    border-radius:50%; font-size:15px; line-height:1; padding:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .btn-icon:hover{ filter:brightness(1.05); }
+  .file-btn{ display:inline-flex; align-items:center; cursor:pointer; }
+
+  /* dropzone */
+  .dropzone{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    border:1.5px dashed var(--border-strong);
+    border-radius:10px;
+    padding:26px 16px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    font-size:14px;
+    background:var(--surface-2);
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone.drag{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong); }
+
+  .encoding-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-bottom:12px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .encoding-row select{ flex:0 0 auto; }
+
+  .summary{ font-size:13.5px; color:var(--ink-soft); margin:14px 0 6px; }
+  .summary strong{ color:var(--ink); font-family:var(--font-mono); }
+
+  .notice{
+    border-radius:9px;
+    padding:10px 14px;
+    font-size:13px;
+    margin:10px 0;
+  }
+  .notice ul{ margin:6px 0 0; padding-left:18px; }
+  .notice-warn{ background:var(--warn-soft); color:var(--warn); }
+  .notice-warn strong{ color:var(--warn); }
+
+  /* tables */
+  .table-scroll{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:10px 0; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  table th, table td{
+    padding:7px 12px;
+    border-bottom:1px solid var(--border);
+    text-align:left;
+    white-space:nowrap;
+  }
+  table thead th{
+    background:var(--surface-2);
+    font-weight:600;
+    color:var(--ink-soft);
+    position:sticky; top:0;
+  }
+  table td.num, table th.marg{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; }
+  .ct-table th.rowlabel{ background:var(--surface-2); font-weight:500; color:var(--ink); }
+  .ct-table td.marg, .ct-table th.marg{ background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .ct-table tr.foot-row th, .ct-table tr.foot-row td{ background:var(--surface-2); font-weight:600; }
+  .ct-table td.strong{ font-weight:700; }
+
+  /* mapping */
+  .mapping-row{
+    display:flex; align-items:center; gap:12px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .mapping-row:last-child{ border-bottom:none; }
+  .mapping-qname{ flex:0 0 auto; min-width:160px; font-weight:500; font-size:13.5px; }
+  .mapping-row select{ flex:1; }
+
+  select{
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:13.5px;
+  }
+
+  .crosstab-controls{
+    display:flex; flex-wrap:wrap; align-items:end; gap:14px; margin-bottom:16px;
+  }
+  .crosstab-controls label{
+    display:flex; flex-direction:column; gap:4px;
+    font-size:12.5px; color:var(--ink-soft);
+  }
+  .crosstab-controls select{ min-width:180px; }
+
+  #crosstab-results{ display:flex; flex-direction:column; gap:16px; }
+  .ct-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 14px 16px;
+    background:var(--surface-2);
+  }
+  .ct-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+  .ct-head h3{ font-family:var(--font-display); font-size:15.5px; margin:0; color:var(--ink); }
+
+  .foot{ margin-top:6px; }
+  .foot p{ color:var(--ink-faint); font-size:12px; text-align:center; margin:0; }
+
+  .toast{
+    position:fixed;
+    left:50%; bottom:24px;
+    transform:translate(-50%,12px);
+    background:var(--ink);
+    color:var(--bg);
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s, transform .18s;
+    box-shadow:var(--shadow);
+    z-index:50;
+    max-width:90vw;
+    text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .toast.toast-error{ background:var(--danger); color:#fff; }
+  .toast.toast-success{ background:var(--good); color:#fff; }
+
+  /* batch chi-square */
+  .chisq-controls{ display:flex; flex-wrap:wrap; align-items:end; gap:14px; margin-bottom:16px; }
+  .chisq-controls label{ display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--ink-soft); }
+  .chisq-controls select{ min-width:150px; }
+  .sub-h{ font-family:var(--font-display); font-size:15.5px; margin:24px 0 4px; color:var(--ink); }
+  .sum-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; margin:10px 0; }
+  .sum-item{ border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:var(--surface-2); font-size:13px; }
+  .sum-item h4{ margin:0 0 6px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sum-item .n{ font-family:var(--font-mono); color:var(--ink-faint); font-weight:400; font-size:12px; margin-left:8px; }
+  .sum-line{ margin:4px 0; line-height:1.6; }
+  .sum-none{ color:var(--ink-faint); font-size:12.5px; }
+  .pill{ display:inline-block; border-radius:999px; padding:1px 10px; margin:2px 4px 2px 0; font-size:12.5px; }
+  .pill-up{ background:var(--good-soft); color:var(--good); }
+  .pill-down{ background:var(--danger-soft); color:var(--danger); }
+  .pill-exp{ background:var(--warn-soft); color:var(--warn); }
+  .hm-table thead th{ white-space:normal; min-width:84px; text-align:center; font-size:12px; vertical-align:bottom; }
+  .hm-table th.rowlabel{ white-space:normal; min-width:130px; }
+  .hm-cell{ text-align:center; line-height:1.25; padding:6px 8px; }
+  .hm-lift{ display:block; font-family:var(--font-mono); font-weight:600; font-size:13px; }
+  .hm-pct{ display:block; font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); }
+  .hm-star{ font-size:12px; font-weight:700; margin-left:2px; }
+  .notice-warn li{ margin:2px 0; }
+
+  .notice-info{ background:var(--accent-soft); color:var(--accent-strong); }
+  .notice-info p{ margin:0 0 8px; }
+  .detect-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .detect-row .opt-input{ min-width:0; flex:1 1 220px; }
+  .sample-row{ margin-top:8px; }
+
+  /* group analysis */
+  #pca-results{ display:flex; flex-direction:column; gap:22px; }
+  .pca-card{ border:1px solid var(--border); border-radius:12px; padding:18px 18px 20px; background:var(--surface-2); min-width:0; }
+  .pca-head h3{ font-family:var(--font-display); font-size:18px; margin:0 0 6px; color:var(--ink); text-wrap:balance; }
+  .pca-meta{ display:flex; flex-wrap:wrap; gap:6px 14px; margin:0 0 4px; font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .pca-meta .pca-key{ color:var(--accent-strong); font-weight:600; }
+  .pca-sub{ display:flex; align-items:center; gap:8px; font-size:14.5px; font-weight:700; color:var(--ink); margin:20px 0 6px; }
+  .pca-no{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; background:var(--accent-soft); color:var(--accent-strong); font-family:var(--font-display); font-size:12.5px; }
+  .pca-table{ background:var(--surface); font-variant-numeric:tabular-nums; }
+  .pca-table thead th.marg{ text-align:right; background:var(--surface-2); color:var(--ink-soft); }
+  .pca-table th.rowlabel{ background:var(--surface); font-weight:500; color:var(--ink); }
+  .pca-table td.strong{ font-weight:700; color:var(--accent-strong); }
+  .pca-table td.diag{ color:var(--ink-faint); text-align:center; }
+  .pca-table tr.kept th, .pca-table tr.kept td{ background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .corr-table td.corr.pos{ background:color-mix(in srgb, var(--accent) calc(var(--a) * 28%), transparent); }
+  .corr-table td.corr.neg{ background:color-mix(in srgb, var(--danger) calc(var(--a) * 24%), transparent); }
+  .corr-table thead th{ white-space:normal; min-width:64px; vertical-align:bottom; }
+  .bar-col{ width:40%; min-width:120px; }
+  .rate-bar{ display:block; height:8px; border-radius:4px; background:var(--border); overflow:hidden; }
+  .rate-bar > span{ display:block; height:100%; background:var(--accent); border-radius:4px; }
+  .map-wrap{ margin:8px 0 0; padding:10px; border:1px solid var(--border); border-radius:10px; background:var(--surface); overflow-x:auto; }
+  .map-wrap svg{ display:block; width:100%; max-width:720px; height:auto; margin:0 auto; }
+  .map-label{ cursor:grab; touch-action:none; }
+  .map-label.dragging{ cursor:grabbing; }
+  .map-label:hover text{ text-decoration:underline; }
+  .pca-actions{ margin-top:16px; gap:10px; }
+
+  /* steps 2-4 */
+  .notice-tip{ background:var(--surface-2); color:var(--ink-soft); border:1px dashed var(--border-strong); }
+  #mc-list{ display:flex; flex-direction:column; gap:8px; }
+  .mc-item{ border:1px solid var(--border); border-radius:10px; padding:10px 14px; background:var(--surface-2); min-width:0; }
+  .mc-item.on{ border-color:var(--accent); background:var(--surface); }
+  .mc-check{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .mc-check input{ margin-top:5px; accent-color:var(--accent); flex:0 0 auto; }
+  .mc-name{ font-weight:500; font-size:14px; color:var(--ink); overflow-wrap:anywhere; }
+  .mc-meta{ display:flex; flex-wrap:wrap; gap:6px 12px; margin:4px 0 0 26px; font-size:12px; color:var(--ink-faint); }
+  .badge{ border-radius:999px; padding:0 8px; background:var(--warn-soft); color:var(--warn); }
+  .mc-opts{ margin:10px 0 2px 26px; display:flex; flex-direction:column; gap:6px; }
+  .mc-opts label{ font-size:13px; font-weight:600; color:var(--ink); }
+  .mc-opts textarea{ width:100%; min-height:120px; resize:vertical; padding:8px 10px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13.5px; line-height:1.6; }
+  .mc-opts textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .mc-opts-foot{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; }
+  .mc-status{ font-size:12.5px; color:var(--ink-soft); }
+  #mc-report{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .report-item{ border:1px solid var(--border); border-radius:10px; padding:10px 14px; background:var(--surface-2); }
+  .report-item h4{ margin:0 0 4px; font-size:13.5px; color:var(--ink); overflow-wrap:anywhere; }
+  .report-item ul{ margin:0; padding-left:18px; font-size:13px; color:var(--ink-soft); }
+  .report-item li{ margin:2px 0; }
+  .report-item li.warn{ color:var(--warn); }
+  .builder{ display:flex; flex-direction:column; gap:12px; border:1px solid var(--border); border-radius:10px; padding:14px; background:var(--surface-2); }
+  .builder-name{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+  .builder-name label{ font-size:13.5px; font-weight:600; color:var(--ink); }
+  .builder-name .opt-input{ flex:1 1 240px; min-width:0; }
+  .builder-actions{ display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; }
+  .pick-count{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); }
+  #pool-picker{ display:flex; flex-direction:column; gap:10px; }
+  .pick-src{ border:1px solid var(--border); border-radius:10px; padding:8px 12px 12px; margin:0; background:var(--surface); min-width:0; }
+  .pick-src legend{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding:0 6px; font-size:13px; max-width:100%; }
+  .src-kind{ font-size:11.5px; color:var(--ink-faint); letter-spacing:.04em; }
+  .src-name{ font-weight:600; color:var(--ink); overflow-wrap:anywhere; }
+  .btn.small-text{ font-size:12.5px; padding:2px 4px; }
+  .pick-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap:4px 12px; margin-top:6px; }
+  .pick{ display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:6px; cursor:pointer; font-size:13.5px; min-width:0; }
+  .pick:hover{ background:var(--accent-soft); }
+  .pick input{ accent-color:var(--accent); flex:0 0 auto; }
+  .pick-label{ flex:1; min-width:0; overflow-wrap:anywhere; color:var(--ink); }
+  .pick-rate{ font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint); }
+  .pick.zero .pick-label{ color:var(--ink-faint); }
+  .list-h{ font-family:var(--font-display); font-size:15.5px; margin:20px 0 8px; color:var(--ink); }
+  #group-list{ display:flex; flex-direction:column; gap:10px; }
+  .chip-missing{ background:var(--danger-soft); color:var(--danger); text-decoration:line-through; }
+  .chip{ padding:4px 12px; }
+  .warn-text{ color:var(--warn); }
+
+  /* group cards */
+  #group-list{ display:flex; flex-direction:column; gap:12px; }
+  .g-card{ border:1px solid var(--border); border-radius:10px; padding:12px 14px; background:var(--surface-2); min-width:0; }
+  .g-card.g-off{ opacity:.7; }
+  .g-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .g-head .q-name-input{ flex:1 1 200px; min-width:0; }
+  .g-letter-wrap{ flex:0 0 auto; }
+  .g-letter{ width:46px; text-align:center; padding:8px 4px; border-radius:8px; border:1.5px solid var(--accent); background:var(--accent-soft); color:var(--accent-strong); font-family:var(--font-mono); font-weight:600; font-size:16px; text-transform:uppercase; }
+  .g-letter:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .g-count{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); }
+  .g-stem{ margin:6px 0 0; font-size:12.5px; color:var(--ink-faint); overflow-wrap:anywhere; }
+  .g-tools{ display:flex; gap:8px; margin-top:4px; }
+  .pick-full{ display:block; font-size:11.5px; color:var(--ink-faint); }
+  .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* short names */
+  .short-panel{ margin-top:6px; }
+  .short-steps{ display:flex; flex-direction:column; gap:14px; margin-top:10px; }
+  .short-step{ display:flex; gap:12px; align-items:flex-start; min-width:0; }
+  .short-no{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:1.5px solid var(--accent); color:var(--accent-strong); font-family:var(--font-mono); font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .short-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  .short-body > p{ margin:0; font-size:13.5px; color:var(--ink); font-weight:500; }
+  .row-actions.tight{ margin-top:0; }
+  .short-body textarea, .prompt-peek textarea{ width:100%; resize:vertical; padding:8px 10px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13px; line-height:1.6; }
+  .short-body textarea:focus, .prompt-peek textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .prompt-peek summary{ cursor:pointer; font-size:12.5px; color:var(--ink-soft); }
+  .prompt-peek textarea{ margin-top:6px; background:var(--surface-2); color:var(--ink-soft); }
+  .notice-ok{ background:var(--good-soft); color:var(--good); }
+  .short-tbl{ background:var(--surface); }
+  .short-tbl td{ vertical-align:middle; }
+  .short-tbl td.sn-full{ white-space:normal; min-width:160px; color:var(--ink); }
+  .sn-input{ width:100%; min-width:110px; padding:5px 8px; border-radius:6px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-size:13.5px; font-family:var(--font-body); }
+  .sn-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .sn-flag{ white-space:nowrap; }
+  .sn-note{ color:var(--ink-faint); font-family:var(--font-body); font-size:12px; }
+  .sn-warn{ display:inline-block; margin-left:4px; padding:0 6px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-family:var(--font-body); font-size:12px; }
+  .pick-short{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong); font-size:11.5px; }
+
+  .rate-input{ width:72px; padding:6px 8px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-mono); font-size:13.5px; text-align:right; }
+  .rate-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .low-row th, .low-row td{ color:var(--ink-faint); }
+  .low-tag{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-faint); font-size:11px; font-weight:400; }
+  .pick.low .pick-label, .pick.low .pick-rate{ color:var(--ink-faint); text-decoration:line-through; text-decoration-color:var(--border-strong); }
+
+  /* segment controls */
+  .seg-panel{ display:flex; flex-direction:column; gap:10px; padding:14px 16px; margin-bottom:18px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); }
+  .seg-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; }
+  .seg-field{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13.5px; font-weight:600; color:var(--ink); }
+  .seg-field select{ min-width:0; max-width:100%; }
+  .seg-radio{ display:inline-flex; align-items:center; gap:6px; font-size:13.5px; color:var(--ink); cursor:pointer; }
+  .seg-radio input{ accent-color:var(--accent); }
+  #seg-value{ min-width:0; max-width:100%; }
+  #seg-value:disabled{ opacity:.5; }
+  .seg-panel .hint.small{ margin:0; }
+  .seg-tag{ display:inline-block; margin:0 0 8px; padding:2px 10px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12.5px; font-weight:600; }
+  .cmp-table th .th-n{ display:block; font-weight:400; font-size:11px; color:var(--ink-faint); }
+  .cmp-table td.all-col{ background:var(--surface-2); font-weight:600; }
+  .cmp-table td.up{ background:var(--good-soft); color:var(--good); font-weight:600; }
+  .cmp-table td.down{ background:var(--danger-soft); color:var(--danger); font-weight:600; }
+  .map-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap:18px; }
+  .map-cell{ margin:0; min-width:0; }
+  .map-cell figcaption{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:13.5px; margin-bottom:4px; color:var(--ink); }
+  .map-cell figcaption span{ font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); }
+  .map-cell .map-wrap{ margin:0; }
+  .seg-details{ display:flex; flex-direction:column; gap:8px; }
+  .seg-details details{ border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .seg-details summary{ cursor:pointer; padding:10px 14px; font-weight:600; font-size:14px; color:var(--ink); display:flex; gap:10px; align-items:baseline; }
+  .seg-details summary span{ font-family:var(--font-mono); font-weight:400; font-size:12px; color:var(--ink-faint); }
+  .seg-details summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:10px; }
+  .seg-details details > .pca-card{ border:none; border-top:1px solid var(--border); border-radius:0 0 10px 10px; }
+
+  @media (max-width:560px){
+    .mapping-row{ flex-direction:column; align-items:stretch; gap:6px; }
+    .mapping-qname{ min-width:0; }
+    .crosstab-controls, .chisq-controls{ flex-direction:column; align-items:stretch; }
+    .crosstab-controls select, .chisq-controls select{ min-width:0; }
+  }
+
+  /* organizer */
+  #type-list{ display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+  .tl-row{ border:1px solid var(--border); border-radius:10px; padding:8px 12px; background:var(--surface-2); min-width:0; }
+  .tl-row.t-personal, .tl-row.t-drop{ opacity:.6; }
+  .tl-row.t-screen{ border-color:var(--warn); }
+  .tl-row.t-mc{ border-color:var(--accent); background:var(--surface); }
+  .tl-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .tl-no{ flex:0 0 auto; font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); min-width:40px; }
+  .tl-q{ flex:1 1 260px; min-width:0; font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tl-head select{ flex:0 0 auto; max-width:100%; font-size:13px; padding:6px 8px; }
+  .tl-meta{ margin:2px 0 0 50px; font-size:12px; color:var(--ink-faint); }
+  .tl-sub{ margin:8px 0 2px 50px; display:flex; flex-direction:column; gap:6px; }
+  .tl-sub summary{ cursor:pointer; font-size:12.5px; color:var(--ink-soft); }
+  .tl-sub textarea{ width:100%; min-height:110px; resize:vertical; padding:8px 10px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13px; line-height:1.6; margin-top:6px; }
+  .tl-sub-h{ margin:0; font-size:12.5px; color:var(--warn); font-weight:600; }
+  .tl-yn{ margin:0; font-size:12.5px; color:var(--ink-soft); line-height:1.7; }
+  .tl-report ul{ margin:0; padding-left:18px; font-size:12.5px; color:var(--ink-soft); }
+  .tl-report li.warn{ color:var(--warn); }
+  .nm-q{ max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap !important; }
+  .nm-type{ font-size:12px; color:var(--ink-soft); }
+  .nm-gen{ font-family:var(--font-mono); font-size:12px; color:var(--accent-strong); }
+  .stat-row{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-bottom:8px; }
+  .stat{ border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:var(--surface-2); display:flex; flex-direction:column; gap:2px; }
+  .stat-k{ font-size:12px; color:var(--ink-soft); }
+  .stat-v{ font-family:var(--font-mono); font-size:20px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+  #output-preview th{ font-family:var(--font-mono); font-size:12px; }
+  @media (max-width:560px){ .tl-meta, .tl-sub{ margin-left:0; } .nm-q{ max-width:160px; } }
+</style>
+
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">問卷資料 · 欄位整理 · 複選題 0／1</p>
+    <h1>問卷資料整理器</h1>
+    <p class="lede">上傳 Google 表單回覆，依原題目順序整理成可直接分析的資料檔：刪除篩選題排除的受訪者與個人資料，複選題拆成 0／1 欄，單選題保留縮減後的文字，量表題保留數值，並以前綴與簡稱重新命名所有欄位。整理後的檔案可直接上傳至「複選題組分析產生器」與「複選題卡方檢定器」。</p>
+  </header>
+
+  <section class="card" id="section-upload">
+    <div class="card-head">
+      <span class="step-badge">1</span>
+      <div>
+        <h2>上傳問卷回覆</h2>
+        <p class="hint">請從 Google 表單回覆試算表「檔案 → 下載」匯出 Excel (.xlsx) 或 CSV 後上傳；Excel 檔有多個工作表時，請選擇回覆所在的工作表。</p>
+      </div>
+    </div>
+    <div class="encoding-row" id="encoding-row">
+      <label for="select-encoding">CSV 檔案編碼</label>
+      <select id="select-encoding">
+        <option value="auto" selected>自動偵測（建議）</option>
+        <option value="utf-8">UTF-8</option>
+        <option value="big5">Big5（Windows 中文版 Excel 另存的 CSV 常見）</option>
+      </select>
+    </div>
+    <div class="encoding-row" id="sheet-row" hidden>
+      <label for="select-sheet">工作表</label>
+      <select id="select-sheet"></select>
+    </div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="input-csv" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dropzone-label">選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡</span>
+    </label>
+    <div id="csv-summary" class="summary" hidden></div>
+    <div id="csv-actions" class="row-actions" hidden>
+      <button class="btn btn-text danger" id="btn-remove-csv" type="button">移除已上傳的檔案</button>
+    </div>
+    <div id="csv-preview-wrap" class="table-scroll" hidden><table id="csv-preview"></table></div>
+  </section>
+
+  <section class="card" id="section-types" hidden>
+    <div class="card-head">
+      <span class="step-badge">2</span>
+      <div>
+        <h2>確認欄位類型</h2>
+        <p class="hint">工具已依內容自動判斷每一欄的類型，請逐一檢查並修改。篩選題請勾選要排除的答案，回答這些答案的受訪者會被刪除；複選題請貼上表單中的原始選項（每行一個），選項文字含逗號也能正確辨識。</p>
+      </div>
+    </div>
+    <div class="notice notice-tip">類型說明：id 改為 1、2、3⋯⋯的序號；個人資料與「移除」不會出現在下載檔；篩選題於刪除受訪者後移除；單選題保留文字（可縮減）；是非題編碼為是＝1、否＝0；數值／量表保留數字；複選題拆成每個選項一欄 0／1；文字保留原文。</div>
+    <div id="screen-summary"></div>
+    <div id="type-list"></div>
+  </section>
+
+  <section class="card" id="section-names" hidden>
+    <div class="card-head">
+      <span class="step-badge">3</span>
+      <div>
+        <h2>欄名、前綴與選項簡稱</h2>
+        <p class="hint">複製 AI 指令交給其他 AI（如 ChatGPT、Gemini），由它依題目決定欄名、前綴與選項簡稱，再貼回套用；也可以在下方表格直接修改。量表題以「代碼＋題序＋題項簡稱」命名（如 M1口渴解渴）；品牌相關題目依品牌順序以 B1、B2⋯⋯為代碼（是否喝過該品牌為 B1原萃，其他品牌題如 B1滿意度，品牌的複選題如 B1_低熱量）；其他單題只用簡稱（如 飲用頻率）；複選題為「代碼_選項簡稱」（如 CH_超商）。簡稱至多 6 個字，代碼與題序不計入；單題欄名不使用底線。</p>
+      </div>
+    </div>
+    <div class="short-steps">
+      <div class="short-step">
+        <span class="short-no">1</span>
+        <div class="short-body">
+          <p>複製指令，貼給其他 AI。</p>
+          <div class="row-actions tight">
+            <button class="btn btn-secondary" id="btn-copy-prompt" type="button">複製 AI 指令</button>
+          </div>
+          <details class="prompt-peek"><summary>檢視指令內容</summary><textarea id="prompt-text" readonly rows="10" aria-label="AI 指令內容"></textarea></details>
+        </div>
+      </div>
+      <div class="short-step">
+        <span class="short-no">2</span>
+        <div class="short-body">
+          <p>把 AI 的回覆貼在這裡：欄名為「欄號｜新欄名」，選項為「原始選項｜簡稱」。</p>
+          <textarea id="ai-paste" rows="8" placeholder="例如：&#10;欄3｜飲用頻率&#10;欄4｜CH&#10;欄6｜M1口渴解渴&#10;欄23｜B1原萃&#10;欄24｜B1&#10;欄25｜B1滿意度&#10;是(請依照您對「原萃」的實際體驗及感受回答以下各題)｜是"></textarea>
+          <div class="row-actions tight">
+            <button class="btn btn-primary" id="btn-apply-ai" type="button">套用欄名與簡稱</button>
+          </div>
+          <div id="ai-report"></div>
+        </div>
+      </div>
+      <div class="short-step">
+        <span class="short-no">3</span>
+        <div class="short-body">
+          <p>檢查並修改欄名與前綴。</p>
+          <div id="name-issues"></div>
+          <div id="name-table"></div>
+          <div id="lgroup-table"></div>
+          <p>檢查並修改選項簡稱（單選題與複選題的選項）。有順序的單選題，簡稱前加上序號與半形句點（如 1.每天都喝、2.每週2至3次），次數分配表與交叉表就會依序排列；數字一律使用阿拉伯數字。</p>
+          <div id="short-table"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="section-output" hidden>
+    <div class="card-head">
+      <span class="step-badge">4</span>
+      <div>
+        <h2>預覽與下載</h2>
+        <p class="hint">下載的 Excel 檔包含三個工作表：「資料」為整理後的全部欄位，依原題目順序排列；「欄名對照表」列出整理摘要、每一欄的新欄名、原題目、原始選項、簡稱與編碼方式；「題組」列出各題組的代碼與名稱，上傳至題組分析產生器或卡方檢定器時會自動帶入題組名稱。</p>
+      </div>
+    </div>
+    <div id="output-summary"></div>
+    <div id="output-issues"></div>
+    <div class="table-scroll"><table id="output-preview"></table></div>
+    <div class="row-actions">
+      <button class="btn btn-primary" id="btn-download-xlsx" type="button">下載整理後的資料（Excel）</button>
+    </div>
+    <div class="row-actions">
+      <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
+      <label class="btn btn-text file-btn">
+        匯入設定（JSON）
+        <input type="file" id="input-import-config" accept="application/json" hidden>
+      </label>
+      <button class="btn btn-text danger" id="btn-clear-config" type="button">重設全部設定</button>
+    </div>
+    <p class="hint small">欄位類型、選項清單、欄名與簡稱會自動保存在此瀏覽器，同一份問卷下次上傳時直接套用，也可匯出存檔。</p>
+  </section>
+
+  <footer class="foot">
+    <p>所有計算都在此頁面（您的瀏覽器）中完成，不會上傳到任何伺服器，也不使用任何 AI 服務。</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- utilities ---------- */
+  let uidCounter = 0;
+  function uid(prefix){ return (prefix||'id') + '_' + Date.now().toString(36) + '_' + (uidCounter++); }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function dateStamp(){
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+  }
+
+  let toastTimer = null;
+  function toast(msg, kind){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (kind === 'error' ? ' toast-error' : kind === 'success' ? ' toast-success' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
+  }
+
+  function parseCSV(text){
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i++; }
+          else { inQuotes = false; }
+        } else { field += c; }
+      } else {
+        if (c === '"'){ inQuotes = true; }
+        else if (c === ','){ row.push(field); field = ''; }
+        else if (c === '\r'){ /* skip */ }
+        else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+        else { field += c; }
+      }
+    }
+    if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    const filtered = rows.filter(r => !(r.length === 1 && r[0] === ''));
+    const headers = (filtered[0] || []).map(h => h.trim());
+    const dataRows = filtered.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined ? r[idx] : ''; });
+      return obj;
+    });
+    return { headers, rows: dataRows };
+  }
+
+  function csvEscape(v){
+    const s = String(v == null ? '' : v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function toCSVString(headers, rows){
+    const lines = [headers.map(csvEscape).join(',')];
+    rows.forEach(r => lines.push(r.map(csvEscape).join(',')));
+    return lines.join('\r\n');
+  }
+
+  function mimeOf(filename){
+    const ext = (filename.split('.').pop() || '').toLowerCase();
+    return ({ csv: 'text/csv;charset=utf-8', json: 'application/json;charset=utf-8', svg: 'image/svg+xml;charset=utf-8', png: 'image/png' })[ext] || 'application/octet-stream';
+  }
+  async function saveFile(filename, content, opts){
+    opts = opts || {};
+    const bom = opts.bom !== false;
+    const blob = content instanceof Blob ? content
+      : new Blob([(bom ? String.fromCharCode(0xFEFF) : '') + content], { type: mimeOf(filename) });
+    /* 在 claude.ai 內：透過平台的下載確認視窗 */
+    if (window.claude && typeof window.claude.use === 'function'){
+      try{
+        const downloads = await window.claude.use('downloads');
+        if (!downloads){ toast('此檢視環境不支援檔案下載', 'error'); return; }
+        await downloads.save({ filename, data: blob });
+      }catch(err){
+        if (err && err.code === 'declined') return;
+        console.error(err);
+        toast('下載失敗：' + (err && err.message ? err.message : '未知錯誤'), 'error');
+      }
+      return;
+    }
+    /* 一般網站（例如 Netlify）：直接由瀏覽器下載 */
+    try{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }catch(err){
+      console.error(err);
+      toast('下載失敗：' + (err && err.message ? err.message : '未知錯誤'), 'error');
+    }
+  }
+
+  /* ---------- CSV upload ---------- */
+  function findIdHeader(headers){
+    return headers.find(h => /email|電子郵件|時間戳記|timestamp/i.test(h)) || null;
+  }
+
+  function renderCSVPreview(){
+    const { headers, rows } = state.csv;
+    const previewRows = rows.slice(0, 5);
+    const thead = '<thead><tr>' + headers.map(h => '<th>' + escapeHtml(h) + '</th>').join('') + '</tr></thead>';
+    const tbody = '<tbody>' + previewRows.map(r => '<tr>' + headers.map(h => '<td>' + escapeHtml(r[h]) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    document.getElementById('csv-preview').innerHTML = thead + tbody;
+    document.getElementById('csv-preview-wrap').hidden = false;
+    const summary = document.getElementById('csv-summary');
+    summary.hidden = false;
+    summary.innerHTML = '共讀取 <strong>' + rows.length + '</strong> 筆回覆，<strong>' + headers.length + '</strong> 個欄位。以下顯示前 5 筆預覽：';
+    document.getElementById('csv-actions').hidden = false;
+  }
+
+  function decodeCSVBuffer(buffer, encoding){
+    if (encoding === 'utf-8') return new TextDecoder('utf-8').decode(buffer);
+    if (encoding === 'big5') return new TextDecoder('big5').decode(buffer);
+    /* auto: real UTF-8 text almost never throws under a fatal decode; Big5
+       Traditional-Chinese bytes almost always do, so this reliably tells them apart. */
+    try{
+      return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    }catch(e){
+      try{ return new TextDecoder('big5').decode(buffer); }
+      catch(e2){ return new TextDecoder('utf-8').decode(buffer); }
+    }
+  }
+
+  function reprocessCSVBuffer(){
+    if (!state.csvRawBuffer) return;
+    try{
+      const encoding = document.getElementById('select-encoding').value;
+      const text = decodeCSVBuffer(state.csvRawBuffer, encoding);
+      const parsed = parseCSV(text);
+      if (!parsed.headers.length){ toast('無法解析此 CSV 檔案，請確認格式', 'error'); return; }
+      state.csv = { headers: parsed.headers, rows: parsed.rows, filename: state.csvFileName };
+      document.getElementById('dropzone-label').textContent = '已上傳：' + state.csvFileName + '（' + parsed.rows.length + ' 筆回覆）';
+      renderCSVPreview();
+      onDataLoaded();
+      if (text.indexOf(String.fromCharCode(0xFFFD)) !== -1){
+        toast('偵測到無法辨識的字元，如內容仍是亂碼，請切換上方「檔案編碼」再試一次', 'error');
+      } else {
+        toast('CSV 讀取成功', 'success');
+      }
+    }catch(err){
+      console.error(err);
+      toast('解析 CSV 時發生錯誤', 'error');
+    }
+  }
+
+  function handleCSVFile(file){
+    if (!file) return;
+    document.getElementById('encoding-row').hidden = false;
+    document.getElementById('sheet-row').hidden = true;
+    state.xlsxWorkbook = null;
+    state.currentSheet = null;
+    const reader = new FileReader();
+    reader.onload = function(){
+      state.csvRawBuffer = reader.result;
+      state.csvFileName = file.name;
+      reprocessCSVBuffer();
+    };
+    reader.onerror = function(){ toast('讀取檔案失敗', 'error'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* ---------- XLSX upload ---------- */
+  function loadSheet(sheetName){
+    const wb = state.xlsxWorkbook;
+    if (!wb) return;
+    let aoa;
+    try{
+      aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: false, blankrows: false });
+    }catch(err){
+      console.error(err);
+      toast('無法讀取此工作表', 'error');
+      return;
+    }
+    const headers = (aoa[0] || []).map(h => String(h).trim());
+    if (!headers.length){ toast('此工作表沒有資料', 'error'); return; }
+    const dataRows = aoa.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined && r[idx] !== null ? String(r[idx]) : ''; });
+      return obj;
+    });
+    state.csv = { headers, rows: dataRows, filename: state.csvFileName };
+    state.currentSheet = sheetName;
+    document.getElementById('dropzone-label').textContent = '已上傳：' + state.csvFileName + '（' + dataRows.length + ' 筆回覆）';
+    renderCSVPreview();
+    onDataLoaded();
+    toast('Excel 讀取成功', 'success');
+  }
+
+  function handleXLSXFile(file){
+    document.getElementById('encoding-row').hidden = true;
+    state.csvRawBuffer = null;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        if (typeof XLSX === 'undefined'){
+          toast('Excel 解析功能載入失敗，請檢查網路連線，或改用 CSV 上傳', 'error');
+          return;
+        }
+        const wb = XLSX.read(new Uint8Array(reader.result), { type: 'array' });
+        if (!wb.SheetNames.length){ toast('這個 Excel 檔案沒有工作表', 'error'); return; }
+        state.xlsxWorkbook = wb;
+        state.csvFileName = file.name;
+        const sheetRow = document.getElementById('sheet-row');
+        const sheetSelect = document.getElementById('select-sheet');
+        if (wb.SheetNames.length > 1){
+          sheetSelect.innerHTML = wb.SheetNames.map(n => '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>').join('');
+          sheetRow.hidden = false;
+        } else {
+          sheetRow.hidden = true;
+        }
+        loadSheet(wb.SheetNames[0]);
+      }catch(err){
+        console.error(err);
+        toast('無法解析此 Excel 檔案，請確認格式是否正確', 'error');
+      }
+    };
+    reader.onerror = function(){ toast('讀取檔案失敗', 'error'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById('select-sheet').addEventListener('change', function(e){
+    loadSheet(e.target.value);
+  });
+
+  function handleUploadedFile(file){
+    if (!file) return;
+    if (/\.xlsx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+      handleXLSXFile(file);
+    } else {
+      handleCSVFile(file);
+    }
+  }
+
+  document.getElementById('select-encoding').addEventListener('change', function(){
+    if (state.csvRawBuffer) reprocessCSVBuffer();
+  });
+  document.getElementById('input-csv').addEventListener('change', function(e){ handleUploadedFile(e.target.files[0]); });
+  const dropzone = document.getElementById('dropzone');
+  ['dragenter','dragover'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', function(e){
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleUploadedFile(f);
+  });
+
+  document.getElementById('btn-remove-csv').addEventListener('click', function(){
+    state.csv = null;
+    state.csvRawBuffer = null;
+    state.csvFileName = null;
+    state.xlsxWorkbook = null;
+    state.currentSheet = null;
+    document.getElementById('input-csv').value = '';
+    document.getElementById('select-encoding').value = 'auto';
+    document.getElementById('encoding-row').hidden = false;
+    document.getElementById('sheet-row').hidden = true;
+    document.getElementById('dropzone-label').textContent = '選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡';
+    document.getElementById('csv-summary').hidden = true;
+    document.getElementById('csv-preview-wrap').hidden = true;
+    document.getElementById('csv-actions').hidden = true;
+    onDataCleared();
+  });
+
+
+
+  function matchCell(s, sortedOpts){
+    const found = new Set(), unmatched = [];
+    const len = s.length;
+    let pos = 0, buf = '';
+    const atBoundary = p => p >= len || /^\s*,/.test(s.slice(p));
+    const flush = () => { const t = buf.trim(); if (t) unmatched.push(t); buf = ''; };
+    while (pos < len){
+      while (pos < len && /\s/.test(s[pos])) pos++;
+      if (pos >= len) break;
+      let hit = null;
+      for (const o of sortedOpts){
+        if (s.startsWith(o, pos) && atBoundary(pos + o.length)){ hit = o; break; }
+      }
+      if (hit){
+        flush();
+        found.add(hit);
+        pos += hit.length;
+        const m = /^\s*,/.exec(s.slice(pos));
+        if (m) pos += m[0].length;
+        continue;
+      }
+      const idx = s.indexOf(',', pos);
+      const piece = idx < 0 ? s.slice(pos) : s.slice(pos, idx);
+      buf = buf ? buf + ', ' + piece.trim() : piece.trim();
+      pos = idx < 0 ? len : idx + 1;
+    }
+    flush();
+    return { found: found, unmatched: unmatched };
+  }
+
+  function normKey(t){ return String(t).replace(/[\s,，、。．.「」『』"'“”‘’()（）\[\]【】:：;；!！?？\-－_|｜]/g, ''); }
+
+  /* ---------- state ---------- */
+  const LS_KEY = 'survey_organizer_v1';
+  function loadSaved(){
+    try{ const raw = localStorage.getItem(LS_KEY); if (raw){ const p = JSON.parse(raw); if (p && typeof p === 'object') return p; } }catch(e){ /* ignore */ }
+    return {};
+  }
+  const saved = loadSaved();
+  const state = {
+    csv: null, csvRawBuffer: null, csvFileName: null, xlsxWorkbook: null, currentSheet: null,
+    cols: [],                                                     /* 每一欄的內容摘要 */
+    cfg: (saved.cfg && typeof saved.cfg === 'object') ? saved.cfg : {},       /* 原題目 → { type, name, options, exclude } */
+    short: (saved.short && typeof saved.short === 'object') ? saved.short : {}, /* 原始選項 → 簡稱 */
+    lgname: (saved.lgname && typeof saved.lgname === 'object') ? saved.lgname : {} /* 是非題題組字母 → 題組名稱 */
+  };
+  function saveConfig(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify({ cfg: state.cfg, short: state.short, lgname: state.lgname })); }catch(e){ /* ignore */ }
+  }
+
+  const TYPES = [
+    ['id', 'id（改為序號）'],
+    ['personal', '個人資料（移除）'],
+    ['screen', '篩選題'],
+    ['single', '單選題（保留文字）'],
+    ['yn', '是非題（是＝1、否＝0）'],
+    ['num', '數值／量表（保留數字）'],
+    ['mc', '複選題（拆成 0／1）'],
+    ['bin', '0／1 欄（保留）'],
+    ['text', '文字（保留原文）'],
+    ['drop', '移除']
+  ];
+  const TYPE_LABEL = {}; TYPES.forEach(t => { TYPE_LABEL[t[0]] = t[1]; });
+  const REMOVED = { personal: 1, screen: 1, drop: 1 };
+
+  /* ---------- helpers ---------- */
+  function pct1(v){ return (v * 100).toFixed(1) + '%'; }
+  function charLen(t){ return Array.from(String(t)).length; }
+  /* 字數：中文字算 1 字，英數字與符號算半字（例如 Threads 約 3.5 字） */
+  function wlen(t){ return Array.from(String(t).replace(/^[0-9]+\.?/, '')).reduce((a, ch) => a + (/[\u0000-\u00ff]/.test(ch) ? 0.5 : 1), 0); }
+  function cellOf(r, h){ const v = state.csv.rows[r][h]; return String(v == null ? '' : v).trim(); }
+  function parseOptionList(text){
+    const seen = new Set(), out = [];
+    String(text || '').split(/\r?\n/).forEach(line => { const t = line.trim(); if (t && !seen.has(t)){ seen.add(t); out.push(t); } });
+    return out;
+  }
+  function splitTokens(t){ return t.split(',').map(s => s.trim()).filter(Boolean); }
+  function isNumText(t){ return t !== '' && isFinite(Number(t)); }
+  function numOut(t){ if (t === '') return ''; const n = Number(t); return isFinite(n) ? n : t; }
+  function disp(o){ const t = state.short[o]; return t && t.trim() ? t.trim() : o; }
+  function cleanName(t){ return String(t || '').replace(/[\s,，、。;；:："'“”‘’|｜\\/]/g, ''); }
+
+  /* ---------- column analysis & type detection ---------- */
+  function analyzeColumns(){
+    const N = state.csv.rows.length;
+    state.cols = state.csv.headers.map((h, i) => {
+      const counts = new Map();
+      let filled = 0, numeric = 0, binary = 0, comma = 0, min = Infinity, max = -Infinity;
+      for (let r = 0; r < N; r++){
+        const t = cellOf(r, h);
+        if (!t) continue;
+        filled++;
+        counts.set(t, (counts.get(t) || 0) + 1);
+        if (isNumText(t)){ numeric++; const n = Number(t); min = Math.min(min, n); max = Math.max(max, n); if (n === 0 || n === 1) binary++; }
+        if (t.indexOf(',') !== -1) comma++;
+      }
+      return { i: i, no: i + 1, header: h, filled: filled, counts: counts, uniq: counts.size,
+        numeric: filled > 0 && numeric === filled, binary: filled > 0 && binary === filled, comma: comma, min: min, max: max };
+    });
+  }
+  function autoType(c, firstSingleIdx){
+    const h = c.header;
+    if (/時間戳記|timestamp/i.test(h)) return 'id';
+    if (/學號|姓名|e-?mail|電子郵件|電子信箱|電話|手機|身分證|地址|line\s*id/i.test(h)) return 'personal';
+    if (!c.filled) return 'drop';
+    if (c.binary) return 'bin';
+    if (c.numeric) return 'num';
+    if (/可複選|複選/.test(h) || c.comma >= Math.max(2, c.filled * 0.15)) return 'mc';
+    if (c.uniq <= 30 && c.uniq <= c.filled * 0.5) return 'single';
+    return 'text';
+  }
+  /* 是非題：選項以「是／否」（或有／沒有、會／不會、Yes／No）開頭，編碼為 1／0 */
+  function ynCode(v){
+    const t = String(v).trim();
+    if (/^(否|沒有|不會|不是|無|no\b|n\b)/i.test(t)) return 0;
+    if (/^(是|有|會|yes\b|y\b)/i.test(t)) return 1;
+    return null;
+  }
+  function looksYesNo(c){
+    if (c.uniq !== 2 || c.numeric) return false;
+    const codes = Array.from(c.counts.keys()).map(ynCode);
+    return codes.indexOf(1) !== -1 && codes.indexOf(0) !== -1;
+  }
+  function screenCandidates(c){
+    return Array.from(c.counts.keys()).filter(v => /從未|未曾|沒有喝過|沒有用過|沒有購買|^否/.test(v));
+  }
+  function conf(h){
+    if (!state.cfg[h]) state.cfg[h] = {};
+    return state.cfg[h];
+  }
+  function ensureTypes(){
+    let screenSuggested = false;
+    state.cols.forEach((c, k) => {
+      const cf = conf(c.header);
+      if (!cf.type){
+        let t = autoType(c);
+        /* 問卷最前面幾題中，含「從未」等答案的單選題，預設為篩選題 */
+        if (t === 'single' && !screenSuggested && k <= 4 && c.uniq <= 4 && screenCandidates(c).length){
+          t = 'screen'; cf.exclude = screenCandidates(c); screenSuggested = true;
+        }
+        if (t === 'single' && looksYesNo(c)) t = 'yn';
+        cf.type = t;
+      } else if (cf.type === 'single' && !cf.userSet && looksYesNo(c)){
+        cf.type = 'yn';   /* 舊設定中自動判斷為單選題的是非題，改為 1／0 編碼 */
+      }
+      if (cf.type === 'screen' && !Array.isArray(cf.exclude)) cf.exclude = [];
+    });
+  }
+  function typeOf(c){ return (state.cfg[c.header] || {}).type || 'text'; }
+
+  /* ---------- multiple-choice options ---------- */
+  function guessOptions(c){
+    const counts = new Map();
+    c.counts.forEach((n, t) => splitTokens(t).forEach(tok => counts.set(tok, (counts.get(tok) || 0) + n)));
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  }
+  /* 未貼選項清單時，各題依「最早出現該選項的題目」的次序排列，品牌題組之間的欄位順序因此一致 */
+  let optOrder = null;
+  function refreshOptOrder(){
+    const order = new Map();
+    state.cols.forEach(c => {
+      if (typeOf(c) !== 'mc') return;
+      const list = parseOptionList((state.cfg[c.header] || {}).options);
+      (list.length ? list : guessOptions(c)).forEach(o => { if (!order.has(o)) order.set(o, order.size); });
+    });
+    optOrder = order;
+  }
+  function mcOptions(c){
+    const list = parseOptionList((state.cfg[c.header] || {}).options);
+    if (list.length) return { mode: 'list', options: list };
+    if (!optOrder) refreshOptOrder();
+    const g = guessOptions(c).slice().sort((a, b) => (optOrder.has(a) ? optOrder.get(a) : 1e9) - (optOrder.has(b) ? optOrder.get(b) : 1e9));
+    return { mode: 'split', options: g };
+  }
+  /* 依選項清單比對一格作答，先比對最長的選項，選項本身含逗號也能整段辨識 */
+  function matchMc(c){
+    const mo = mcOptions(c);
+    const sorted = mo.options.slice().sort((a, b) => b.length - a.length);
+    const N = state.csv.rows.length;
+    const vecs = {}; mo.options.forEach(o => { vecs[o] = new Array(N).fill(0); });
+    const unmatched = new Map();
+    for (let r = 0; r < N; r++){
+      const t = cellOf(r, c.header);
+      if (!t) continue;
+      if (mo.mode === 'list'){
+        const m = matchCell(t, sorted);
+        m.found.forEach(o => { vecs[o][r] = 1; });
+        m.unmatched.forEach(u => unmatched.set(u, (unmatched.get(u) || 0) + 1));
+      } else splitTokens(t).forEach(tok => { if (vecs[tok]) vecs[tok][r] = 1; });
+    }
+    return { mode: mo.mode, options: mo.options, vecs: vecs, unmatched: Array.from(unmatched.entries()).sort((a, b) => b[1] - a[1]) };
+  }
+
+  /* ---------- screening ---------- */
+  function screening(){
+    const N = state.csv.rows.length;
+    const rules = state.cols.filter(c => typeOf(c) === 'screen').map(c => ({ c: c, ex: new Set(state.cfg[c.header].exclude || []) }));
+    const keep = [];
+    const dropBy = rules.map(() => 0);
+    for (let r = 0; r < N; r++){
+      let drop = false;
+      rules.forEach((rule, k) => { if (rule.ex.has(cellOf(r, rule.c.header))){ if (!drop) dropBy[k]++; drop = true; } });
+      if (!drop) keep.push(r);
+    }
+    return { N: N, keep: keep, removed: N - keep.length, rules: rules, dropBy: dropBy };
+  }
+
+  /* ---------- step 2 rendering ---------- */
+  function colSummary(c){
+    if (!c.filled) return '沒有作答';
+    const parts = ['已填答 ' + c.filled + ' 筆'];
+    if (c.numeric) parts.push('數值 ' + c.min + '–' + c.max);
+    parts.push(c.uniq + ' 種答案');
+    if (c.comma) parts.push(c.comma + ' 筆含逗號');
+    return parts.join('｜');
+  }
+  function renderTypes(){
+    refreshOptOrder();
+    const box = document.getElementById('type-list');
+    box.innerHTML = state.cols.map(c => {
+      const t = typeOf(c), cf = state.cfg[c.header] || {};
+      let html = '<div class="tl-row t-' + t + '" data-i="' + c.i + '">' +
+        '<div class="tl-head"><span class="tl-no">欄' + c.no + '</span>' +
+        '<span class="tl-q" title="' + escapeHtml(c.header) + '">' + escapeHtml(c.header) + '</span>' +
+        '<select id="type-' + c.i + '" data-role="type" aria-label="欄' + c.no + ' 的類型">' +
+          TYPES.map(x => '<option value="' + x[0] + '"' + (x[0] === t ? ' selected' : '') + '>' + x[1] + '</option>').join('') + '</select></div>' +
+        '<p class="tl-meta">' + escapeHtml(colSummary(c)) + '</p>';
+      if (t === 'screen'){
+        const ex = new Set(cf.exclude || []);
+        html += '<div class="tl-sub"><p class="tl-sub-h">勾選要排除的答案（回答這些答案的受訪者會被刪除）：</p>' +
+          Array.from(c.counts.entries()).map(([v, n], k) => '<label class="pick"><input type="checkbox" id="ex-' + c.i + '-' + k + '" data-role="exclude" data-v="' + escapeHtml(v) + '"' + (ex.has(v) ? ' checked' : '') + '>' +
+            '<span class="pick-label">' + escapeHtml(v) + '</span><span class="pick-rate">' + n + ' 筆</span></label>').join('') + '</div>';
+      }
+      if (t === 'yn'){
+        html += '<div class="tl-sub"><p class="tl-yn">' + Array.from(c.counts.entries()).map(([v, n]) => {
+          const code = ynCode(v);
+          return '<span class="' + (code == null ? 'warn-text' : '') + '">' + (code == null ? '無法判斷' : code) + '＝' + escapeHtml(v) + '（' + n + ' 筆）</span>';
+        }).join('<br>') + '</p></div>';
+      }
+      if (t === 'mc'){
+        const mo = mcOptions(c);
+        html += '<details class="tl-sub"' + (mo.mode === 'split' ? '' : '') + '><summary>' +
+          (mo.mode === 'list' ? '選項清單：已輸入 ' + mo.options.length + ' 個選項' : '<span class="warn-text">尚未貼上選項清單，暫以逗號切分出 ' + mo.options.length + ' 個選項</span>') + '（點此展開）</summary>' +
+          '<textarea id="opts-' + c.i + '" data-role="options" rows="6" placeholder="貼上表單中的原始選項，每行一個">' + escapeHtml(cf.options || '') + '</textarea>' +
+          '<div class="row-actions tight"><button type="button" class="btn btn-ghost small" data-role="guess">從作答內容帶入選項（請檢查）</button></div>' +
+          '<div class="tl-report" data-role="report"></div></details>';
+      }
+      return html + '</div>';
+    }).join('');
+    state.cols.filter(c => typeOf(c) === 'mc').forEach(renderMcReport);
+    renderScreenSummary();
+  }
+  function renderMcReport(c){
+    const el = document.querySelector('.tl-row[data-i="' + c.i + '"] [data-role="report"]');
+    if (!el) return;
+    const m = matchMc(c);
+    const zero = m.options.filter(o => !m.vecs[o].some(Boolean));
+    let html = '<ul>';
+    html += m.mode === 'list' ? '<li>以選項清單比對，共 ' + m.options.length + ' 個選項。</li>'
+                              : '<li class="warn">未貼選項清單，以逗號切分；選項文字含半形逗號時會被切開。</li>';
+    if (zero.length) html += '<li>無人勾選：' + zero.map(z => '「' + escapeHtml(z) + '」').join('、') + '（仍保留為全 0 欄）。</li>';
+    if (m.unmatched.length){
+      const total = m.unmatched.reduce((a, b) => a + b[1], 0);
+      html += '<li class="warn">有 ' + total + ' 筆作答對不上任何選項（多為「其他」的自由填答），未列入：' +
+        m.unmatched.slice(0, 10).map(u => '「' + escapeHtml(u[0]) + '」×' + u[1]).join('、') + (m.unmatched.length > 10 ? '⋯⋯等 ' + m.unmatched.length + ' 種' : '') + '</li>';
+    }
+    el.innerHTML = html + '</ul>';
+  }
+  function renderScreenSummary(){
+    const s = screening();
+    const box = document.getElementById('screen-summary');
+    if (!s.rules.length){
+      box.innerHTML = '<div class="notice notice-info">目前沒有設定篩選題，所有 ' + s.N + ' 筆回覆都會保留。</div>';
+      return;
+    }
+    box.innerHTML = '<div class="notice ' + (s.removed ? 'notice-ok' : 'notice-info') + '">原始回覆共 <strong>' + s.N + '</strong> 筆，依篩選題刪除 <strong>' + s.removed +
+      '</strong> 筆，有效樣本 <strong>' + s.keep.length + '</strong> 筆，有效回收率 <strong>' + (s.N ? pct1(s.keep.length / s.N) : '—') + '</strong>。</div>';
+  }
+
+  const typeList = document.getElementById('type-list');
+  typeList.addEventListener('change', function(e){
+    const row = e.target.closest('.tl-row');
+    if (!row) return;
+    const c = state.cols[Number(row.dataset.i)];
+    const cf = conf(c.header);
+    if (e.target.dataset.role === 'type'){
+      cf.type = e.target.value;
+      cf.userSet = true;
+      if (cf.type === 'screen' && !Array.isArray(cf.exclude)) cf.exclude = screenCandidates(c);
+      saveConfig(); renderTypes(); refreshDownstream();
+    } else if (e.target.dataset.role === 'exclude'){
+      const ex = new Set(cf.exclude || []);
+      if (e.target.checked) ex.add(e.target.dataset.v); else ex.delete(e.target.dataset.v);
+      cf.exclude = Array.from(ex);
+      saveConfig(); renderScreenSummary(); refreshDownstream();
+    }
+  });
+  let optTimer = null;
+  typeList.addEventListener('input', function(e){
+    if (e.target.dataset.role !== 'options') return;
+    const c = state.cols[Number(e.target.closest('.tl-row').dataset.i)];
+    conf(c.header).options = e.target.value;
+    saveConfig();
+    clearTimeout(optTimer);
+    optTimer = setTimeout(function(){ refreshOptOrder(); renderMcReport(c); refreshDownstream(); }, 500);
+  });
+  typeList.addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-role="guess"]');
+    if (!btn) return;
+    const row = btn.closest('.tl-row');
+    const c = state.cols[Number(row.dataset.i)];
+    conf(c.header).options = guessOptions(c).join('\n');
+    saveConfig();
+    row.querySelector('textarea').value = state.cfg[c.header].options;
+    refreshOptOrder(); renderMcReport(c); refreshDownstream();
+    toast('已依逗號帶入選項，被切開的選項請手動合併成一行');
+  });
+
+  /* ---------- names ---------- */
+  function namedCols(){ return state.cols.filter(c => !REMOVED[typeOf(c)] && typeOf(c) !== 'id'); }
+  function defaultName(c){ return 'Q' + c.no; }
+  function nameOf(c){ const n = cleanName((state.cfg[c.header] || {}).name); return n || defaultName(c); }
+  function singleValues(c){ return Array.from(c.counts.keys()); }
+  function optionPool(){
+    const seen = new Set(), out = [];
+    namedCols().forEach(c => {
+      const t = typeOf(c);
+      const list = t === 'mc' ? mcOptions(c).options : t === 'single' ? singleValues(c) : [];
+      list.forEach(o => { if (!seen.has(o)){ seen.add(o); out.push(o); } });
+    });
+    return out;
+  }
+  /* 依目前設定產生最終欄名清單 */
+  function outputColumns(){
+    const out = [];
+    let hasId = false;
+    state.cols.forEach(c => {
+      const t = typeOf(c);
+      if (REMOVED[t]) return;
+      if (t === 'id'){ if (!hasId){ out.push({ name: 'id', c: c, kind: 'id' }); hasId = true; } return; }
+      if (t === 'mc'){
+        const pre = nameOf(c);
+        mcOptions(c).options.forEach(o => out.push({ name: pre + '_' + cleanName(disp(o)), c: c, kind: 'mc', option: o }));
+        return;
+      }
+      out.push({ name: nameOf(c), c: c, kind: t });
+    });
+    if (!hasId) out.unshift({ name: 'id', c: null, kind: 'id' });
+    return out;
+  }
+  /* 分析工具會讀到的題組：複選題依代碼；是非題或 0／1 欄依「字母＋序號＋名稱」的開頭字母 */
+  function letterGroups(){
+    const map = {};
+    outputColumns().forEach(o => {
+      if (o.kind !== 'yn' && o.kind !== 'bin') return;
+      const m = /^([A-Za-z]+)([0-9]+)(.+)$/.exec(o.name);
+      if (!m || o.name.indexOf('_') !== -1) return;
+      (map[m[1]] = map[m[1]] || []).push(o);
+    });
+    return Object.keys(map).map(k => ({ code: k, cols: map[k] }));
+  }
+  function groupList(){
+    const out = [];
+    const seen = new Set();
+    namedCols().forEach(c => {
+      if (typeOf(c) !== 'mc') return;
+      const code = nameOf(c);
+      if (seen.has(code)) return;
+      seen.add(code);
+      out.push({ code: code, name: ((state.cfg[c.header] || {}).gname || '').trim(), desc: c.header, n: mcOptions(c).options.length });
+    });
+    letterGroups().forEach(g => {
+      if (seen.has(g.code)) return;
+      seen.add(g.code);
+      out.push({ code: g.code, name: (state.lgname[g.code] || '').trim(), desc: '是非題：' + g.cols.map(o => o.name).join('、'), n: g.cols.length, letter: true });
+    });
+    return out;
+  }
+  function nameIssues(){
+    const issues = [];
+    const cols = outputColumns();
+    const seen = {};
+    cols.forEach(o => { (seen[o.name] = seen[o.name] || []).push(o); });
+    Object.keys(seen).forEach(n => { if (seen[n].length > 1) issues.push('欄名「' + n + '」重複 ' + seen[n].length + ' 次（' + seen[n].map(o => o.c ? '欄' + o.c.no : '新增的 id').filter((v, i, a) => a.indexOf(v) === i).join('、') + '）。'); });
+    namedCols().forEach(c => {
+      const t = typeOf(c), n = nameOf(c);
+      if (t !== 'mc' && n.indexOf('_') !== -1) issues.push('欄' + c.no + '「' + n + '」不是複選題，欄名不宜含底線，否則分析工具會誤認為複選題組。');
+      if (t === 'mc' && !/^[A-Za-z][A-Za-z0-9]{0,3}$/.test(n)) issues.push('欄' + c.no + ' 的複選題前綴「' + n + '」建議改為英文字母開頭、至多 4 個字元（如 CH、B1），分析工具才能沿用為題組代碼。');
+      if (t !== 'mc' && wlen(n.replace(/^[A-Za-z]+[0-9]*/, '')) > 6) issues.push('欄' + c.no + '「' + n + '」的簡稱超過 6 個字（代碼與題序不計）。');
+      if (!cleanName((state.cfg[c.header] || {}).name)) issues.push('欄' + c.no + ' 尚未命名，暫用「' + n + '」。');
+    });
+    groupList().forEach(g => {
+      if (!g.name) issues.push('題組「' + g.code + '」尚未命名，分析工具中會顯示為「題組 ' + g.code + '」。');
+      else if (wlen(g.name) > 6) issues.push('題組「' + g.code + '」的名稱「' + g.name + '」超過 6 個字。');
+    });
+    const longOpts = optionPool().filter(o => !state.short[o] && wlen(o) > 6);
+    /* 有序號的單選題：檢查同一題的序號是否連續、不重複 */
+    namedCols().filter(c => typeOf(c) === 'single').forEach(c => {
+      const nums = singleValues(c).map(v => { const m = /^([0-9]+)/.exec(disp(v)); return m ? Number(m[1]) : null; });
+      const withNum = nums.filter(n => n != null);
+      if (withNum.indexOf(1) === -1) return;   /* 沒有編號 1，視為選項本身以數字開頭（如 20-29歲），不檢查 */
+      const sorted = withNum.slice().sort((a, b) => a - b);
+      const ok = withNum.length === nums.length && sorted.every((n, i) => n === i + 1);
+      const noDot = singleValues(c).filter(v => /^[0-9]+[^0-9.]/.test(disp(v)));
+      if (ok && noDot.length) issues.push('欄' + c.no + '「' + nameOf(c) + '」的選項序號後請加半形句點，例如「' + disp(noDot[0]).replace(/^([0-9]+)/, '$1.') + '」。');
+      if (!ok) issues.push('欄' + c.no + '「' + nameOf(c) + '」的選項序號不完整或不連續（目前為 ' + nums.map(n => n == null ? '無' : n).join('、') + '），應為 1 到 ' + nums.length + '。');
+    });
+    if (longOpts.length) issues.push('有 ' + longOpts.length + ' 個選項超過 6 個字且尚未縮減，例如「' + longOpts.slice(0, 3).join('」「') + '」；請在下方選項簡稱表中填寫，或貼回 AI 的結果。');
+    return issues;
+  }
+  function renderNames(){
+    const cols = namedCols();
+    document.getElementById('prompt-text').value = buildPrompt();
+    document.getElementById('name-table').innerHTML = '<div class="table-scroll"><table class="short-tbl"><thead><tr><th>欄號</th><th>原題目</th><th>類型</th><th>新欄名／複選題代碼</th><th>題組名稱</th><th>產生的欄位</th></tr></thead><tbody>' +
+      cols.map(c => {
+        const t = typeOf(c), n = nameOf(c), cf = state.cfg[c.header] || {};
+        let gen = n;
+        if (t === 'mc'){ const opts = mcOptions(c).options; gen = escapeHtml(n + '_' + cleanName(disp(opts[0] || ''))) + (opts.length > 1 ? ' 等 ' + opts.length + ' 欄' : ''); }
+        else gen = escapeHtml(n);
+        return '<tr><td class="num">' + c.no + '</td><td class="sn-full nm-q" title="' + escapeHtml(c.header) + '">' + escapeHtml(c.header) + '</td><td class="nm-type">' + escapeHtml(TYPE_LABEL[t].replace(/（.*）/, '')) + '</td>' +
+          '<td><input type="text" class="sn-input" id="name-' + c.i + '" data-i="' + c.i + '" value="' + escapeHtml(cf.name || '') + '" placeholder="' + escapeHtml(defaultName(c)) + '" aria-label="欄' + c.no + ' 的新欄名"></td>' +
+          '<td>' + (t === 'mc' ? '<input type="text" class="sn-input" id="gname-' + c.i + '" data-i="' + c.i + '" data-role="gname" value="' + escapeHtml(cf.gname || '') + '" placeholder="至多 6 個字" aria-label="欄' + c.no + ' 的題組名稱">' : '') + '</td>' +
+          '<td class="nm-gen">' + gen + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    const lg = letterGroups();
+    document.getElementById('lgroup-table').innerHTML = lg.length ? '<p>是非題題組（欄名同為「字母＋序號＋名稱」的是非題，分析工具會合成一個題組）：</p><div class="table-scroll"><table class="short-tbl"><thead><tr><th>代碼</th><th>包含的欄位</th><th>題組名稱</th></tr></thead><tbody>' +
+      lg.map((g, i) => '<tr><td class="nm-gen">' + escapeHtml(g.code) + '</td><td class="sn-full">' + escapeHtml(g.cols.map(o => o.name).join('、')) + '</td>' +
+        '<td><input type="text" class="sn-input" id="lgname-' + i + '" data-code="' + escapeHtml(g.code) + '" value="' + escapeHtml(state.lgname[g.code] || '') + '" placeholder="至多 6 個字" aria-label="題組 ' + escapeHtml(g.code) + ' 的名稱"></td></tr>').join('') +
+      '</tbody></table></div>' : '';
+    const pool = optionPool();
+    const counts = {};
+    pool.forEach(o => { const d = disp(o); counts[d] = (counts[d] || 0) + 1; });
+    document.getElementById('short-table').innerHTML = pool.length ? '<div class="table-scroll"><table class="short-tbl"><thead><tr><th>原始選項</th><th>簡稱</th><th class="marg">字數</th></tr></thead><tbody>' +
+      pool.map((o, i) => {
+        const v = state.short[o] || '', n = v ? wlen(v) : 0;
+        const flag = !v ? '<span class="sn-note">顯示原文</span>' : (n > 6 ? '<span class="sn-warn">' + n + ' 字</span>' : n + ' 字');
+        return '<tr><td class="sn-full">' + escapeHtml(o) + '</td><td><input type="text" class="sn-input" id="short-' + i + '" data-i="' + i + '" value="' + escapeHtml(v) + '" placeholder="（空白則用原文）" aria-label="' + escapeHtml(o) + ' 的簡稱"></td><td class="num sn-flag">' + flag + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="empty-hint">目前沒有單選題或複選題選項。</p>';
+    document.getElementById('short-table')._pool = pool;
+    const issues = nameIssues();
+    document.getElementById('name-issues').innerHTML = issues.length ? '<div class="notice notice-warn"><ul>' + issues.slice(0, 20).map(t => '<li>' + escapeHtml(t) + '</li>').join('') +
+      (issues.length > 20 ? '<li>⋯⋯等 ' + issues.length + ' 項</li>' : '') + '</ul></div>' : '<div class="notice notice-ok">欄名沒有重複，格式正確。</div>';
+  }
+  document.getElementById('lgroup-table').addEventListener('change', function(e){
+    if (!e.target.classList.contains('sn-input')) return;
+    const v = e.target.value.trim();
+    if (v) state.lgname[e.target.dataset.code] = v; else delete state.lgname[e.target.dataset.code];
+    saveConfig(); renderNames(); renderOutput();
+  });
+  document.getElementById('name-table').addEventListener('change', function(e){
+    if (!e.target.classList.contains('sn-input')) return;
+    const c = state.cols[Number(e.target.dataset.i)];
+    if (e.target.dataset.role === 'gname'){ conf(c.header).gname = e.target.value.trim(); saveConfig(); renderNames(); renderOutput(); return; }
+    conf(c.header).name = cleanName(e.target.value);
+    saveConfig(); renderNames(); renderOutput();
+  });
+  document.getElementById('short-table').addEventListener('change', function(e){
+    if (!e.target.classList.contains('sn-input')) return;
+    const o = (this._pool || [])[Number(e.target.dataset.i)];
+    if (o == null) return;
+    const v = e.target.value.trim();
+    if (v) state.short[o] = v; else delete state.short[o];
+    saveConfig(); renderNames(); renderOutput();
+  });
+
+  /* ---------- AI prompt ---------- */
+  function colLine(c){
+    const t = typeOf(c);
+    const kind = { single: '單選題', yn: '是非題，編碼為 1／0', num: '數值', mc: '複選題', bin: '0／1', text: '文字' }[t] || t;
+    let line = '欄' + c.no + '（' + kind + (t === 'num' ? '，' + c.min + '–' + c.max : '') + '）：' + c.header.replace(/\s+/g, ' ').trim();
+    if (t === 'single') line += '【選項：' + singleValues(c).join('／') + '】';
+    if (t === 'mc') line += '【選項：' + mcOptions(c).options.join('／') + '】';
+    return line;
+  }
+  function buildPrompt(){
+    const cols = namedCols();
+    const pool = optionPool();
+    return '以下是一份問卷資料的欄位，依原始順序排列。請協助為每一欄取新欄名，並為選項取簡稱，分成兩部分輸出。\n\n' +
+      '【第一部分：欄名】每一欄輸出一行「欄號｜新欄名」，規則如下：\n' +
+      '1. 新欄名只能使用英文字母、數字與中文，不可有空白、底線或標點；所有欄名不可重複。以下所稱「簡稱」為中文，至多 6 個字，英文代碼與題序不計入字數。\n' +
+      '2. 連續且屬於同一量表或構面的數值題，組成一個量表題組，共用一個英文大寫字母代碼，欄名為「代碼＋題序＋題項簡稱」，例如 M1口渴解渴、M2提振精神；不同題組使用不同字母。\n' +
+      '3. 與特定品牌有關的題目，依品牌在問卷中出現的順序，以 B1、B2⋯⋯作為代碼。詢問是否曾使用、購買或喝過該品牌的是非題，欄名為「代碼＋品牌名稱」，例如 B1原萃、B2純喫茶；該品牌的其他單題，欄名為「代碼＋簡稱」，例如 B1滿意度、B1再購率。\n' +
+      '4. 其他單選題、數值題、文字題：只用簡稱，不加代碼，例如 飲用頻率、性別。\n' +
+      '5. 類型為「複選題」的欄只輸出代碼，不含選項：由英文字母開頭、至多 4 個字元的英數字組成，並取自題意的英文縮寫，讓人看得出是哪一題（例如購買通路用 CH、購買時機用 T、社群網站用 SN、休閒活動用 L）；與品牌有關的複選題直接使用該品牌的 B 碼，例如 B1，產生的欄名為 B1_低熱量。複選題代碼不可彼此重複，也不可與其他欄名相同。工具會自動把選項接在代碼後面，形成「代碼_選項簡稱」，例如 CH_超商。複選題請輸出「欄號｜代碼｜題組名稱」，題組名稱為至多 6 個字的中文簡稱，例如「欄4｜CH｜購買通路」。\n' +
+      '6. 欄名同為「字母＋序號＋名稱」的是非題（例如 B1原萃、B2純喫茶），分析時會合成一個以該字母為代碼的題組，請另外輸出一行「題組字母｜題組名稱」，例如「題組B｜曾喝過品牌」，題組名稱至多 6 個字。\n\n' +
+      cols.map(colLine).join('\n') + '\n\n' +
+      '【第二部分：選項簡稱】將下列選項縮寫成至多 6 個字的簡稱（英文字母算半字）：保留原意，讓人一看就知道是哪個選項；同一題的選項簡稱不可重複；原本已在 6 個字以內的選項照抄原文。選項有大小順序的單選題（例如飲用頻率、年齡、所得、教育程度、滿意程度），在簡稱前加上序號，頻率類依「由多到少」編號，其他依「由低到高」編號，序號後一律加一個半形句點，例如 1.每天都喝、2.每週2至3次、3.每週1次、1.未滿20歲、2.20至29歲；序號不計入字數，同一題的序號必須連續且不重複。簡稱中的數字一律使用阿拉伯數字，不可使用一、二、兩、三等中文數字，也不可混用。每個選項輸出一行「原始選項｜簡稱」，原始選項必須與下列文字完全相同。\n' +
+      pool.join('\n') + '\n\n' +
+      '【輸出規則】欄位之間用全形直線「｜」分隔；直接逐行輸出上述兩部分，不要加標題、編號、說明或其他文字。';
+  }
+  function copyTextSync(text){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.width = '1px'; ta.style.height = '1px'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    let ok = false;
+    try{ ta.focus(); ta.select(); ta.setSelectionRange(0, text.length); ok = document.execCommand('copy'); }catch(err){ ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  document.getElementById('btn-copy-prompt').addEventListener('click', function(){
+    const text = buildPrompt();
+    const ta = document.getElementById('prompt-text');
+    ta.value = text;
+    const okMsg = function(){ toast('已複製 AI 指令：' + namedCols().length + ' 欄、' + optionPool().length + ' 個選項', 'success'); };
+    const fallback = function(){ ta.closest('details').open = true; ta.focus(); ta.select(); toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製'); };
+    if (copyTextSync(text)){ okMsg(); return; }
+    try{ if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(okMsg, fallback); else fallback(); }catch(err){ fallback(); }
+  });
+  document.getElementById('btn-apply-ai').addEventListener('click', function(){
+    const raw = document.getElementById('ai-paste').value;
+    const byNo = {}; state.cols.forEach(c => { byNo[c.no] = c; });
+    const pool = optionPool();
+    const exact = new Map(pool.map(o => [o, o]));
+    const loose = new Map(pool.map(o => [normKey(o), o]));
+    const ynVals = new Set();
+    state.cols.forEach(c => { if (typeOf(c) === 'yn') c.counts.forEach((n, v) => { ynVals.add(v); ynVals.add(normKey(v)); }); });
+    let nCols = 0, nOpts = 0, nYn = 0, nGroups = 0;
+    const badCols = [], notFound = [], noSep = [];
+    raw.split(/\r?\n/).forEach(line => {
+      let t = line.trim();
+      if (!t || /^【.*】$/.test(t)) return;
+      t = t.replace(/^[-*•・]\s+/, '');
+      const gm = /^題組\s*([A-Za-z]+)\s*[｜|]\s*(.+)$/.exec(t);
+      if (gm){ state.lgname[gm[1]] = gm[2].trim(); nGroups++; return; }
+      const cm = /^欄\s*(\d+)\s*[｜|]\s*(.+)$/.exec(t);
+      if (cm){
+        const c = byNo[Number(cm[1])];
+        if (!c || REMOVED[typeOf(c)] || typeOf(c) === 'id'){ badCols.push(t); return; }
+        const parts = cm[2].split(/[｜|]/).map(x => x.trim());
+        conf(c.header).name = cleanName(parts[0]);
+        if (typeOf(c) === 'mc' && parts[1]){ conf(c.header).gname = parts[1]; nGroups++; }
+        nCols++;
+        return;
+      }
+      let idx = t.lastIndexOf('｜');
+      if (idx < 0) idx = t.lastIndexOf('|');
+      if (idx < 0) idx = t.lastIndexOf('\t');
+      if (idx < 0){ noSep.push(t); return; }
+      const orig = t.slice(0, idx).trim().replace(/^[「『"]|[」』"]$/g, '');
+      const sh = t.slice(idx + 1).trim().replace(/^[「『"]|[」』"]$/g, '');
+      if (!orig || !sh){ noSep.push(t); return; }
+      const o = exact.get(orig) || loose.get(normKey(orig));
+      if (!o){ if (ynVals.has(orig) || ynVals.has(normKey(orig))) nYn++; else notFound.push(orig); return; }
+      state.short[o] = sh;
+      nOpts++;
+    });
+    if (!nCols && !nOpts && !nGroups && !badCols.length && !notFound.length && !noSep.length){ toast('請先貼上 AI 的回覆'); return; }
+    saveConfig(); renderNames(); renderOutput();
+    const long = pool.filter(o => state.short[o] && wlen(state.short[o]) > 6);
+    const warn = badCols.length || notFound.length || noSep.length || long.length;
+    let html = '<div class="notice ' + (warn ? 'notice-warn' : 'notice-ok') + '"><ul><li>已套用 ' + nCols + ' 個欄名、' + nGroups + ' 個題組名稱、' + nOpts + ' 個選項簡稱。</li>';
+    if (nYn) html += '<li>略過 ' + nYn + ' 行是非題的選項：是非題直接編為 1／0，不需要簡稱。</li>';
+    if (badCols.length) html += '<li>下列欄號不存在或該欄不需命名，未套用：' + badCols.slice(0, 8).map(x => '「' + escapeHtml(x) + '」').join('、') + '</li>';
+    if (notFound.length) html += '<li>下列原始選項對不上目前的選項（AI 可能改了原文），未套用：' + notFound.slice(0, 12).map(x => '「' + escapeHtml(x) + '」').join('、') + (notFound.length > 12 ? '⋯⋯等 ' + notFound.length + ' 項' : '') + '</li>';
+    if (noSep.length) html += '<li>下列幾行找不到分隔符號「｜」，未套用：' + noSep.slice(0, 8).map(x => '「' + escapeHtml(x) + '」').join('、') + '</li>';
+    if (long.length) html += '<li>下列簡稱超過 6 個字：' + long.slice(0, 12).map(o => '「' + escapeHtml(state.short[o]) + '」').join('、') + '</li>';
+    document.getElementById('ai-report').innerHTML = html + '</ul></div>';
+    toast('已套用 ' + nCols + ' 個欄名、' + nOpts + ' 個簡稱', (nCols || nOpts) ? 'success' : 'error');
+  });
+
+  /* ---------- output ---------- */
+  function buildOutput(){
+    const s = screening();
+    const cols = outputColumns();
+    const mcCache = {};
+    cols.forEach(o => { if (o.kind === 'mc' && !mcCache[o.c.i]) mcCache[o.c.i] = matchMc(o.c); });
+    const rows = s.keep.map((r, k) => cols.map(o => {
+      if (o.kind === 'id') return k + 1;
+      const t = cellOf(r, o.c.header);
+      if (o.kind === 'mc') return mcCache[o.c.i].vecs[o.option][r];
+      if (o.kind === 'num' || o.kind === 'bin') return numOut(t);
+      if (o.kind === 'yn'){ const code = t ? ynCode(t) : null; return code == null ? '' : code; }
+      if (o.kind === 'single') return t ? disp(t) : '';
+      return t;
+    }));
+    return { s: s, cols: cols, rows: rows };
+  }
+  function renderOutput(){
+    if (!state.csv) return;
+    const out = buildOutput();
+    const s = out.s;
+    document.getElementById('output-summary').innerHTML = '<div class="stat-row">' +
+      '<div class="stat"><span class="stat-k">原始回覆</span><span class="stat-v">' + s.N + '</span></div>' +
+      '<div class="stat"><span class="stat-k">篩選刪除</span><span class="stat-v">' + s.removed + '</span></div>' +
+      '<div class="stat"><span class="stat-k">有效樣本</span><span class="stat-v">' + s.keep.length + '</span></div>' +
+      '<div class="stat"><span class="stat-k">有效回收率</span><span class="stat-v">' + (s.N ? pct1(s.keep.length / s.N) : '—') + '</span></div>' +
+      '<div class="stat"><span class="stat-k">整理後欄數</span><span class="stat-v">' + out.cols.length + '</span></div></div>' +
+      (s.rules.length ? '<p class="hint small">篩選條件：' + s.rules.map((r, k) => '欄' + r.c.no + '「' + escapeHtml(r.c.header) + '」排除「' + Array.from(r.ex).map(escapeHtml).join('」「') + '」，刪除 ' + s.dropBy[k] + ' 筆').join('；') + '。</p>' : '<p class="hint small">未設定篩選題。</p>');
+    const issues = nameIssues().filter(t => /重複|底線/.test(t));
+    document.getElementById('output-issues').innerHTML = issues.length ? '<div class="notice notice-warn">下載前請先修正步驟 3 的欄名問題：' + issues.slice(0, 5).map(escapeHtml).join(' ') + '</div>' : '';
+    const thead = '<thead><tr>' + out.cols.map(o => '<th title="' + escapeHtml(o.c ? o.c.header + (o.option ? '｜' + o.option : '') : '') + '">' + escapeHtml(o.name) + '</th>').join('') + '</tr></thead>';
+    const tbody = '<tbody>' + out.rows.slice(0, 8).map(r => '<tr>' + r.map(v => '<td' + (typeof v === 'number' ? ' class="num"' : '') + '>' + escapeHtml(v) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    document.getElementById('output-preview').innerHTML = thead + tbody;
+  }
+  function codebookAoa(out){
+    const s = out.s;
+    const aoa = [
+      ['資料整理摘要'],
+      ['原始檔案', state.csvFileName || ''],
+      ['原始回覆筆數', s.N],
+      ['篩選刪除筆數', s.removed, s.rules.map((r, k) => '欄' + r.c.no + '排除「' + Array.from(r.ex).join('」「') + '」：' + s.dropBy[k] + ' 筆').join('；')],
+      ['有效樣本數', s.keep.length],
+      ['有效回收率', s.N ? Number((s.keep.length / s.N).toFixed(4)) : ''],
+      [],
+      ['新欄名', '類型', '原欄號', '原題目', '原始選項', '簡稱', '編碼說明', '有效樣本中人數']
+    ];
+    const keep = s.keep;
+    const outByCol = {};
+    out.cols.forEach((o, k) => { if (o.c){ (outByCol[o.c.i] = outByCol[o.c.i] || []).push({ o: o, k: k }); } });
+    if (!out.cols[0].c) aoa.push(['id', 'id', '', '（新增）', '', '', '有效樣本序號 1、2、3⋯⋯', keep.length]);
+    state.cols.forEach(c => {
+      const t = typeOf(c);
+      if (REMOVED[t]){
+        aoa.push(['（已移除）', TYPE_LABEL[t], c.no, c.header, '', '', t === 'screen' ? '篩選題：刪除指定答案的受訪者後移除此欄' : t === 'personal' ? '個人資料，未輸出' : '未輸出', '']);
+        return;
+      }
+      (outByCol[c.i] || []).forEach(({ o, k }) => {
+        if (o.kind === 'id'){ aoa.push(['id', 'id', c.no, c.header, '', '', '有效樣本序號 1、2、3⋯⋯（取代原欄位內容）', keep.length]); return; }
+        if (o.kind === 'mc'){
+          const n = out.rows.reduce((a, r) => a + (r[k] === 1 ? 1 : 0), 0);
+          aoa.push([o.name, '複選題選項', c.no, c.header, o.option, state.short[o.option] || '', '1＝勾選，0＝未勾選', n]);
+          return;
+        }
+        if (o.kind === 'single'){
+          aoa.push([o.name, '單選題', c.no, c.header, '', '', '文字（選項已縮減）', out.rows.filter(r => r[k] !== '').length]);
+          const cnt = {};
+          keep.forEach(r => { const v = cellOf(r, c.header); if (v) cnt[v] = (cnt[v] || 0) + 1; });
+          Object.keys(cnt).forEach(v => aoa.push(['', '', '', '', v, disp(v), '', cnt[v]]));
+          return;
+        }
+        if (o.kind === 'yn'){
+          aoa.push([o.name, '是非題', c.no, c.header, '', '', '1＝是，0＝否', out.rows.filter(r => r[k] !== '').length]);
+          const cnt = {};
+          keep.forEach(r => { const v = cellOf(r, c.header); if (v) cnt[v] = (cnt[v] || 0) + 1; });
+          Object.keys(cnt).forEach(v => { const code = ynCode(v); aoa.push(['', '', '', '', v, code == null ? '' : String(code), code == null ? '無法判斷，輸出為空白' : '', cnt[v]]); });
+          return;
+        }
+        const label = { num: '數值／量表', bin: '0／1 欄', text: '文字' }[o.kind] || o.kind;
+        const note = o.kind === 'num' ? '原數值（' + c.min + '–' + c.max + '）' : o.kind === 'bin' ? '原 0／1 值' : '原文';
+        aoa.push([o.name, label, c.no, c.header, '', '', note, out.rows.filter(r => r[k] !== '').length]);
+      });
+    });
+    return aoa;
+  }
+  document.getElementById('btn-download-xlsx').addEventListener('click', function(){
+    if (!state.csv) return;
+    const issues = nameIssues().filter(t => /重複/.test(t));
+    if (issues.length){ toast('欄名有重複，請先在步驟 3 修正', 'error'); return; }
+    const out = buildOutput();
+    const base = (state.csvFileName || '問卷資料').replace(/\.(xlsx|csv)$/i, '');
+    if (typeof XLSX === 'undefined'){
+      saveFile(base + '_整理後_' + dateStamp() + '.csv', toCSVString(out.cols.map(o => o.name), out.rows));
+      toast('Excel 功能載入失敗，已改為下載 CSV（不含欄名對照表）', 'error');
+      return;
+    }
+    try{
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.aoa_to_sheet([out.cols.map(o => o.name)].concat(out.rows));
+      ws1['!cols'] = out.cols.map(o => ({ wch: Math.max(6, Math.min(24, charLen(o.name) * 2 + 2)) }));
+      XLSX.utils.book_append_sheet(wb, ws1, '資料');
+      const ws2 = XLSX.utils.aoa_to_sheet(codebookAoa(out));
+      ws2['!cols'] = [{ wch: 16 }, { wch: 12 }, { wch: 7 }, { wch: 50 }, { wch: 36 }, { wch: 12 }, { wch: 30 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, ws2, '欄名對照表');
+      const ws3 = XLSX.utils.aoa_to_sheet([['代碼', '題組名稱', '題目或說明', '欄數']].concat(groupList().map(g => [g.code, g.name, g.desc, g.n])));
+      ws3['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 60 }, { wch: 6 }];
+      XLSX.utils.book_append_sheet(wb, ws3, '題組');
+      const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      saveFile(base + '_整理後_' + dateStamp() + '.xlsx', new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    }catch(err){
+      console.error(err);
+      toast('產生 Excel 檔時發生錯誤', 'error');
+    }
+  });
+
+  /* ---------- settings ---------- */
+  document.getElementById('btn-export-config').addEventListener('click', function(){
+    saveFile('問卷整理設定_' + dateStamp() + '.json', JSON.stringify({ tool: 'survey-organizer', version: 1, cfg: state.cfg, short: state.short, lgname: state.lgname }, null, 2), { bom: false });
+  });
+  document.getElementById('input-import-config').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const p = JSON.parse(String(reader.result));
+        if (!p || p.tool !== 'survey-organizer') throw new Error('格式錯誤');
+        state.cfg = p.cfg || {}; state.short = p.short || {}; state.lgname = p.lgname || {};
+        saveConfig();
+        if (state.csv) onDataLoaded();
+        toast('已匯入設定', 'success');
+      }catch(err){ toast('匯入失敗，請確認為本工具匯出的 JSON 設定檔', 'error'); }
+    };
+    reader.readAsText(file, 'utf-8');
+    e.target.value = '';
+  });
+  let clearArmed = false;
+  const btnClear = document.getElementById('btn-clear-config');
+  btnClear.addEventListener('click', function(){
+    if (!clearArmed){
+      clearArmed = true; btnClear.textContent = '再按一次以確認重設';
+      setTimeout(function(){ clearArmed = false; btnClear.textContent = '重設全部設定'; }, 3000);
+      return;
+    }
+    clearArmed = false; btnClear.textContent = '重設全部設定';
+    state.cfg = {}; state.short = {}; state.lgname = {};
+    saveConfig();
+    if (state.csv) onDataLoaded();
+    toast('已重設，欄位類型改回自動判斷');
+  });
+
+  /* ---------- flow ---------- */
+  function refreshDownstream(){ renderNames(); renderOutput(); }
+  function updateVisibility(){
+    const has = !!state.csv;
+    ['section-types', 'section-names', 'section-output'].forEach(id => { document.getElementById(id).hidden = !has; });
+  }
+  function onDataLoaded(){
+    analyzeColumns();
+    ensureTypes();
+    saveConfig();
+    updateVisibility();
+    renderTypes();
+    refreshDownstream();
+  }
+  function onDataCleared(){
+    state.cols = [];
+    updateVisibility();
+    ['type-list', 'screen-summary', 'name-table', 'short-table', 'name-issues', 'output-summary', 'output-issues', 'output-preview', 'ai-report'].forEach(id => { document.getElementById(id).innerHTML = ''; });
+  }
+
+  updateVisibility();
+})();
+</script>
+</body>
+</html>

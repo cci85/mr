@@ -1,0 +1,2464 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>複選題卡方檢定器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#f5f3ee;
+    --surface:#ffffff;
+    --surface-2:#faf8f3;
+    --border:#ddd7c9;
+    --border-strong:#c7bea9;
+    --ink:#232019;
+    --ink-soft:#655e4d;
+    --ink-faint:#8f886f;
+    --accent:#28594f;
+    --accent-strong:#1b4139;
+    --accent-soft:#e1ece7;
+    --accent-contrast:#ffffff;
+    --warn:#95591b;
+    --warn-soft:#f6ecda;
+    --danger:#9c3b3b;
+    --danger-soft:#f7e6e4;
+    --good:#3c6e3f;
+    --good-soft:#e7f0e2;
+    --shadow: 0 1px 2px rgba(35,32,25,.06), 0 6px 20px -8px rgba(35,32,25,.12);
+    --font-display:'Noto Serif TC','Songti TC',serif;
+    --font-body:'Noto Sans TC',system-ui,-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;
+    --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141612;
+      --surface:#1c1f1a;
+      --surface-2:#20241e;
+      --border:#373d33;
+      --border-strong:#4a5140;
+      --ink:#eae7dc;
+      --ink-soft:#b7b3a1;
+      --ink-faint:#847e69;
+      --accent:#79bda7;
+      --accent-strong:#9bd2bf;
+      --accent-soft:#213b34;
+      --accent-contrast:#0c1210;
+      --warn:#dba064;
+      --warn-soft:#3b2c19;
+      --danger:#e08e8e;
+      --danger-soft:#3c2320;
+      --good:#94c286;
+      --good-soft:#25361f;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141612;
+    --surface:#1c1f1a;
+    --surface-2:#20241e;
+    --border:#373d33;
+    --border-strong:#4a5140;
+    --ink:#eae7dc;
+    --ink-soft:#b7b3a1;
+    --ink-faint:#847e69;
+    --accent:#79bda7;
+    --accent-strong:#9bd2bf;
+    --accent-soft:#213b34;
+    --accent-contrast:#0c1210;
+    --warn:#dba064;
+    --warn-soft:#3b2c19;
+    --danger:#e08e8e;
+    --danger-soft:#3c2320;
+    --good:#94c286;
+    --good-soft:#25361f;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+  }
+
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.6;
+  }
+  .page{
+    max-width:880px;
+    margin:0 auto;
+    padding:40px 20px 80px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+  .hero{ padding-block:8px 4px; }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--font-display);
+    font-size:clamp(26px,4vw,34px);
+    font-weight:700;
+    margin:0 0 12px;
+    color:var(--ink);
+    text-wrap:balance;
+  }
+  .lede{
+    color:var(--ink-soft);
+    font-size:15px;
+    max-width:64ch;
+    margin:0;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:22px 22px 24px;
+  }
+  .card-head{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .step-badge{
+    flex:0 0 auto;
+    width:28px;height:28px;
+    border-radius:50%;
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+    font-family:var(--font-mono);
+    font-weight:600;
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:2px;
+  }
+  .card-head h2{
+    font-family:var(--font-display);
+    font-size:18px;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .card-head .hint, .hint{
+    color:var(--ink-soft);
+    font-size:13.5px;
+    margin:0;
+  }
+  .hint.small{ font-size:12.5px; margin:4px 0 12px; }
+  .empty-hint{ color:var(--ink-faint); font-size:13.5px; padding:10px 0; }
+  .empty-hint.small{ padding:2px 0; }
+
+  /* question cards */
+  #questions-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
+  .q-card{
+    background:var(--surface-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 14px 12px;
+  }
+  .q-card-head{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .q-name-input{
+    flex:1;
+    font-family:var(--font-body);
+    font-size:15px;
+    font-weight:500;
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .q-name-input:focus, select:focus, .opt-input:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:10px;
+    min-height:26px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--accent-soft);
+    color:var(--accent-strong);
+    border-radius:999px;
+    padding:4px 6px 4px 12px;
+    font-size:13px;
+  }
+  .chip-x{
+    background:none;border:none;cursor:pointer;
+    color:var(--accent-strong);
+    font-size:14px;
+    line-height:1;
+    padding:2px 4px;
+    border-radius:50%;
+  }
+  .chip-x:hover{ background:rgba(0,0,0,.08); }
+  .opt-add-row{ display:flex; gap:8px; }
+  .opt-input{
+    flex:1;
+    padding:7px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+    font-size:13.5px;
+  }
+
+  .row-actions{ display:flex; gap:16px; flex-wrap:wrap; margin-top:10px; }
+
+  /* buttons */
+  .btn{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    font-weight:500;
+    border-radius:8px;
+    padding:9px 16px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:filter .15s, background .15s;
+  }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-primary{ background:var(--accent); color:var(--accent-contrast); }
+  .btn-primary:hover:not(:disabled){ filter:brightness(1.08); }
+  .btn-secondary{ background:var(--surface); color:var(--accent-strong); border-color:var(--accent); }
+  .btn-secondary:hover:not(:disabled){ background:var(--accent-soft); }
+  .btn-ghost{ background:var(--surface-2); color:var(--ink); border-color:var(--border-strong); }
+  .btn-ghost:hover{ background:var(--accent-soft); }
+  .btn-ghost.small{ padding:7px 12px; font-size:13px; }
+  .btn-text{ background:none; border:none; color:var(--ink-soft); padding:6px 4px; text-decoration:underline; text-underline-offset:3px; }
+  .btn-text:hover{ color:var(--accent-strong); }
+  .btn-text.danger{ color:var(--danger); }
+  .btn-icon{
+    width:26px;height:26px;flex:0 0 auto;
+    border:none; background:var(--danger-soft); color:var(--danger);
+    border-radius:50%; font-size:15px; line-height:1; padding:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .btn-icon:hover{ filter:brightness(1.05); }
+  .file-btn{ display:inline-flex; align-items:center; cursor:pointer; }
+
+  /* dropzone */
+  .dropzone{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    border:1.5px dashed var(--border-strong);
+    border-radius:10px;
+    padding:26px 16px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    font-size:14px;
+    background:var(--surface-2);
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone.drag{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong); }
+
+  .encoding-row{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    margin-bottom:12px;
+    font-size:13px; color:var(--ink-soft);
+  }
+  .encoding-row select{ flex:0 0 auto; }
+
+  .summary{ font-size:13.5px; color:var(--ink-soft); margin:14px 0 6px; }
+  .summary strong{ color:var(--ink); font-family:var(--font-mono); }
+
+  .notice{
+    border-radius:9px;
+    padding:10px 14px;
+    font-size:13px;
+    margin:10px 0;
+  }
+  .notice ul{ margin:6px 0 0; padding-left:18px; }
+  .notice-warn{ background:var(--warn-soft); color:var(--warn); }
+  .notice-warn strong{ color:var(--warn); }
+
+  /* tables */
+  .table-scroll{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:10px 0; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  table th, table td{
+    padding:7px 12px;
+    border-bottom:1px solid var(--border);
+    text-align:left;
+    white-space:nowrap;
+  }
+  table thead th{
+    background:var(--surface-2);
+    font-weight:600;
+    color:var(--ink-soft);
+    position:sticky; top:0;
+  }
+  table td.num, table th.marg{ font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; }
+  .ct-table th.rowlabel{ background:var(--surface-2); font-weight:500; color:var(--ink); }
+  .ct-table td.marg, .ct-table th.marg{ background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .ct-table tr.foot-row th, .ct-table tr.foot-row td{ background:var(--surface-2); font-weight:600; }
+  .ct-table td.strong{ font-weight:700; }
+
+  /* mapping */
+  .mapping-row{
+    display:flex; align-items:center; gap:12px;
+    padding:8px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .mapping-row:last-child{ border-bottom:none; }
+  .mapping-qname{ flex:0 0 auto; min-width:160px; font-weight:500; font-size:13.5px; }
+  .mapping-row select{ flex:1; }
+
+  select{
+    padding:8px 10px;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    background:var(--surface);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:13.5px;
+  }
+
+  .crosstab-controls{
+    display:flex; flex-wrap:wrap; align-items:end; gap:14px; margin-bottom:16px;
+  }
+  .crosstab-controls label{
+    display:flex; flex-direction:column; gap:4px;
+    font-size:12.5px; color:var(--ink-soft);
+  }
+  .crosstab-controls select{ min-width:180px; }
+
+  #crosstab-results{ display:flex; flex-direction:column; gap:16px; }
+  .ct-card{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 14px 16px;
+    background:var(--surface-2);
+  }
+  .ct-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
+  .ct-head h3{ font-family:var(--font-display); font-size:15.5px; margin:0; color:var(--ink); }
+
+  .foot{ margin-top:6px; }
+  .foot p{ color:var(--ink-faint); font-size:12px; text-align:center; margin:0; }
+
+  .toast{
+    position:fixed;
+    left:50%; bottom:24px;
+    transform:translate(-50%,12px);
+    background:var(--ink);
+    color:var(--bg);
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s, transform .18s;
+    box-shadow:var(--shadow);
+    z-index:50;
+    max-width:90vw;
+    text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+  .toast.toast-error{ background:var(--danger); color:#fff; }
+  .toast.toast-success{ background:var(--good); color:#fff; }
+
+  /* batch chi-square */
+  .chisq-controls{ display:flex; flex-wrap:wrap; align-items:end; gap:14px; margin-bottom:16px; }
+  .chisq-controls label{ display:flex; flex-direction:column; gap:4px; font-size:12.5px; color:var(--ink-soft); }
+  .chisq-controls select{ min-width:150px; }
+  .sub-h{ font-family:var(--font-display); font-size:15.5px; margin:24px 0 4px; color:var(--ink); }
+  .sum-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; margin:10px 0; }
+  .sum-item{ border:1px solid var(--border); border-radius:10px; padding:10px 12px; background:var(--surface-2); font-size:13px; }
+  .sum-item h4{ margin:0 0 6px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sum-item .n{ font-family:var(--font-mono); color:var(--ink-faint); font-weight:400; font-size:12px; margin-left:8px; }
+  .sum-line{ margin:4px 0; line-height:1.6; }
+  .sum-none{ color:var(--ink-faint); font-size:12.5px; }
+  .pill{ display:inline-block; border-radius:999px; padding:1px 10px; margin:2px 4px 2px 0; font-size:12.5px; }
+  .pill-up{ background:var(--good-soft); color:var(--good); }
+  .pill-down{ background:var(--danger-soft); color:var(--danger); }
+  .pill-exp{ background:var(--warn-soft); color:var(--warn); }
+  .hm-table thead th{ white-space:normal; min-width:84px; text-align:center; font-size:12px; vertical-align:bottom; }
+  .hm-table th.rowlabel{ white-space:normal; min-width:130px; }
+  .hm-cell{ text-align:center; line-height:1.25; padding:6px 8px; }
+  .hm-lift{ display:block; font-family:var(--font-mono); font-weight:600; font-size:13px; }
+  .hm-pct{ display:block; font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); }
+  .hm-star{ font-size:12px; font-weight:700; margin-left:2px; }
+  .notice-warn li{ margin:2px 0; }
+
+  .notice-info{ background:var(--accent-soft); color:var(--accent-strong); }
+  .notice-info p{ margin:0 0 8px; }
+  .detect-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .detect-row .opt-input{ min-width:0; flex:1 1 220px; }
+  .sample-row{ margin-top:8px; }
+
+  /* group analysis */
+  #pca-results{ display:flex; flex-direction:column; gap:22px; }
+  .pca-card{ border:1px solid var(--border); border-radius:12px; padding:18px 18px 20px; background:var(--surface-2); min-width:0; }
+  .pca-head h3{ font-family:var(--font-display); font-size:18px; margin:0 0 6px; color:var(--ink); text-wrap:balance; }
+  .pca-meta{ display:flex; flex-wrap:wrap; gap:6px 14px; margin:0 0 4px; font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .pca-meta .pca-key{ color:var(--accent-strong); font-weight:600; }
+  .pca-sub{ display:flex; align-items:center; gap:8px; font-size:14.5px; font-weight:700; color:var(--ink); margin:20px 0 6px; }
+  .pca-no{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; background:var(--accent-soft); color:var(--accent-strong); font-family:var(--font-display); font-size:12.5px; }
+  .pca-table{ background:var(--surface); font-variant-numeric:tabular-nums; }
+  .pca-table thead th.marg{ text-align:right; background:var(--surface-2); color:var(--ink-soft); }
+  .pca-table th.rowlabel{ background:var(--surface); font-weight:500; color:var(--ink); }
+  .pca-table td.strong{ font-weight:700; color:var(--accent-strong); }
+  .pca-table td.diag{ color:var(--ink-faint); text-align:center; }
+  .pca-table tr.kept th, .pca-table tr.kept td{ background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .corr-table td.corr.pos{ background:color-mix(in srgb, var(--accent) calc(var(--a) * 28%), transparent); }
+  .corr-table td.corr.neg{ background:color-mix(in srgb, var(--danger) calc(var(--a) * 24%), transparent); }
+  .corr-table thead th{ white-space:normal; min-width:64px; vertical-align:bottom; }
+  .bar-col{ width:40%; min-width:120px; }
+  .rate-bar{ display:block; height:8px; border-radius:4px; background:var(--border); overflow:hidden; }
+  .rate-bar > span{ display:block; height:100%; background:var(--accent); border-radius:4px; }
+  .map-wrap{ margin:8px 0 0; padding:10px; border:1px solid var(--border); border-radius:10px; background:var(--surface); overflow-x:auto; }
+  .map-wrap svg{ display:block; width:100%; max-width:720px; height:auto; margin:0 auto; }
+  .map-label{ cursor:grab; touch-action:none; }
+  .map-label.dragging{ cursor:grabbing; }
+  .map-label:hover text{ text-decoration:underline; }
+  .pca-actions{ margin-top:16px; gap:10px; }
+
+  /* steps 2-4 */
+  .notice-tip{ background:var(--surface-2); color:var(--ink-soft); border:1px dashed var(--border-strong); }
+  #mc-list{ display:flex; flex-direction:column; gap:8px; }
+  .mc-item{ border:1px solid var(--border); border-radius:10px; padding:10px 14px; background:var(--surface-2); min-width:0; }
+  .mc-item.on{ border-color:var(--accent); background:var(--surface); }
+  .mc-check{ display:flex; align-items:flex-start; gap:10px; cursor:pointer; }
+  .mc-check input{ margin-top:5px; accent-color:var(--accent); flex:0 0 auto; }
+  .mc-name{ font-weight:500; font-size:14px; color:var(--ink); overflow-wrap:anywhere; }
+  .mc-meta{ display:flex; flex-wrap:wrap; gap:6px 12px; margin:4px 0 0 26px; font-size:12px; color:var(--ink-faint); }
+  .badge{ border-radius:999px; padding:0 8px; background:var(--warn-soft); color:var(--warn); }
+  .mc-opts{ margin:10px 0 2px 26px; display:flex; flex-direction:column; gap:6px; }
+  .mc-opts label{ font-size:13px; font-weight:600; color:var(--ink); }
+  .mc-opts textarea{ width:100%; min-height:120px; resize:vertical; padding:8px 10px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13.5px; line-height:1.6; }
+  .mc-opts textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .mc-opts-foot{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; justify-content:space-between; }
+  .mc-status{ font-size:12.5px; color:var(--ink-soft); }
+  #mc-report{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .report-item{ border:1px solid var(--border); border-radius:10px; padding:10px 14px; background:var(--surface-2); }
+  .report-item h4{ margin:0 0 4px; font-size:13.5px; color:var(--ink); overflow-wrap:anywhere; }
+  .report-item ul{ margin:0; padding-left:18px; font-size:13px; color:var(--ink-soft); }
+  .report-item li{ margin:2px 0; }
+  .report-item li.warn{ color:var(--warn); }
+  .builder{ display:flex; flex-direction:column; gap:12px; border:1px solid var(--border); border-radius:10px; padding:14px; background:var(--surface-2); }
+  .builder-name{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+  .builder-name label{ font-size:13.5px; font-weight:600; color:var(--ink); }
+  .builder-name .opt-input{ flex:1 1 240px; min-width:0; }
+  .builder-actions{ display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-wrap:wrap; }
+  .pick-count{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); }
+  #pool-picker{ display:flex; flex-direction:column; gap:10px; }
+  .pick-src{ border:1px solid var(--border); border-radius:10px; padding:8px 12px 12px; margin:0; background:var(--surface); min-width:0; }
+  .pick-src legend{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding:0 6px; font-size:13px; max-width:100%; }
+  .src-kind{ font-size:11.5px; color:var(--ink-faint); letter-spacing:.04em; }
+  .src-name{ font-weight:600; color:var(--ink); overflow-wrap:anywhere; }
+  .btn.small-text{ font-size:12.5px; padding:2px 4px; }
+  .pick-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap:4px 12px; margin-top:6px; }
+  .pick{ display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:6px; cursor:pointer; font-size:13.5px; min-width:0; }
+  .pick:hover{ background:var(--accent-soft); }
+  .pick input{ accent-color:var(--accent); flex:0 0 auto; }
+  .pick-label{ flex:1; min-width:0; overflow-wrap:anywhere; color:var(--ink); }
+  .pick-rate{ font-family:var(--font-mono); font-size:11.5px; color:var(--ink-faint); }
+  .pick.zero .pick-label{ color:var(--ink-faint); }
+  .list-h{ font-family:var(--font-display); font-size:15.5px; margin:20px 0 8px; color:var(--ink); }
+  #group-list{ display:flex; flex-direction:column; gap:10px; }
+  .chip-missing{ background:var(--danger-soft); color:var(--danger); text-decoration:line-through; }
+  .chip{ padding:4px 12px; }
+  .warn-text{ color:var(--warn); }
+
+  /* group cards */
+  #group-list{ display:flex; flex-direction:column; gap:12px; }
+  .g-card{ border:1px solid var(--border); border-radius:10px; padding:12px 14px; background:var(--surface-2); min-width:0; }
+  .g-card.g-off{ opacity:.7; }
+  .g-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .g-head .q-name-input{ flex:1 1 200px; min-width:0; }
+  .g-letter-wrap{ flex:0 0 auto; }
+  .g-letter{ width:64px; text-align:center; padding:8px 4px; border-radius:8px; border:1.5px solid var(--accent); background:var(--accent-soft); color:var(--accent-strong); font-family:var(--font-mono); font-weight:600; font-size:16px; text-transform:uppercase; }
+  .g-letter:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .g-count{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); }
+  .g-stem{ margin:6px 0 0; font-size:12.5px; color:var(--ink-faint); overflow-wrap:anywhere; }
+  .g-tools{ display:flex; gap:8px; margin-top:4px; }
+  .pick-full{ display:block; font-size:11.5px; color:var(--ink-faint); }
+  .sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+
+  /* short names */
+  .short-panel{ margin-top:6px; }
+  .short-steps{ display:flex; flex-direction:column; gap:14px; margin-top:10px; }
+  .short-step{ display:flex; gap:12px; align-items:flex-start; min-width:0; }
+  .short-no{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; border:1.5px solid var(--accent); color:var(--accent-strong); font-family:var(--font-mono); font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+  .short-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  .short-body > p{ margin:0; font-size:13.5px; color:var(--ink); font-weight:500; }
+  .row-actions.tight{ margin-top:0; }
+  .short-body textarea, .prompt-peek textarea{ width:100%; resize:vertical; padding:8px 10px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-body); font-size:13px; line-height:1.6; }
+  .short-body textarea:focus, .prompt-peek textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .prompt-peek summary{ cursor:pointer; font-size:12.5px; color:var(--ink-soft); }
+  .prompt-peek textarea{ margin-top:6px; background:var(--surface-2); color:var(--ink-soft); }
+  .notice-ok{ background:var(--good-soft); color:var(--good); }
+  .short-tbl{ background:var(--surface); }
+  .short-tbl td{ vertical-align:middle; }
+  .short-tbl td.sn-full{ white-space:normal; min-width:160px; color:var(--ink); }
+  .sn-input{ width:100%; min-width:110px; padding:5px 8px; border-radius:6px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-size:13.5px; font-family:var(--font-body); }
+  .sn-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .sn-flag{ white-space:nowrap; }
+  .sn-note{ color:var(--ink-faint); font-family:var(--font-body); font-size:12px; }
+  .sn-warn{ display:inline-block; margin-left:4px; padding:0 6px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-family:var(--font-body); font-size:12px; }
+  .pick-short{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; background:var(--accent-soft); color:var(--accent-strong); font-size:11.5px; }
+
+  .rate-input{ width:72px; padding:6px 8px; border-radius:8px; border:1px solid var(--border-strong); background:var(--surface); color:var(--ink); font-family:var(--font-mono); font-size:13.5px; text-align:right; }
+  .rate-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .low-row th, .low-row td{ color:var(--ink-faint); }
+  .low-tag{ display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-faint); font-size:11px; font-weight:400; }
+  .pick.low .pick-label, .pick.low .pick-rate{ color:var(--ink-faint); text-decoration:line-through; text-decoration-color:var(--border-strong); }
+
+  .cross-card{ background:var(--surface); }
+  .cross-card + .cross-card{ margin-top:4px; }
+  .cross-card .pca-meta{ align-items:center; margin-top:4px; }
+  .cross-card .seg-tag{ margin:0; }
+  .sub-num{ display:block; font-size:11px; color:var(--ink-faint); }
+  .cross-table td{ line-height:1.3; }
+  .chisq-controls label{ min-width:0; }
+  .chisq-controls select{ max-width:100%; }
+  #cross-results{ display:flex; flex-direction:column; gap:16px; margin-top:16px; }
+
+  /* segment controls */
+  .seg-panel{ display:flex; flex-direction:column; gap:10px; padding:14px 16px; margin-bottom:18px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); }
+  .seg-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; }
+  .seg-field{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13.5px; font-weight:600; color:var(--ink); }
+  .seg-field select{ min-width:0; max-width:100%; }
+  .seg-radio{ display:inline-flex; align-items:center; gap:6px; font-size:13.5px; color:var(--ink); cursor:pointer; }
+  .seg-radio input{ accent-color:var(--accent); }
+  #seg-value{ min-width:0; max-width:100%; }
+  #seg-value:disabled{ opacity:.5; }
+  .seg-panel .hint.small{ margin:0; }
+  .seg-tag{ display:inline-block; margin:0 0 8px; padding:2px 10px; border-radius:999px; background:var(--warn-soft); color:var(--warn); font-size:12.5px; font-weight:600; }
+  .cmp-table th .th-n{ display:block; font-weight:400; font-size:11px; color:var(--ink-faint); }
+  .cmp-table td.all-col{ background:var(--surface-2); font-weight:600; }
+  .cmp-table td.up{ background:var(--good-soft); color:var(--good); font-weight:600; }
+  .cmp-table td.down{ background:var(--danger-soft); color:var(--danger); font-weight:600; }
+  .map-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 560px), 1fr)); gap:18px; }
+  .map-cell{ margin:0; min-width:0; }
+  .map-cell figcaption{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap; font-size:13.5px; margin-bottom:4px; color:var(--ink); }
+  .map-cell figcaption span{ font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); }
+  .map-cell .map-wrap{ margin:0; }
+  .seg-details{ display:flex; flex-direction:column; gap:8px; }
+  .seg-details details{ border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .seg-details summary{ cursor:pointer; padding:10px 14px; font-weight:600; font-size:14px; color:var(--ink); display:flex; gap:10px; align-items:baseline; }
+  .seg-details summary span{ font-family:var(--font-mono); font-weight:400; font-size:12px; color:var(--ink-faint); }
+  .seg-details summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:10px; }
+  .seg-details details > .pca-card{ border:none; border-top:1px solid var(--border); border-radius:0 0 10px 10px; }
+
+  @media (max-width:560px){
+    .mapping-row{ flex-direction:column; align-items:stretch; gap:6px; }
+    .mapping-qname{ min-width:0; }
+    .crosstab-controls, .chisq-controls{ flex-direction:column; align-items:stretch; }
+    .crosstab-controls select, .chisq-controls select{ min-width:0; }
+  }
+</style>
+
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <p class="eyebrow">複選題 · 交叉分析 · 卡方檢定</p>
+    <h1>複選題卡方檢定器</h1>
+    <p class="lede">上傳問卷回覆，把複選題整理成 (0,1) 資料並為題組與選項命名，再進行交叉分析：兩個複選題組之間的共同勾選次數與批次卡方檢定，或單選變數（如性別、年齡層、市場區隔）與複選題組之間的卡方獨立性檢定。</p>
+  </header>
+
+  <section class="card" id="section-upload">
+    <div class="card-head">
+      <span class="step-badge">1</span>
+      <div>
+        <h2>上傳問卷回覆</h2>
+        <p class="hint">請上傳「問卷資料整理器」產出的 Excel 檔（或欄名格式相同的 CSV）。欄名含「_」的 0／1 欄會依前綴自動分成題組，例如 CH_超商、B1_低熱量；「字母＋序號＋名稱」的 0／1 欄（例如 B1原萃、B2純喫茶）依開頭字母合成一個題組。</p>
+      </div>
+    </div>
+    <div class="encoding-row" id="encoding-row">
+      <label for="select-encoding">CSV 檔案編碼</label>
+      <select id="select-encoding">
+        <option value="auto" selected>自動偵測（建議）</option>
+        <option value="utf-8">UTF-8</option>
+        <option value="big5">Big5（Windows 中文版 Excel 另存的 CSV 常見）</option>
+      </select>
+    </div>
+    <div class="encoding-row" id="sheet-row" hidden>
+      <label for="select-sheet">工作表</label>
+      <select id="select-sheet"></select>
+    </div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="input-csv" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dropzone-label">選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡</span>
+    </label>
+    <div class="row-actions sample-row" id="sample-row" hidden>
+      <button class="btn btn-text" id="btn-load-sample" type="button">載入範例：冰淇淋品牌與消費情境模擬資料（120 筆）</button>
+    </div>
+    <div id="csv-summary" class="summary" hidden></div>
+    <div id="raw-warn"></div>
+    <div id="csv-actions" class="row-actions" hidden>
+      <button class="btn btn-text danger" id="btn-remove-csv" type="button">移除已上傳的檔案</button>
+    </div>
+    <div id="csv-preview-wrap" class="table-scroll" hidden><table id="csv-preview"></table></div>
+  </section>
+
+  <section class="card" id="section-mc" hidden>
+    <div class="card-head">
+      <span class="step-badge">2</span>
+      <div>
+        <h2>指定複選題欄位</h2>
+        <p class="hint">Google 表單的複選題，一題的所有答案會放在同一格、以逗號分隔。請勾選這類欄位，並貼上表單中的原始選項（每行一個）。工具會即時用選項清單比對答案，選項文字含逗號也能正確辨識，沒有人勾的選項也會保留。資料若已是 0／1 格式，請略過此步驟。</p>
+      </div>
+    </div>
+    <div class="notice notice-tip">設計問卷時，複選題的選項文字請避免使用半形逗號「,」，改用頓號「、」或全形逗號「，」。</div>
+    <div id="mc-list"></div>
+    <div id="mc-report"></div>
+  </section>
+
+  <section class="card" id="section-groups" hidden>
+    <div class="card-head">
+      <span class="step-badge">2</span>
+      <div>
+        <h2>題組</h2>
+        <p class="hint">每個前綴自動成為一個題組，選項預設全選；不想納入分析的選項，直接在題組卡片上取消勾選。題組名稱會從整理器 Excel 檔的「題組」工作表自動帶入，也可自行修改；代碼沿用欄名前綴。</p>
+      </div>
+    </div>
+    <div class="short-panel" id="short-panel">
+      <h3 class="list-h">用其他 AI 產生題組名稱與選項簡稱</h3>
+      <p class="hint small">指令會請 AI（如 ChatGPT、Gemini）依題幹為每個題組取至多 4 個字的名稱，並依名稱決定一個英文字母作為代碼；同時把選項縮寫成至多 4 個字的簡稱。代碼與簡稱用於 0／1 資料表的欄名（例如 B_茶裏王綠）；簡稱也用於競爭圖與分析表格，下載的分析結果同時保留原始選項。沒有填簡稱的選項顯示原文。</p>
+      <div class="short-steps">
+        <div class="short-step">
+          <span class="short-no">1</span>
+          <div class="short-body">
+            <p>複製指令，貼給其他 AI。</p>
+            <div class="row-actions tight">
+              <button class="btn btn-secondary" id="btn-copy-prompt" type="button">複製 AI 指令</button>
+            </div>
+            <details class="prompt-peek"><summary>檢視指令內容</summary><textarea id="prompt-text" readonly rows="8" aria-label="AI 指令內容"></textarea></details>
+          </div>
+        </div>
+        <div class="short-step">
+          <span class="short-no">2</span>
+          <div class="short-body">
+            <p>把 AI 的回覆貼在這裡：題組為「題號｜名稱｜代碼」，選項為「原始選項｜簡稱」。</p>
+            <textarea id="short-paste" rows="8" placeholder="例如：&#10;題1｜購買品牌｜B&#10;題2｜購買動機｜M&#10;便宜、好吃, 又方便｜便宜好吃&#10;朋友或家人推薦｜親友推薦"></textarea>
+            <div class="row-actions tight">
+              <button class="btn btn-primary" id="btn-apply-short" type="button">套用名稱與簡稱</button>
+            </div>
+            <div id="short-report"></div>
+          </div>
+        </div>
+        <div class="short-step">
+          <span class="short-no">3</span>
+          <div class="short-body">
+            <p>檢查選項簡稱並逐一修改；題組名稱與代碼在下方的題組卡片修改。</p>
+            <div id="short-table"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="list-h">題組</h3>
+    <div id="group-list"></div>
+    <div class="row-actions">
+      <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
+      <label class="btn btn-text file-btn">
+        匯入設定（JSON）
+        <input type="file" id="input-import-config" accept="application/json" hidden>
+      </label>
+      <button class="btn btn-text danger" id="btn-clear-config" type="button">重設題組名稱、代碼與勾選</button>
+    </div>
+    <p class="hint small">題組名稱、代碼與勾選會自動保存在此瀏覽器，同一份資料下次上傳時直接套用，也可匯出存檔。</p>
+  </section>
+
+  <section class="card" id="section-dummy" hidden>
+    <div class="card-head">
+      <span class="step-badge">4</span>
+      <div>
+        <h2>下載 (0,1) 資料表</h2>
+        <p class="hint">每個選項一欄，勾選為 1、未勾選為 0，包含所有選項（含步驟 3 取消勾選者）。欄名為「題組代碼_簡稱」，依步驟 3 的命名產生；每欄對應的題目、原始選項及是否納入分析，請見欄名對照表。資料原本就是 0／1 格式時，也可在此下載加上代碼與簡稱欄名的版本。</p>
+      </div>
+    </div>
+    <div id="dummy-result" hidden>
+      <div id="dummy-summary" class="summary"></div>
+      <div class="table-scroll"><table id="dummy-preview"></table></div>
+      <div class="row-actions">
+        <button class="btn btn-secondary" id="btn-download-dummy" type="button">下載 0/1 資料表 CSV</button>
+        <button class="btn btn-ghost" id="btn-download-codebook" type="button">下載欄名對照表 CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="section-cross" hidden>
+    <div class="card-head">
+      <span class="step-badge">3</span>
+      <div>
+        <h2>交叉分析：共同勾選次數與卡方檢定</h2>
+        <p class="hint">選擇列變數 A 與欄變數 B 後執行分析。A 為複選題組時，計算兩兩選項的共同勾選次數，並對每組選項配對做 2×2 檢定；A 為單選變數時，對 B 的每個選項做「A 的類別 × 是否勾選」卡方獨立性檢定。可執行多組分析，結果依序列在下方；修改題組、門檻或區隔條件後會自動重新計算。</p>
+      </div>
+    </div>
+    <div class="seg-panel" id="seg-panel">
+      <div class="seg-row">
+        <label class="seg-field" for="min-rate">勾選率低於
+          <input type="number" id="min-rate" class="rate-input" min="0" max="50" step="0.5" value="5">
+          % 的選項不納入分析
+        </label>
+      </div>
+      <p class="hint small">依全部受訪者的勾選率判斷，套用到所有分析；勾選太少的選項容易造成期望次數不足。</p>
+      <div class="seg-row">
+        <label class="seg-field" for="seg-col">區隔變數
+          <select id="seg-col"></select>
+        </label>
+        <select id="seg-value" aria-label="區隔類別" hidden></select>
+      </div>
+      <p class="hint small">區隔變數與單選變數只列出資料中的文字單選題（不含量表等數值題）。選定區隔變數與類別後，所有分析只使用該類別的受訪者；選「不區隔」即以全部受訪者分析。區隔變數不會出現在列變數的選單中。</p>
+    </div>
+    <div class="chisq-controls">
+      <label for="cross-a">列變數 A（複選題組或單選變數）
+        <select id="cross-a"></select>
+      </label>
+      <label for="cross-b">欄變數 B（複選題組）
+        <select id="cross-b"></select>
+      </label>
+      <label for="chisq-method">檢定方法
+        <select id="chisq-method">
+          <option value="auto" selected>自動：期望次數 ≥5 用 Pearson，否則 Fisher</option>
+          <option value="fisher">2×2 一律用 Fisher 精確檢定</option>
+          <option value="pearson">全部用 Pearson 卡方</option>
+        </select>
+      </label>
+      <label for="chisq-alpha">顯著水準 α
+        <select id="chisq-alpha">
+          <option value="0.05" selected>.05</option>
+          <option value="0.01">.01</option>
+          <option value="0.1">.10</option>
+          <option value="0.2">.20</option>
+        </select>
+      </label>
+      <button class="btn btn-primary" id="btn-run-cross" type="button">執行分析</button>
+    </div>
+    <div id="cross-results"></div>
+  </section>
+
+  <footer class="foot">
+    <p>所有計算都在此頁面（您的瀏覽器）中完成，不會上傳到任何伺服器，也不使用任何 AI 服務。題組與選項設定會保留在此瀏覽器中；已上傳的回覆資料在重新整理頁面後需要重新上傳。</p>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- utilities ---------- */
+  let uidCounter = 0;
+  function uid(prefix){ return (prefix||'id') + '_' + Date.now().toString(36) + '_' + (uidCounter++); }
+
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function dateStamp(){
+    const d = new Date();
+    const p = n => String(n).padStart(2,'0');
+    return '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate());
+  }
+
+  let toastTimer = null;
+  function toast(msg, kind){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show' + (kind === 'error' ? ' toast-error' : kind === 'success' ? ' toast-success' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3200);
+  }
+
+  function parseCSV(text){
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i = 0; i < text.length; i++){
+      const c = text[i];
+      if (inQuotes){
+        if (c === '"'){
+          if (text[i+1] === '"'){ field += '"'; i++; }
+          else { inQuotes = false; }
+        } else { field += c; }
+      } else {
+        if (c === '"'){ inQuotes = true; }
+        else if (c === ','){ row.push(field); field = ''; }
+        else if (c === '\r'){ /* skip */ }
+        else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+        else { field += c; }
+      }
+    }
+    if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+    const filtered = rows.filter(r => !(r.length === 1 && r[0] === ''));
+    const headers = (filtered[0] || []).map(h => h.trim());
+    const dataRows = filtered.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined ? r[idx] : ''; });
+      return obj;
+    });
+    return { headers, rows: dataRows };
+  }
+
+  function csvEscape(v){
+    const s = String(v == null ? '' : v);
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  function toCSVString(headers, rows){
+    const lines = [headers.map(csvEscape).join(',')];
+    rows.forEach(r => lines.push(r.map(csvEscape).join(',')));
+    return lines.join('\r\n');
+  }
+
+  function mimeOf(filename){
+    const ext = (filename.split('.').pop() || '').toLowerCase();
+    return ({ csv: 'text/csv;charset=utf-8', json: 'application/json;charset=utf-8', svg: 'image/svg+xml;charset=utf-8', png: 'image/png' })[ext] || 'application/octet-stream';
+  }
+  async function saveFile(filename, content, opts){
+    opts = opts || {};
+    const bom = opts.bom !== false;
+    const blob = content instanceof Blob ? content
+      : new Blob([(bom ? String.fromCharCode(0xFEFF) : '') + content], { type: mimeOf(filename) });
+    /* 在 claude.ai 內：透過平台的下載確認視窗 */
+    if (window.claude && typeof window.claude.use === 'function'){
+      try{
+        const downloads = await window.claude.use('downloads');
+        if (!downloads){ toast('此檢視環境不支援檔案下載', 'error'); return; }
+        await downloads.save({ filename, data: blob });
+      }catch(err){
+        if (err && err.code === 'declined') return;
+        console.error(err);
+        toast('下載失敗：' + (err && err.message ? err.message : '未知錯誤'), 'error');
+      }
+      return;
+    }
+    /* 一般網站（例如 Netlify）：直接由瀏覽器下載 */
+    try{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    }catch(err){
+      console.error(err);
+      toast('下載失敗：' + (err && err.message ? err.message : '未知錯誤'), 'error');
+    }
+  }
+
+  /* ---------- state ---------- */
+  const LS_KEY = 'mc_chisq_tool_v1';
+  const SEP = '\u001f';
+  function loadSavedConfig(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }catch(e){ /* ignore */ }
+    return null;
+  }
+  const saved = loadSavedConfig() || {};
+  const state = {
+    csv: null,
+    csvRawBuffer: null,
+    csvFileName: null,
+    xlsxWorkbook: null,
+    currentSheet: null,
+    mc: (saved.mc && typeof saved.mc === 'object') ? saved.mc : {},          /* 欄位標題 → { enabled, options } */
+    short: (saved.short && typeof saved.short === 'object') ? saved.short : {}, /* 原始選項 → 簡稱 */
+    mcCands: [],         /* 步驟 2 可勾選的欄位 */
+    native: [],          /* 上傳資料中原本就是 0／1 的欄位 */
+    generated: null,     /* 步驟 3 產生的欄位與比對報告 */
+    gconf: (saved.gconf && typeof saved.gconf === 'object') ? saved.gconf : {},  /* 題組來源 → { name, letter, off } */
+    minRate: (typeof saved.minRate === 'number' && saved.minRate >= 0 && saved.minRate <= 0.5) ? saved.minRate : 0.05,
+    dummy: null,
+    seg: { col: '', value: '' },
+    crossReqs: [],
+    results: []
+  };
+  function saveConfig(){
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        mc: state.mc,
+        short: state.short,
+        gconf: state.gconf,
+        minRate: state.minRate
+      }));
+    }catch(e){ /* ignore */ }
+  }
+
+  /* ---------- CSV upload ---------- */
+  function findIdHeader(headers){
+    return headers.find(h => /email|電子郵件|時間戳記|timestamp/i.test(h)) || null;
+  }
+
+  function renderCSVPreview(){
+    const { headers, rows } = state.csv;
+    const previewRows = rows.slice(0, 5);
+    const thead = '<thead><tr>' + headers.map(h => '<th>' + escapeHtml(h) + '</th>').join('') + '</tr></thead>';
+    const tbody = '<tbody>' + previewRows.map(r => '<tr>' + headers.map(h => '<td>' + escapeHtml(r[h]) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    document.getElementById('csv-preview').innerHTML = thead + tbody;
+    document.getElementById('csv-preview-wrap').hidden = false;
+    const summary = document.getElementById('csv-summary');
+    summary.hidden = false;
+    summary.innerHTML = '共讀取 <strong>' + rows.length + '</strong> 筆回覆，<strong>' + headers.length + '</strong> 個欄位。以下顯示前 5 筆預覽：';
+    document.getElementById('csv-actions').hidden = false;
+  }
+
+  function decodeCSVBuffer(buffer, encoding){
+    if (encoding === 'utf-8') return new TextDecoder('utf-8').decode(buffer);
+    if (encoding === 'big5') return new TextDecoder('big5').decode(buffer);
+    /* auto: real UTF-8 text almost never throws under a fatal decode; Big5
+       Traditional-Chinese bytes almost always do, so this reliably tells them apart. */
+    try{
+      return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    }catch(e){
+      try{ return new TextDecoder('big5').decode(buffer); }
+      catch(e2){ return new TextDecoder('utf-8').decode(buffer); }
+    }
+  }
+
+  function reprocessCSVBuffer(){
+    if (!state.csvRawBuffer) return;
+    try{
+      const encoding = document.getElementById('select-encoding').value;
+      const text = decodeCSVBuffer(state.csvRawBuffer, encoding);
+      const parsed = parseCSV(text);
+      if (!parsed.headers.length){ toast('無法解析此 CSV 檔案，請確認格式', 'error'); return; }
+      state.csv = { headers: parsed.headers, rows: parsed.rows, filename: state.csvFileName };
+      document.getElementById('dropzone-label').textContent = '已上傳：' + state.csvFileName + '（' + parsed.rows.length + ' 筆回覆）';
+      renderCSVPreview();
+      onDataLoaded();
+      if (text.indexOf(String.fromCharCode(0xFFFD)) !== -1){
+        toast('偵測到無法辨識的字元，如內容仍是亂碼，請切換上方「檔案編碼」再試一次', 'error');
+      } else {
+        toast('CSV 讀取成功', 'success');
+      }
+    }catch(err){
+      console.error(err);
+      toast('解析 CSV 時發生錯誤', 'error');
+    }
+  }
+
+  function handleCSVFile(file){
+    if (!file) return;
+    state.importNames = null;
+    document.getElementById('encoding-row').hidden = false;
+    document.getElementById('sheet-row').hidden = true;
+    state.xlsxWorkbook = null;
+    state.currentSheet = null;
+    const reader = new FileReader();
+    reader.onload = function(){
+      state.csvRawBuffer = reader.result;
+      state.csvFileName = file.name;
+      reprocessCSVBuffer();
+    };
+    reader.onerror = function(){ toast('讀取檔案失敗', 'error'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  /* ---------- XLSX upload ---------- */
+  function loadSheet(sheetName){
+    const wb = state.xlsxWorkbook;
+    if (!wb) return;
+    let aoa;
+    try{
+      aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: false, blankrows: false });
+    }catch(err){
+      console.error(err);
+      toast('無法讀取此工作表', 'error');
+      return;
+    }
+    const headers = (aoa[0] || []).map(h => String(h).trim());
+    if (!headers.length){ toast('此工作表沒有資料', 'error'); return; }
+    const dataRows = aoa.slice(1).map(r => {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = r[idx] !== undefined && r[idx] !== null ? String(r[idx]) : ''; });
+      return obj;
+    });
+    state.csv = { headers, rows: dataRows, filename: state.csvFileName };
+    state.currentSheet = sheetName;
+    state.importNames = readGroupSheet(wb);
+    document.getElementById('dropzone-label').textContent = '已上傳：' + state.csvFileName + '（' + dataRows.length + ' 筆回覆）';
+    renderCSVPreview();
+    onDataLoaded();
+    toast('Excel 讀取成功', 'success');
+  }
+
+  /* 讀取「問卷資料整理器」寫入的「題組」工作表：代碼 → 題組名稱 */
+  function readGroupSheet(wb){
+    const ws = wb && wb.Sheets && wb.Sheets['題組'];
+    if (!ws) return null;
+    const out = {};
+    try{
+      XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }).slice(1).forEach(r => {
+        const code = String(r[0] || '').trim(), name = String(r[1] || '').trim();
+        if (code && name) out[code] = name;
+      });
+    }catch(err){ return null; }
+    return Object.keys(out).length ? out : null;
+  }
+  function applyImportedNames(){
+    if (!state.importNames) return 0;
+    let n = 0;
+    const done = new Set();
+    state.native.forEach(c => {
+      if (!c.gsrc || done.has(c.gsrc)) return;
+      done.add(c.gsrc);
+      const name = state.importNames[c.prefix];
+      if (name){ gconf(c.gsrc).name = name; n++; }
+    });
+    if (n) saveConfig();
+    return n;
+  }
+  function handleXLSXFile(file){
+    document.getElementById('encoding-row').hidden = true;
+    state.csvRawBuffer = null;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        if (typeof XLSX === 'undefined'){
+          toast('Excel 解析功能載入失敗，請檢查網路連線，或改用 CSV 上傳', 'error');
+          return;
+        }
+        const wb = XLSX.read(new Uint8Array(reader.result), { type: 'array' });
+        if (!wb.SheetNames.length){ toast('這個 Excel 檔案沒有工作表', 'error'); return; }
+        state.xlsxWorkbook = wb;
+        state.csvFileName = file.name;
+        const sheetRow = document.getElementById('sheet-row');
+        const sheetSelect = document.getElementById('select-sheet');
+        if (wb.SheetNames.length > 1){
+          sheetSelect.innerHTML = wb.SheetNames.map(n => '<option value="' + n.replace(/"/g,'&quot;') + '">' + n + '</option>').join('');
+          sheetRow.hidden = false;
+        } else {
+          sheetRow.hidden = true;
+        }
+        loadSheet(wb.SheetNames.indexOf('資料') !== -1 ? '資料' : wb.SheetNames[0]);
+      }catch(err){
+        console.error(err);
+        toast('無法解析此 Excel 檔案，請確認格式是否正確', 'error');
+      }
+    };
+    reader.onerror = function(){ toast('讀取檔案失敗', 'error'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  document.getElementById('select-sheet').addEventListener('change', function(e){
+    loadSheet(e.target.value);
+  });
+
+  function handleUploadedFile(file){
+    if (!file) return;
+    if (/\.xlsx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+      handleXLSXFile(file);
+    } else {
+      handleCSVFile(file);
+    }
+  }
+
+  document.getElementById('select-encoding').addEventListener('change', function(){
+    if (state.csvRawBuffer) reprocessCSVBuffer();
+  });
+  document.getElementById('input-csv').addEventListener('change', function(e){ handleUploadedFile(e.target.files[0]); });
+  const dropzone = document.getElementById('dropzone');
+  ['dragenter','dragover'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(evt){
+    dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove('drag'); });
+  });
+  dropzone.addEventListener('drop', function(e){
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleUploadedFile(f);
+  });
+
+  document.getElementById('btn-remove-csv').addEventListener('click', function(){
+    state.csv = null;
+    state.csvRawBuffer = null;
+    state.csvFileName = null;
+    state.xlsxWorkbook = null;
+    state.currentSheet = null;
+    document.getElementById('input-csv').value = '';
+    document.getElementById('select-encoding').value = 'auto';
+    document.getElementById('encoding-row').hidden = false;
+    document.getElementById('sheet-row').hidden = true;
+    document.getElementById('dropzone-label').textContent = '選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡';
+    document.getElementById('csv-summary').hidden = true;
+    document.getElementById('csv-preview-wrap').hidden = true;
+    document.getElementById('csv-actions').hidden = true;
+    onDataCleared();
+  });
+
+
+
+  /* ---------- value helpers ---------- */
+  function isCheckedValue(v){
+    const t = String(v == null ? '' : v).trim();
+    if (!t) return false;
+    if (Number(t) === 1) return true;
+    return /^(true|yes|y|是|v|✓|✔)$/i.test(t);
+  }
+  function isBinaryValue(v){
+    const t = String(v == null ? '' : v).trim();
+    return t === '' || Number(t) === 0 || Number(t) === 1 || /^(true|false)$/i.test(t);
+  }
+  function cellText(r, h){ const v = state.csv.rows[r][h]; return String(v == null ? '' : v).trim(); }
+
+  /* ---------- pool of 0/1 columns ---------- */
+  function isNativeBinary(h){
+    let filled = 0;
+    for (const r of state.csv.rows){
+      if (!isBinaryValue(r[h])) return false;
+      if (String(r[h] == null ? '' : r[h]).trim() !== '') filled++;
+    }
+    return filled > 0;
+  }
+  function detectNative(){
+    const idHeader = findIdHeader(state.csv.headers);
+    const N = state.csv.rows.length;
+    const cols = state.csv.headers.filter(h => h && h !== idHeader && isNativeBinary(h)).map(h => {
+      const vec = new Array(N);
+      for (let r = 0; r < N; r++) vec[r] = isCheckedValue(state.csv.rows[r][h]) ? 1 : 0;
+      return { key: 'bin' + SEP + h, header: h, label: h, source: 'bin', sourceLabel: '原本就是 0／1 的欄位', gsrc: 'bin', prefix: '', vec: vec };
+    });
+    /* 依欄名分題組：「前綴_選項」依前綴分組（如 CH_超商）；「字母＋序號＋名稱」依開頭字母分組（如 B1原萃、B2純喫茶）；其他 0／1 欄不納入 */
+    cols.forEach(c => {
+      let m = /^([^_]+)_(.+)$/.exec(c.header);
+      if (m){ c.label = m[2]; c.prefix = m[1]; c.gsrc = 'bin' + SEP + m[1]; c.stem = '前綴為「' + m[1] + '_」的 0／1 欄位'; return; }
+      m = /^([A-Za-z]+)([0-9]+)(.+)$/.exec(c.header);
+      if (m){ c.label = m[3]; c.prefix = m[1]; c.gsrc = 'bin' + SEP + m[1] + '#'; c.stem = '代碼為「' + m[1] + '」＋序號的 0／1 欄位（如 ' + c.header + '）'; return; }
+      c.gsrc = null;
+    });
+    return cols.filter(c => c.gsrc);
+  }
+  function computeMcCands(){
+    return [];   /* 只讀取已整理好的 0／1 資料，不解析 Google 表單的複選題 */
+    const idHeader = findIdHeader(state.csv.headers);
+    const nativeSet = new Set(state.native.map(c => c.header));
+    const out = [];
+    state.csv.headers.forEach(h => {
+      if (!h || h === idHeader || nativeSet.has(h)) return;
+      let filled = 0, comma = 0;
+      for (const r of state.csv.rows){
+        const t = String(r[h] == null ? '' : r[h]).trim();
+        if (!t) continue;
+        filled++;
+        if (t.indexOf(',') !== -1) comma++;
+      }
+      if (!filled) return;
+      out.push({ header: h, filled: filled, comma: comma });
+    });
+    return out;
+  }
+  function poolCols(){ return state.native.concat(state.generated ? state.generated.cols : []); }
+  function poolMap(){ const m = {}; poolCols().forEach(c => { m[c.key] = c; }); return m; }
+
+  /* ---------- step 2: multiple-choice columns ---------- */
+  function parseOptionList(text){
+    const seen = new Set(), out = [];
+    String(text || '').split(/\r?\n/).forEach(line => {
+      const t = line.trim();
+      if (t && !seen.has(t)){ seen.add(t); out.push(t); }
+    });
+    return out;
+  }
+  function splitTokens(t){ return t.split(',').map(s => s.trim()).filter(Boolean); }
+  function guessOptions(h){
+    const counts = new Map();
+    state.csv.rows.forEach(r => {
+      const t = String(r[h] == null ? '' : r[h]).trim();
+      if (!t) return;
+      splitTokens(t).forEach(tok => counts.set(tok, (counts.get(tok) || 0) + 1));
+    });
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  }
+  function mcConf(h){
+    if (!state.mc[h]) state.mc[h] = { enabled: false, options: '' };
+    return state.mc[h];
+  }
+
+  function renderMcList(){
+    const box = document.getElementById('mc-list');
+    const cands = state.mcCands;
+    if (!cands.length){
+      box.innerHTML = '<p class="empty-hint">此資料沒有需要轉換的欄位（已是 0／1 格式），請略過此步驟，直接到步驟 3。</p>';
+      return;
+    }
+    box.innerHTML = cands.map((c, i) => {
+      const conf = state.mc[c.header] || { enabled: false, options: '' };
+      let html = '<div class="mc-item' + (conf.enabled ? ' on' : '') + '">' +
+        '<label class="mc-check"><input type="checkbox" id="mc-toggle-' + i + '" data-role="mc-toggle" data-i="' + i + '"' + (conf.enabled ? ' checked' : '') + '>' +
+        '<span class="mc-name">' + escapeHtml(c.header) + '</span></label>' +
+        '<div class="mc-meta"><span>已填答 ' + c.filled + ' 筆</span>' +
+        (c.comma ? '<span class="badge">' + c.comma + ' 筆含逗號，可能是複選題</span>' : '') + '</div>';
+      if (conf.enabled){
+        html += '<div class="mc-opts">' +
+          '<label for="mc-opts-' + i + '">貼上表單中的原始選項（每行一個）</label>' +
+          '<textarea id="mc-opts-' + i + '" data-role="mc-opts" data-i="' + i + '" rows="6" placeholder="例如：\n哈根達斯\n班&amp;傑瑞\n便宜、好吃, 又方便">' + escapeHtml(conf.options) + '</textarea>' +
+          '<div class="mc-opts-foot"><span class="mc-status" data-role="mc-status" data-i="' + i + '">' + mcStatusText(conf) + '</span>' +
+          '<button type="button" class="btn btn-ghost small" data-role="mc-guess" data-i="' + i + '">從作答內容帶入選項（請檢查）</button></div>' +
+          '</div>';
+      }
+      return html + '</div>';
+    }).join('');
+  }
+  function mcStatusText(conf){
+    const n = parseOptionList(conf.options).length;
+    return n ? '已輸入 ' + n + ' 個選項，將以選項清單比對作答。'
+             : '尚未輸入選項：將以逗號切分作答，選項文字含逗號時會切錯，且無法得知沒有人勾的選項。';
+  }
+  /* 步驟 2 的設定一變更就重新比對；文字框輸入時稍等片刻再比對 */
+  let rebuildTimer = null;
+  function markGeneratedStale(delay){
+    clearTimeout(rebuildTimer);
+    if (delay){ rebuildTimer = setTimeout(function(){ buildGenerated({ silent: true }); }, delay); return; }
+    buildGenerated({ silent: true });
+  }
+
+  const mcList = document.getElementById('mc-list');
+  mcList.addEventListener('change', function(e){
+    if (e.target.dataset.role !== 'mc-toggle') return;
+    const c = state.mcCands[Number(e.target.dataset.i)];
+    mcConf(c.header).enabled = e.target.checked;
+    saveConfig();
+    renderMcList();
+    markGeneratedStale();
+  });
+  mcList.addEventListener('input', function(e){
+    if (e.target.dataset.role !== 'mc-opts') return;
+    const i = Number(e.target.dataset.i);
+    const conf = mcConf(state.mcCands[i].header);
+    conf.options = e.target.value;
+    saveConfig();
+    const st = mcList.querySelector('[data-role="mc-status"][data-i="' + i + '"]');
+    if (st) st.textContent = mcStatusText(conf);
+    markGeneratedStale(600);
+  });
+  mcList.addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-role="mc-guess"]');
+    if (!btn) return;
+    const i = Number(btn.dataset.i);
+    const h = state.mcCands[i].header;
+    const conf = mcConf(h);
+    conf.options = guessOptions(h).join('\n');
+    saveConfig();
+    renderMcList();
+    markGeneratedStale();
+    toast('已依逗號帶入選項，被切開的選項請手動合併成一行');
+  });
+
+  /* ---------- step 3: build 0/1 columns ---------- */
+  /* 以選項清單比對一格作答：優先比對最長的選項，選項本身含逗號也能整段辨識 */
+  function matchCell(s, sortedOpts){
+    const found = new Set(), unmatched = [];
+    const len = s.length;
+    let pos = 0, buf = '';
+    const atBoundary = p => p >= len || /^\s*,/.test(s.slice(p));
+    const flush = () => { const t = buf.trim(); if (t) unmatched.push(t); buf = ''; };
+    while (pos < len){
+      while (pos < len && /\s/.test(s[pos])) pos++;
+      if (pos >= len) break;
+      let hit = null;
+      for (const o of sortedOpts){
+        if (s.startsWith(o, pos) && atBoundary(pos + o.length)){ hit = o; break; }
+      }
+      if (hit){
+        flush();
+        found.add(hit);
+        pos += hit.length;
+        const m = /^\s*,/.exec(s.slice(pos));
+        if (m) pos += m[0].length;
+        continue;
+      }
+      const idx = s.indexOf(',', pos);
+      const piece = idx < 0 ? s.slice(pos) : s.slice(pos, idx);
+      buf = buf ? buf + ', ' + piece.trim() : piece.trim();
+      pos = idx < 0 ? len : idx + 1;
+    }
+    flush();
+    return { found: found, unmatched: unmatched };
+  }
+
+  function buildGenerated(opts){
+    opts = opts || {};
+    const enabled = state.mcCands.filter(c => state.mc[c.header] && state.mc[c.header].enabled);
+    if (!enabled.length){
+      const had = !!state.generated;
+      state.generated = null;
+      renderMcReport();
+      if (had) afterPoolChange();
+      return;
+    }
+    const N = state.csv.rows.length;
+    const cols = [], reports = [];
+    enabled.forEach(c => {
+      const h = c.header;
+      const list = parseOptionList(state.mc[h].options);
+      const mode = list.length ? 'list' : 'split';
+      const options = mode === 'list' ? list : guessOptions(h);
+      const vecs = {};
+      options.forEach(o => { vecs[o] = new Array(N).fill(0); });
+      const unmatched = new Map();
+      const sorted = options.slice().sort((a, b) => b.length - a.length);
+      for (let r = 0; r < N; r++){
+        const t = cellText(r, h);
+        if (!t) continue;
+        if (mode === 'list'){
+          const m = matchCell(t, sorted);
+          m.found.forEach(o => { vecs[o][r] = 1; });
+          m.unmatched.forEach(u => unmatched.set(u, (unmatched.get(u) || 0) + 1));
+        } else {
+          splitTokens(t).forEach(tok => { if (vecs[tok]) vecs[tok][r] = 1; });
+        }
+      }
+      const counts = options.map(o => vecs[o].reduce((a, b) => a + b, 0));
+      options.forEach((o, k) => cols.push({ key: 'mc' + SEP + h + SEP + o, label: o, source: 'mc', sourceLabel: h, vec: vecs[o], count: counts[k] }));
+      reports.push({
+        header: h, mode: mode, nOptions: options.length,
+        zero: options.filter((o, k) => counts[k] === 0),
+        unmatched: Array.from(unmatched.entries()).sort((a, b) => b[1] - a[1])
+      });
+    });
+    state.generated = { cols: cols, reports: reports };
+    renderMcReport();
+    afterPoolChange();
+  }
+
+  /* ---------- groups: one per source, all options selected by default ---------- */
+  function groupSources(){
+    const out = [];
+    state.native.forEach(c => {
+      let s = out.find(x => x.src === c.gsrc);
+      if (!s){
+        s = { src: c.gsrc, type: 'bin', stem: c.stem || '', cols: [],
+              defLetter: /^[A-Za-z][A-Za-z0-9]{0,3}$/.test(c.prefix) ? c.prefix.toUpperCase() : '' };
+        out.push(s);
+      }
+      s.cols.push(c);
+    });
+    if (state.generated){
+      state.generated.cols.forEach(c => {
+        const src = 'mc' + SEP + c.sourceLabel;
+        let s = out.find(x => x.src === src);
+        if (!s){ s = { src: src, type: 'mc', stem: c.sourceLabel, cols: [] }; out.push(s); }
+        s.cols.push(c);
+      });
+    }
+    return out;
+  }
+  function gconf(src){
+    if (!state.gconf[src]) state.gconf[src] = { name: '', letter: '', off: [] };
+    return state.gconf[src];
+  }
+  function cleanLetter(t){ return String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^[0-9]+/, '').slice(0, 4); }
+  /* 每個題組的代碼：有指定就用指定的，沒有就依序補上未被使用的字母 */
+  function groupsResolved(){
+    const srcs = groupSources();
+    const used = new Set();
+    srcs.forEach(s => { const l = cleanLetter((state.gconf[s.src] || {}).letter); if (l) used.add(l); });
+    /* 前綴本身是英文字母時，預設沿用為代碼 */
+    const defs = {};
+    srcs.forEach(s => { if (!cleanLetter((state.gconf[s.src] || {}).letter) && s.defLetter && !used.has(s.defLetter)){ used.add(s.defLetter); defs[s.src] = s.defLetter; } });
+    let next = 0;
+    const nextFree = () => {
+      for (;;){
+        const l = next < 26 ? String.fromCharCode(65 + next) : 'A' + String.fromCharCode(65 + next - 26);
+        next++;
+        if (!used.has(l)){ used.add(l); return l; }
+      }
+    };
+    return srcs.map((s, i) => {
+      const c = state.gconf[s.src] || { name: '', letter: '', off: [] };
+      const letter = cleanLetter(c.letter) || defs[s.src] || nextFree();
+      const off = new Set(c.off || []);
+      return {
+        src: s.src, type: s.type, stem: s.stem, cols: s.cols, index: i,
+        letter: letter, letterSet: !!cleanLetter(c.letter),
+        name: (c.name || '').trim(),
+        dispName: (c.name || '').trim() || ('題組 ' + letter),
+        selected: s.cols.filter(col => !off.has(col.key))
+      };
+    });
+  }
+  function colLetterMap(){
+    const m = {};
+    groupsResolved().forEach(g => g.cols.forEach(c => { m[c.key] = g; }));
+    return m;
+  }
+
+  function poolTable(){
+    const cols = poolCols();
+    const lm = colLetterMap();
+    const idHeader = findIdHeader(state.csv.headers);
+    const segCol = state.seg.col;
+    const keep = segRowFilter();
+    const headers = ['序號'].concat(idHeader ? [idHeader] : []).concat(segCol ? [segCol] : [])
+      .concat(cols.map(c => (lm[c.key] ? lm[c.key].letter + '_' : '') + dispLabel(c.label)));
+    const rows = [];
+    for (let r = 0; r < state.csv.rows.length; r++){
+      if (keep && !keep(r)) continue;
+      rows.push([r + 1].concat(idHeader ? [cellText(r, idHeader)] : []).concat(segCol ? [segValueRow(r)] : []).concat(cols.map(c => c.vec[r])));
+    }
+    return { headers, rows };
+  }
+  function codebookCsv(){
+    const lm = colLetterMap();
+    const N = state.csv ? state.csv.rows.length : 0;
+    const rows = [['欄名', '代碼', '題組名稱', '題目', '原始選項', '簡稱', '勾選人數', '勾選率', '納入分析', '未納入原因']];
+    groupsResolved().forEach(g => {
+      const sel = new Set(g.selected.map(c => c.key));
+      const rateOf = c => N ? c.vec.reduce((a, b) => a + b, 0) / N : 0;
+      const candidates = g.selected.filter(c => rateOf(c) >= state.minRate - 1e-9 && rateOf(c) > 0 && rateOf(c) < 1);
+      const enough = candidates.length >= 1;
+      g.cols.forEach(c => {
+        const n = c.vec.reduce((a, b) => a + b, 0), r = rateOf(c);
+        let reason = '';
+        if (!sel.has(c.key)) reason = '步驟 3 取消勾選';
+        else if (r < state.minRate - 1e-9) reason = '全體勾選率低於 ' + minRateText();
+        else if (r <= 0 || r >= 1) reason = '勾選率為 0% 或 100%';
+        else if (!enough) reason = '此題組沒有可分析的選項';
+        rows.push([g.letter + '_' + dispLabel(c.label), g.letter, g.dispName, g.type === 'mc' ? g.stem : '（上傳資料中原本就是 0／1 的欄位）',
+          c.label, state.short[c.label] || '', n, Number(r.toFixed(4)), reason ? '否' : '是', reason]);
+      });
+    });
+    return rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+  }
+
+  function renderMcReport(){
+    const box = document.getElementById('mc-report');
+    if (!box) return;
+    const rep = state.generated ? state.generated.reports : [];
+    box.innerHTML = rep.map(r => {
+      let html = '<div class="report-item"><h4>' + escapeHtml(r.header) + '</h4><ul>';
+      html += r.mode === 'list'
+        ? '<li>以選項清單比對，共 ' + r.nOptions + ' 個選項。</li>'
+        : '<li class="warn">未貼選項清單，以逗號切分出 ' + r.nOptions + ' 個選項。選項文字含逗號時會被切開，建議回到步驟 2 貼上原始選項。</li>';
+      if (r.zero.length) html += '<li>無人勾選：' + r.zero.map(z => '「' + escapeHtml(z) + '」').join('、') + '。這些選項全為 0，分析時會自動排除。</li>';
+      if (r.unmatched.length){
+        const total = r.unmatched.reduce((a, b) => a + b[1], 0);
+        const shown = r.unmatched.slice(0, 12);
+        html += '<li class="warn">有 ' + total + ' 筆作答對不上任何選項（多為「其他」的自由填答），未列入計算：' +
+          shown.map(u => '「' + escapeHtml(u[0]) + '」×' + u[1]).join('、') + (r.unmatched.length > shown.length ? '⋯⋯等 ' + r.unmatched.length + ' 種' : '') + '</li>';
+      }
+      return html + '</ul></div>';
+    }).join('');
+  }
+
+  function renderDummyResult(){
+    const cols = poolCols();
+    if (!state.csv || !cols.length){ document.getElementById('dummy-result').hidden = true; return; }
+    const { headers, rows } = poolTable();
+    const segText = segDescription();
+    document.getElementById('dummy-summary').innerHTML =
+      '0／1 資料表共 <strong>' + state.csv.rows.length + '</strong> 位受訪者 × <strong>' + cols.length + '</strong> 個選項欄位。欄名為「題組代碼_簡稱」，代碼與簡稱可在步驟 3 修改，完整對應請下載欄名對照表。' +
+      (segText ? '目前區隔條件為「' + escapeHtml(segText) + '」，預覽與下載只包含 <strong>' + rows.length + '</strong> 位受訪者。' : '以下顯示前 8 筆：');
+    const thead = '<thead><tr>' + headers.map(h => '<th>' + escapeHtml(h) + '</th>').join('') + '</tr></thead>';
+    const tbody = '<tbody>' + rows.slice(0, 8).map(r => '<tr>' + r.map((v, i) =>
+      i === 0 ? '<td>' + escapeHtml(v) + '</td>' : '<td class="num">' + escapeHtml(v) + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    document.getElementById('dummy-preview').innerHTML = thead + tbody;
+    document.getElementById('dummy-result').hidden = false;
+  }
+
+  document.getElementById('btn-download-dummy').addEventListener('click', function(){
+    if (!state.csv) return;
+    const { headers, rows } = poolTable();
+    saveFile('0-1資料表' + segSuffix() + '_' + dateStamp() + '.csv', toCSVString(headers, rows));
+  });
+  document.getElementById('btn-download-codebook').addEventListener('click', function(){
+    if (!state.csv) return;
+    saveFile('欄名對照表_' + dateStamp() + '.csv', codebookCsv());
+  });
+
+  /* ---------- step 4: group cards ---------- */
+  function renderGroups(){
+    const box = document.getElementById('group-list');
+    const groups = groupsResolved();
+    box._groups = groups;
+    if (!groups.length){
+      box.innerHTML = '<p class="empty-hint">找不到可分組的 0／1 欄位。請上傳「問卷資料整理器」產出的檔案：複選題欄名為「前綴_選項」（如 CH_超商），是非題欄名為「字母＋序號＋名稱」（如 B1原萃）。</p>';
+      return;
+    }
+    const N = state.csv ? state.csv.rows.length : 0;
+    const letterCount = {};
+    groups.forEach(g => { letterCount[g.letter] = (letterCount[g.letter] || 0) + 1; });
+    box.innerHTML = groups.map((g, gi) => {
+      const sel = new Set(g.selected.map(c => c.key));
+      const items = g.cols.map((c, ci) => {
+        const n = c.vec.reduce((a, b) => a + b, 0);
+        const sh = state.short[c.label];
+        const isLow = N && n / N < state.minRate - 1e-9;
+        return '<label class="pick' + (n === 0 ? ' zero' : '') + (isLow ? ' low' : '') + '" title="' + (isLow ? '全體勾選率低於 ' + minRateText() + '，不納入分析' : '') + '"><input type="checkbox" id="gopt-' + gi + '-' + ci + '" data-gi="' + gi + '" data-ci="' + ci + '"' + (sel.has(c.key) ? ' checked' : '') + '>' +
+          '<span class="pick-label">' + escapeHtml(sh || c.label) + (sh ? '<span class="pick-full">' + escapeHtml(c.label) + '</span>' : '') + '</span>' +
+          '<span class="pick-rate">' + (N ? pct1(n / N) : '—') + '</span></label>';
+      }).join('');
+      const nameLen = g.name ? charLen(g.name) : 0;
+      return '<div class="g-card' + (g.selected.length < 1 ? ' g-off' : '') + '">' +
+        '<div class="g-head">' +
+          '<label class="g-letter-wrap" title="題組代碼（英文字母）"><span class="sr">代碼</span><input type="text" class="g-letter" id="gletter-' + gi + '" data-role="gletter" data-gi="' + gi + '" maxlength="4" value="' + escapeHtml(g.letter) + '" aria-label="題組代碼"></label>' +
+          '<input type="text" class="q-name-input" id="gname-' + gi + '" data-role="gname" data-gi="' + gi + '" value="' + escapeHtml(g.name) + '" placeholder="題組名稱（至多 6 個字）" aria-label="題組名稱">' +
+          '<span class="g-count">已選 ' + g.selected.length + '／' + g.cols.length + '</span>' +
+        '</div>' +
+        '<p class="g-stem">' + (g.type === 'mc' ? '題目：' + escapeHtml(g.stem) : '來源：' + (g.stem ? escapeHtml(g.stem) : '上傳資料中原本就是 0／1 的欄位')) + '</p>' +
+        ((letterCount[g.letter] > 1) ? '<p class="hint small warn-text">代碼「' + escapeHtml(g.letter) + '」與其他題組重複，請修改。</p>' : '') +
+        (nameLen > 6 ? '<p class="hint small warn-text">題組名稱超過 6 個字。</p>' : '') +
+        '<div class="g-tools"><button type="button" class="btn btn-text small-text" data-role="g-all" data-gi="' + gi + '">全選</button>' +
+        '<button type="button" class="btn btn-text small-text" data-role="g-none" data-gi="' + gi + '">全不選</button></div>' +
+        '<div class="pick-grid">' + items + '</div>' +
+        (g.selected.length < 1 ? '<p class="hint small warn-text">此題組沒有勾選任何選項，不進行分析。</p>' : '') +
+        '</div>';
+    }).join('');
+  }
+  const groupList = document.getElementById('group-list');
+  groupList.addEventListener('change', function(e){
+    const t = e.target;
+    const g = (this._groups || [])[Number(t.dataset.gi)];
+    if (!g) return;
+    const c = gconf(g.src);
+    if (t.dataset.role === 'gname'){
+      c.name = t.value.trim();
+    } else if (t.dataset.role === 'gletter'){
+      c.letter = cleanLetter(t.value);
+    } else if (t.dataset.ci != null){
+      const key = g.cols[Number(t.dataset.ci)].key;
+      const off = new Set(c.off || []);
+      if (t.checked) off.delete(key); else off.add(key);
+      c.off = Array.from(off);
+    } else return;
+    saveConfig();
+    afterGroupsChange();
+  });
+  groupList.addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-role]');
+    if (!btn) return;
+    const g = (this._groups || [])[Number(btn.dataset.gi)];
+    if (!g) return;
+    gconf(g.src).off = btn.dataset.role === 'g-none' ? g.cols.map(c => c.key) : [];
+    saveConfig();
+    afterGroupsChange();
+  });
+
+  let clearArmed = false;
+  const btnClear = document.getElementById('btn-clear-config');
+  btnClear.addEventListener('click', function(){
+    if (!clearArmed){
+      clearArmed = true;
+      btnClear.textContent = '再按一次以確認重設';
+      setTimeout(function(){ clearArmed = false; btnClear.textContent = '重設題組名稱、代碼與勾選'; }, 3000);
+      return;
+    }
+    clearArmed = false;
+    btnClear.textContent = '重設題組名稱、代碼與勾選';
+    groupSources().forEach(s => { delete state.gconf[s.src]; });
+    saveConfig();
+    afterGroupsChange();
+  });
+
+  document.getElementById('btn-export-config').addEventListener('click', function(){
+    const mc = {};
+    Object.keys(state.mc).forEach(h => { if (state.mc[h].enabled || state.mc[h].options) mc[h] = state.mc[h]; });
+    const payload = JSON.stringify({ version: 3, mc: mc, short: state.short, gconf: state.gconf, minRate: state.minRate }, null, 2);
+    saveFile('題組設定_' + dateStamp() + '.json', payload, { bom: false });
+  });
+  document.getElementById('input-import-config').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(){
+      try{
+        const parsed = JSON.parse(String(reader.result));
+        if (!parsed || (parsed.version !== 3 && parsed.version !== 2)) throw new Error('格式錯誤');
+        state.mc = (parsed.mc && typeof parsed.mc === 'object') ? parsed.mc : {};
+        state.short = (parsed.short && typeof parsed.short === 'object') ? parsed.short : {};
+        state.gconf = (parsed.gconf && typeof parsed.gconf === 'object') ? parsed.gconf : {};
+        if (typeof parsed.minRate === 'number') state.minRate = parsed.minRate;
+        syncMinRateInput();
+        saveConfig();
+        if (state.csv){
+          renderMcList();
+          state.generated = null;
+          buildGenerated({ silent: true });
+        }
+        afterPoolChange();
+        toast('已匯入設定', 'success');
+      }catch(err){
+        toast('匯入失敗，請確認為本工具匯出的 JSON 設定檔', 'error');
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+    e.target.value = '';
+  });
+
+  /* ---------- names via another AI: group names, letters, option short names ---------- */
+  function dispLabel(label){ const t = state.short[label]; return t && t.trim() ? t.trim() : label; }
+  function charLen(t){ return Array.from(String(t)).length; }
+  function poolLabels(){
+    const seen = new Set(), out = [];
+    poolCols().forEach(c => { if (!seen.has(c.label)){ seen.add(c.label); out.push(c.label); } });
+    return out;
+  }
+  function buildPrompt(){
+    const groups = groupsResolved();
+    const labels = poolLabels();
+    const stems = groups.map((g, i) => '題' + (i + 1) + '：' + (g.type === 'mc' ? g.stem : '（沒有題幹，選項為：' + g.cols.map(c => c.label).join('、') + '）')).join('\n');
+    return '請協助整理問卷分析用的名稱，分成兩部分輸出。\n\n' +
+      '【第一部分：題組名稱與代碼】\n' +
+      '依每一題的題幹，為題組取一個「至多 4 個字」的名稱，再依名稱決定一個英文大寫字母作為代碼（例如「品牌」用 B、「動機」用 M、「通路」用 C），各題的代碼不可重複。\n' +
+      '每題輸出一行，格式為「題號｜題組名稱｜代碼」，例如「題1｜購買品牌｜B」。\n' +
+      stems + '\n\n' +
+      '【第二部分：選項簡稱】\n' +
+      '將下列選項縮寫成「至多 4 個字」的簡稱：保留原意，讓人一看就知道是哪個選項；簡稱彼此不可重複；原本已在 4 個字以內的選項照抄原文。\n' +
+      '每個選項輸出一行，格式為「原始選項｜簡稱」，原始選項必須與下列文字完全相同。\n' +
+      labels.join('\n') + '\n\n' +
+      '【輸出規則】欄位之間用全形直線「｜」分隔；直接逐行輸出上述兩部分，不要加標題、編號、說明或其他文字。';
+  }
+  function normKey(t){ return String(t).replace(/[\s,，、。．.「」『』"'“”‘’()（）\[\]【】:：;；!！?？\-－_|｜]/g, ''); }
+
+  function renderShortPanel(){
+    const panel = document.getElementById('short-panel');
+    const labels = poolLabels();
+    panel.hidden = true;
+    if (!labels.length) return;
+    document.getElementById('prompt-text').value = buildPrompt();
+    const counts = {};
+    labels.forEach(l => { const d = dispLabel(l); counts[d] = (counts[d] || 0) + 1; });
+    document.getElementById('short-table').innerHTML = '<div class="table-scroll"><table class="short-tbl"><thead><tr><th>原始選項</th><th>簡稱</th><th class="marg">字數</th></tr></thead><tbody>' +
+      labels.map((l, i) => {
+        const v = state.short[l] || '';
+        const n = v ? charLen(v) : 0;
+        const dup = v && counts[dispLabel(l)] > 1;
+        const flag = !v ? '<span class="sn-note">顯示原文</span>' : (n > 4 ? '<span class="sn-warn">' + n + ' 字</span>' : n + ' 字') + (dup ? '<span class="sn-warn">重複</span>' : '');
+        return '<tr><td class="sn-full">' + escapeHtml(l) + '</td><td><input type="text" class="sn-input" id="short-' + i + '" data-i="' + i + '" value="' + escapeHtml(v) + '" placeholder="（空白則顯示原文）" aria-label="' + escapeHtml(l) + ' 的簡稱"></td><td class="num sn-flag">' + flag + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    document.getElementById('short-table')._labels = labels;
+  }
+
+  function afterShortChange(){
+    saveConfig();
+    renderShortPanel();
+    afterGroupsChange();
+  }
+
+  document.getElementById('short-table').addEventListener('change', function(e){
+    if (!e.target.classList.contains('sn-input')) return;
+    const labels = this._labels || [];
+    const l = labels[Number(e.target.dataset.i)];
+    if (l == null) return;
+    const v = e.target.value.trim();
+    if (v) state.short[l] = v; else delete state.short[l];
+    afterShortChange();
+  });
+
+  /* 先用暫存文字框同步複製（在嵌入頁面與各瀏覽器中最可靠），失敗再改用剪貼簿 API */
+  function copyTextSync(text){
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '1px';
+    ta.style.height = '1px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    let ok = false;
+    try{
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+    }catch(err){ ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  document.getElementById('btn-copy-prompt').addEventListener('click', function(){
+    const text = buildPrompt();
+    const ta = document.getElementById('prompt-text');
+    ta.value = text;
+    const okMsg = function(){ toast('已複製 AI 指令：' + groupsResolved().length + ' 個題組、' + poolLabels().length + ' 個選項', 'success'); };
+    const fallback = function(){
+      ta.closest('details').open = true;
+      ta.focus(); ta.select();
+      toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製');
+    };
+    if (copyTextSync(text)){ okMsg(); return; }
+    try{
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(okMsg, fallback);
+      } else fallback();
+    }catch(err){ fallback(); }
+  });
+
+  document.getElementById('btn-apply-short').addEventListener('click', function(){
+    const raw = document.getElementById('short-paste').value;
+    const labels = poolLabels();
+    const groups = groupsResolved();
+    const exact = new Map(labels.map(l => [l, l]));
+    const loose = new Map(labels.map(l => [normKey(l), l]));
+    let applied = 0, gApplied = 0;
+    const notFound = [], noSep = [], badGroup = [];
+    raw.split(/\r?\n/).forEach(line => {
+      let t = line.trim();
+      if (!t || /^【.*】$/.test(t)) return;
+      t = t.replace(/^(\d+[.、)）]\s*|[-*•・]\s+)/, '');
+      /* 題組行：題號｜名稱｜代碼 */
+      const gp = t.split(/[｜|]/).map(x => x.trim());
+      const gm = /^題\s*(\d+)$/.exec(gp[0]);
+      if (gm && gp.length >= 2){
+        const g = groups[Number(gm[1]) - 1];
+        if (!g){ badGroup.push(t); return; }
+        const c = gconf(g.src);
+        if (gp[1]) c.name = gp[1].replace(/^[「『"]|[」』"]$/g, '');
+        if (gp[2] && cleanLetter(gp[2])) c.letter = cleanLetter(gp[2]);
+        gApplied++;
+        return;
+      }
+      let idx = t.lastIndexOf('｜');
+      if (idx < 0) idx = t.lastIndexOf('|');
+      if (idx < 0) idx = t.lastIndexOf('\t');
+      if (idx < 0){ const m = t.lastIndexOf('→'); if (m >= 0) idx = m; }
+      if (idx < 0){ noSep.push(t); return; }
+      const orig = t.slice(0, idx).trim().replace(/^[「『"]|[」』"]$/g, '');
+      const short = t.slice(idx + 1).trim().replace(/^[「『"]|[」』"]$/g, '');
+      if (!orig || !short){ noSep.push(t); return; }
+      const label = exact.get(orig) || loose.get(normKey(orig));
+      if (!label){ notFound.push(orig); return; }
+      state.short[label] = short;
+      applied++;
+    });
+    if (!applied && !gApplied && !notFound.length && !noSep.length && !badGroup.length){ toast('請先貼上 AI 的回覆'); return; }
+    afterShortChange();
+    const after = groupsResolved();
+    const letterCount = {};
+    after.forEach(g => { letterCount[g.letter] = (letterCount[g.letter] || 0) + 1; });
+    const dupLetters = Object.keys(letterCount).filter(l => letterCount[l] > 1);
+    const longNames = after.filter(g => g.name && charLen(g.name) > 4);
+    const long = labels.filter(l => state.short[l] && charLen(state.short[l]) > 4);
+    const dmap = {};
+    labels.forEach(l => { const d = dispLabel(l); (dmap[d] = dmap[d] || []).push(l); });
+    const dups = Object.keys(dmap).filter(d => dmap[d].length > 1);
+    const warn = notFound.length || noSep.length || badGroup.length || long.length || dups.length || dupLetters.length || longNames.length;
+    let html = '<div class="notice ' + (warn ? 'notice-warn' : 'notice-ok') + '"><ul>';
+    html += '<li>已套用 ' + gApplied + ' 個題組名稱與代碼、' + applied + ' 個選項簡稱。</li>';
+    if (badGroup.length) html += '<li>下列題號不存在，未套用：' + badGroup.map(x => '「' + escapeHtml(x) + '」').join('、') + '</li>';
+    if (dupLetters.length) html += '<li>題組代碼重複：' + dupLetters.map(x => '「' + escapeHtml(x) + '」').join('、') + '，請在題組卡片上修改。</li>';
+    if (longNames.length) html += '<li>下列題組名稱超過 4 個字：' + longNames.map(g => '「' + escapeHtml(g.name) + '」').join('、') + '</li>';
+    if (notFound.length) html += '<li>下列原始選項對不上目前的選項（AI 可能改了原文），未套用：' + notFound.map(x => '「' + escapeHtml(x) + '」').join('、') + '</li>';
+    if (noSep.length) html += '<li>下列幾行找不到分隔符號「｜」，未套用：' + noSep.slice(0, 8).map(x => '「' + escapeHtml(x) + '」').join('、') + '</li>';
+    if (long.length) html += '<li>下列簡稱超過 4 個字：' + long.map(l => '「' + escapeHtml(state.short[l]) + '」').join('、') + '</li>';
+    if (dups.length) html += '<li>下列簡稱重複，競爭圖上會無法區分：' + dups.map(d => '「' + escapeHtml(d) + '」').join('、') + '</li>';
+    html += '</ul></div>';
+    document.getElementById('short-report').innerHTML = html;
+    toast('已套用 ' + gApplied + ' 個題組、' + applied + ' 個簡稱', (applied || gApplied) ? 'success' : 'error');
+  });
+
+  /* ---------- flow ---------- */
+  function rebuildAnalysis(){
+    const N = state.csv ? state.csv.rows.length : 0;
+    const groups = state.csv ? groupsResolved().filter(g => g.selected.length >= 1) : [];
+    if (!groups.length){
+      state.dummy = null;
+      state.results = [];
+      document.getElementById('cross-results').innerHTML = '';
+      updateVisibility();
+      return;
+    }
+    const qs = groups.map(g => ({ id: g.src, name: g.letter + '｜' + g.dispName }));
+    const columns = [], vecs = [];
+    groups.forEach((g, gi) => g.selected.forEach(c => { columns.push({ qId: qs[gi].id, qName: qs[gi].name, option: dispLabel(c.label), full: c.label, overallRate: N ? c.vec.reduce((a, b) => a + b, 0) / N : 0 }); vecs.push(c.vec); }));
+    const matrix = [], rowsMeta = [];
+    for (let r = 0; r < N; r++){
+      matrix.push(vecs.map(v => v[r]));
+      rowsMeta.push({ seq: r + 1, rowIndex: r });
+    }
+    state.dummy = { qs: qs, columns: columns, matrix: matrix, rowsMeta: rowsMeta };
+    updateVisibility();
+    rerunAll();
+  }
+  function afterGroupsChange(){
+    renderGroups();
+    rebuildAnalysis();
+    renderDummyResult();
+  }
+  function afterPoolChange(){
+    renderShortPanel();
+    afterGroupsChange();
+  }
+  function updateVisibility(){
+    const has = !!state.csv;
+    document.getElementById('section-mc').hidden = true;
+    document.getElementById('section-dummy').hidden = true;
+    document.getElementById('section-groups').hidden = !has;
+    document.getElementById('section-cross').hidden = !state.dummy;
+  }
+
+  /* ---------- 上傳原始表單回覆的警告 ---------- */
+  function renderRawWarn(){
+    const box = document.getElementById('raw-warn');
+    if (!box) return;
+    if (!state.csv){ box.innerHTML = ''; return; }
+    const hasStamp = state.csv.headers.some(h => /時間戳記|timestamp/i.test(h));
+    const grouped = (state.native || []).some(c => c.gsrc && c.gsrc !== 'bin');
+    if (grouped && !hasStamp){ box.innerHTML = ''; return; }
+    const msg = hasStamp && !grouped
+      ? '這份檔案看起來是 Google 表單的原始回覆（含「時間戳記」欄），不是「問卷資料整理器」產出的檔案。請先用問卷資料整理器整理並下載 Excel，再將該檔案上傳到這裡。'
+      : (!grouped
+        ? '找不到可分組的 0／1 欄位。請先用「問卷資料整理器」整理並下載 Excel，再將該檔案上傳到這裡（工作表請選「資料」）。'
+        : '這份檔案仍含「時間戳記」欄，可能不是「問卷資料整理器」產出的檔案；若分析結果異常，請先用問卷資料整理器整理後再上傳。');
+    box.innerHTML = '<div class="notice notice-warn"><strong>請先整理資料：</strong>' + escapeHtml(msg) + '</div>';
+  }
+
+
+  function onDataLoaded(){
+    state.native = detectNative();
+    renderRawWarn();
+    const nImported = applyImportedNames();
+    if (nImported) setTimeout(function(){ toast('已從「題組」工作表帶入 ' + nImported + ' 個題組名稱', 'success'); }, 600);
+    state.mcCands = computeMcCands();
+    state.generated = null;
+    document.getElementById('dummy-result').hidden = true;
+    renderMcList();
+    const reuse = state.mcCands.some(c => state.mc[c.header] && state.mc[c.header].enabled);
+    if (reuse) buildGenerated({ silent: true }); else renderMcReport();
+    afterPoolChange();
+    if (reuse) toast('已套用先前對這份問卷的設定', 'success');
+  }
+  function onDataCleared(){
+    state.native = [];
+    document.getElementById('raw-warn').innerHTML = '';
+    state.mcCands = [];
+    state.generated = null;
+    document.getElementById('dummy-result').hidden = true;
+    document.getElementById('mc-list').innerHTML = '';
+    document.getElementById('mc-report').innerHTML = '';
+    afterPoolChange();
+  }
+
+  /* ---------- sample data (模擬資料，僅供試用) ---------- */
+  const SAMPLE = {
+    file: '冰淇淋品牌與消費情境模擬資料（範例）',
+    brandQ: '您最常購買哪些冰淇淋品牌？',
+    sitQ: '您通常在什麼情況下吃冰淇淋？',
+    brands: ['醉爾思','藍兔','藍鈴','布利斯','班&傑瑞','哈根達斯','商店品牌'],
+    sits: ['日常點心','特殊場合','招待客人','戶外活動','深夜犒賞'],
+    ages: { '18': '18-24', '25': '25-34', '35': '35-44', '45': '45+' },
+    rows: '女45|110110111011,男25|000000110100,女45|100101011100,男25|011000110010,女45|001011001011,女18|000111001100,女18|000000001011,男18|010101111001,女35|011000011000,女18|000010011100,男45|011111011010,女45|000000110110,男25|000100110000,女35|100000010010,女25|100001001110,男25|001110011000,女35|110011110011,女35|000000110100,男25|000001110100,女25|101000110110,男18|000100110110,男35|001100010110,女18|000011011101,男18|000000010001,女45|000010110000,男18|111010111111,女35|000001010011,男18|000100010000,男45|000101110010,男45|000111011100,男18|000100010000,男25|011000110001,女18|111010010101,女18|000110111000,男18|000000110000,男18|001000010000,女45|000100010110,男45|010100111110,女35|001000000000,男25|000011010000,男45|110100110110,女35|100011111110,女35|110110011100,男35|000001111000,男45|000110001110,男35|000101011100,女18|000001011000,男18|001110001011,女25|000010010000,男25|010000010100,女18|000010011001,女25|110010111111,女25|000101110100,男25|000000010000,男25|100100111010,女25|100000110000,女18|000110110011,男18|000111110100,男45|000110010110,女18|000110010001,女45|000100110001,女35|000001011110,女18|010110010101,男35|010100111010,女35|010101010100,男35|000100010010,男25|000100110001,男35|110011010100,男25|100001110010,女35|000110010010,女25|000000010110,女25|000011101100,女25|000111001100,男45|000101111101,女25|001101011100,男18|010000111100,男25|000000110000,男35|000110110110,男25|000100011010,男45|001100110000,男35|011000111010,男45|000001011000,男35|000011110100,女18|000110110101,男45|000000110000,男25|000000010000,男35|010001011000,男45|010000111010,女35|010010111100,女25|000110111010,女18|100100011011,男18|110000111101,女25|100100010010,女35|000101111110,女25|000000110000,男25|010101110010,女45|000110011111,女35|100100110011,男18|000011110111,女25|000000011000,女45|100000100000,女45|100000010000,女45|010000111000,女45|000100110010,男25|100011011100,女45|000000010001,男35|100000010010,女25|000100010001,女18|000000110110,女45|010010011000,男35|001000111001,女18|000101000100,女25|000011011100,女18|010111010110,男35|000010010000,男25|011100111011,男45|010100110010,女25|000010010100,女35|100100100000,男18|010000110111'
+  };
+  function loadSample(){
+    const headers = ['受訪者編號', '性別', '年齡層'].concat(SAMPLE.brands.map(x => 'B_' + x), SAMPLE.sits.map(x => 'S_' + x));
+    const rows = SAMPLE.rows.split(',').map((code, i) => {
+      const bits = code.split('|')[1];
+      const o = { '受訪者編號': 'R' + String(i + 1).padStart(3, '0'), '性別': code[0], '年齡層': SAMPLE.ages[code.slice(1, 3)] };
+      SAMPLE.brands.forEach((x, j) => { o['B_' + x] = bits[j]; });
+      SAMPLE.sits.forEach((x, j) => { o['S_' + x] = bits[7 + j]; });
+      return o;
+    });
+    state.csv = { headers: headers, rows: rows, filename: SAMPLE.file };
+    state.csvRawBuffer = null; state.xlsxWorkbook = null; state.currentSheet = null;
+    state.csvFileName = SAMPLE.file;
+    document.getElementById('encoding-row').hidden = true;
+    document.getElementById('sheet-row').hidden = true;
+    document.getElementById('dropzone-label').textContent = '已載入：' + SAMPLE.file + '（' + rows.length + ' 筆回覆）';
+    const gb = gconf('bin' + SEP + 'B'), gs = gconf('bin' + SEP + 'S');
+    if (!gb.name) gb.name = '購買品牌';
+    if (!gs.name) gs.name = '消費情境';
+    saveConfig();
+    renderCSVPreview();
+    state.crossReqs = [];
+    onDataLoaded();
+    if (state.dummy){
+      const gB = 'g:bin' + SEP + 'B', gS = 'g:bin' + SEP + 'S';
+      state.crossReqs = [
+        { id: 'r' + (++reqSeq), a: 's:性別', b: gB, method: 'auto', alpha: 0.05 },
+        { id: 'r' + (++reqSeq), a: gB, b: gS, method: 'auto', alpha: 0.05 }
+      ];
+      rerunAll();
+    }
+    toast('已載入模擬範例資料並完成分析', 'success');
+    requestAnimationFrame(function(){ document.getElementById('section-cross').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  }
+  document.getElementById('btn-load-sample').addEventListener('click', loadSample);
+
+  /* ---------- formatting helpers ---------- */
+  function pct1(v){ return (v * 100).toFixed(1) + '%'; }
+  function fmtP(p){ if (p == null) return '—'; if (p < 0.001) return '<.001'; return p.toFixed(3).replace(/^0/, ''); }
+  function pEq(p){ const f = fmtP(p); return f.charAt(0) === '<' ? 'p' + f : 'p=' + f; }
+  function fmtPct(v){ return v == null ? '—' : (v * 100).toFixed(1) + '%'; }
+  function fmtNum(v, k){ return v == null ? '—' : v.toFixed(k); }
+  function safeName(s){ return String(s).replace(/[\\/:*?"<>|]/g, '_').slice(0, 60); }
+  function minRateText(){ return (Math.round(state.minRate * 1000) / 10) + '%'; }
+  function naturalSort(a, b){ return a.localeCompare(b, 'zh-Hant', { numeric: true }); }
+  const SMALL_N = 30;
+
+  /* ---------- segment filter ---------- */
+  function segValueRow(r){
+    const sg = state.seg;
+    if (!sg.col || !state.csv || !state.csv.rows[r]) return '';
+    const raw = state.csv.rows[r][sg.col];
+    return String(raw == null ? '' : raw).trim();
+  }
+  function segRowFilter(){
+    const sg = state.seg;
+    if (!sg.col || !sg.value) return null;
+    return function(r){ return segValueRow(r) === sg.value; };
+  }
+  function segDescription(){
+    const sg = state.seg;
+    return sg.col && sg.value ? sg.col + '＝' + sg.value : '';
+  }
+  function segSuffix(){
+    const sg = state.seg;
+    return sg.col && sg.value ? '_' + safeName(sg.col) + '-' + safeName(sg.value) : '';
+  }
+  /* 單選欄位：2–30 個類別、未被題組使用、不是受訪者編號這類每人一值的欄位 */
+  function singleCandidates(){
+    if (!state.csv) return [];
+    const used = new Set();
+    state.native.forEach(c => used.add(c.header));
+    const idHeader = findIdHeader(state.csv.headers);
+    const rows = state.csv.rows;
+    const out = [];
+    state.csv.headers.forEach(h => {
+      if (!h || used.has(h) || h === idHeader) return;
+      const counts = new Map();
+      for (const r of rows){
+        const v = String(r[h] == null ? '' : r[h]).trim();
+        if (!v) continue;
+        counts.set(v, (counts.get(v) || 0) + 1);
+        if (counts.size > 30) return;
+      }
+      if (counts.size < 2) return;
+      /* 數值欄（量表、評分）不列入，只保留文字的單選題 */
+      if (Array.from(counts.keys()).every(v => isFinite(Number(v)))) return;
+      const filled = Array.from(counts.values()).reduce((a, b) => a + b, 0);
+      if (counts.size > filled * 0.6) return;
+      out.push({ col: h, values: Array.from(counts.keys()).sort(naturalSort).map(v => ({ v: v, n: counts.get(v) })) });
+    });
+    return out;
+  }
+  function renderSegControls(){
+    const cands = singleCandidates();
+    const sg = state.seg;
+    const cur = cands.find(c => c.col === sg.col);
+    if (!cur){ sg.col = ''; sg.value = ''; }
+    const colSel = document.getElementById('seg-col');
+    colSel.innerHTML = '<option value="">— 不區隔（全部受訪者）—</option>' +
+      cands.map(c => '<option value="' + escapeHtml(c.col) + '"' + (c.col === sg.col ? ' selected' : '') + '>' + escapeHtml(c.col) + '（' + c.values.length + ' 類）</option>').join('');
+    colSel.disabled = !cands.length;
+    const valSel = document.getElementById('seg-value');
+    if (!cur){ valSel.hidden = true; valSel.innerHTML = ''; return; }
+    if (!cur.values.some(x => x.v === sg.value)) sg.value = cur.values[0].v;
+    valSel.hidden = false;
+    valSel.innerHTML = cur.values.map(x => '<option value="' + escapeHtml(x.v) + '"' + (x.v === sg.value ? ' selected' : '') + '>' + escapeHtml(x.v) + '（n=' + x.n + '）</option>').join('');
+  }
+  function filteredIdx(){
+    const N = state.csv.rows.length;
+    const keep = segRowFilter();
+    const out = [];
+    for (let r = 0; r < N; r++) if (!keep || keep(r)) out.push(r);
+    return out;
+  }
+
+  /* ---------- statistics ---------- */
+  const LOGFACT = [0];
+  function logFact(n){
+    for (let i = LOGFACT.length; i <= n; i++) LOGFACT[i] = LOGFACT[i - 1] + Math.log(i);
+    return LOGFACT[n];
+  }
+  function logHyper(k, r1, c1, N){
+    return logFact(r1) - logFact(k) - logFact(r1 - k)
+         + logFact(N - r1) - logFact(c1 - k) - logFact(N - r1 - c1 + k)
+         - (logFact(N) - logFact(c1) - logFact(N - c1));
+  }
+  function fisherTwoSided(n11, r1, c1, N){
+    const lo = Math.max(0, r1 + c1 - N), hi = Math.min(r1, c1);
+    const lpObs = logHyper(n11, r1, c1, N);
+    let p = 0;
+    for (let k = lo; k <= hi; k++){
+      const lp = logHyper(k, r1, c1, N);
+      if (lp <= lpObs + 1e-7) p += Math.exp(lp);
+    }
+    return Math.min(1, p);
+  }
+  /* 正則化上不完全 Gamma 函數 Q(a, x)，用於任意自由度的卡方右尾機率 */
+  function gammaln(x){
+    const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    let y = x, tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (let j = 0; j < 6; j++) ser += c[j] / ++y;
+    return -tmp + Math.log(2.5066282746310005 * ser / x);
+  }
+  function gammq(a, x){
+    if (x <= 0) return 1;
+    const gln = gammaln(a);
+    if (x < a + 1){
+      let ap = a, sum = 1 / a, del = sum;
+      for (let n = 0; n < 500; n++){ ap++; del *= x / ap; sum += del; if (Math.abs(del) < Math.abs(sum) * 1e-14) break; }
+      return Math.max(0, 1 - sum * Math.exp(-x + a * Math.log(x) - gln));
+    }
+    let b = x + 1 - a, c = 1 / 1e-300, d = 1 / b, h = d;
+    for (let i = 1; i < 500; i++){
+      const an = -i * (i - a);
+      b += 2;
+      d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return Math.min(1, Math.exp(-x + a * Math.log(x) - gln) * h);
+  }
+  function chi2Sf(x, df){ return x <= 0 ? 1 : gammq(df / 2, x / 2); }
+
+  /* 2×2：a = 兩者皆是，b = A 是 B 否，c = A 否 B 是，d = 兩者皆否 */
+  function test2x2(a, b, c, d, method){
+    const N = a + b + c + d, r1 = a + b, r2 = c + d, c1 = a + c, c2 = b + d;
+    const out = { N, a, b, c, d, r1, c1, df: 1, testable: true };
+    if (r1 === 0 || r2 === 0 || c1 === 0 || c2 === 0){
+      out.testable = false; out.chi2 = null; out.p = null; out.usedMethod = '無法檢定（某選項無人勾選或全體皆勾選）';
+      out.minExp = null; return out;
+    }
+    out.minExp = Math.min(r1 * c1, r1 * c2, r2 * c1, r2 * c2) / N;
+    out.chi2 = N * Math.pow(a * d - b * c, 2) / (r1 * r2 * c1 * c2);
+    let use = method;
+    if (method === 'auto') use = out.minExp < 5 ? 'fisher' : 'pearson';
+    out.usedMethod = use === 'fisher' ? 'Fisher' : 'Pearson';
+    out.p = use === 'fisher' ? fisherTwoSided(a, r1, c1, N) : chi2Sf(out.chi2, 1);
+    return out;
+  }
+
+  function dirOf(t, x){
+    const v = x != null ? x : t.lift;
+    if (!t.testable || v == null) return '—';
+    return v > 1.0000001 ? '偏高' : (v < 0.9999999 ? '偏低' : '持平');
+  }
+  function ratioColor(l){
+    if (l == null) return 'transparent';
+    if (l >= 1) return 'color-mix(in srgb, var(--good) ' + Math.round(Math.min(60, (l - 1) * 40)) + '%, transparent)';
+    return 'color-mix(in srgb, var(--warn) ' + Math.round(Math.min(50, (1 - l) * 70)) + '%, transparent)';
+  }
+
+  /* ---------- variables for cross analysis ---------- */
+  function groupColsOf(qid){
+    const d = state.dummy;
+    return d.columns.map((c, idx) => Object.assign({ idx: idx }, c)).filter(c => c.qId === qid);
+  }
+  function splitByThreshold(cols){
+    const keep = [], low = [];
+    cols.forEach(c => { if ((c.overallRate != null ? c.overallRate : 1) < state.minRate - 1e-9) low.push(c); else keep.push(c); });
+    return { keep: keep, low: low };
+  }
+  function varLabel(v){
+    if (!v) return '';
+    if (v.startsWith('g:')){ const q = state.dummy && state.dummy.qs.find(x => x.id === v.slice(2)); return q ? q.name : ''; }
+    return v.slice(2);
+  }
+  function renderCrossControls(){
+    const selA = document.getElementById('cross-a');
+    const selB = document.getElementById('cross-b');
+    const prevA = selA.value, prevB = selB.value;
+    const qs = state.dummy ? state.dummy.qs : [];
+    const singles = singleCandidates().filter(c => c.col !== state.seg.col);
+    const gOpts = qs.map(q => '<option value="g:' + escapeHtml(q.id) + '">' + escapeHtml(q.name) + '</option>').join('');
+    selA.innerHTML = (qs.length ? '<optgroup label="複選題組">' + gOpts + '</optgroup>' : '') +
+      (singles.length ? '<optgroup label="單選變數">' + singles.map(c => '<option value="s:' + escapeHtml(c.col) + '">' + escapeHtml(c.col) + '（' + c.values.length + ' 類）</option>').join('') + '</optgroup>' : '');
+    selB.innerHTML = gOpts;
+    const has = (sel, v) => Array.from(sel.options).some(o => o.value === v);
+    if (prevA && has(selA, prevA)) selA.value = prevA;
+    if (prevB && has(selB, prevB)) selB.value = prevB;
+    else if (qs.length > 1 && selA.value === 'g:' + qs[0].id) selB.selectedIndex = 1;
+  }
+
+  /* ---------- analysis: multiple-choice × multiple-choice ---------- */
+  function analyzeMcMc(req){
+    const d = state.dummy;
+    const qa = req.a.slice(2), qb = req.b.slice(2);
+    const A = splitByThreshold(groupColsOf(qa)), B = splitByThreshold(groupColsOf(qb));
+    const idxs = filteredIdx();
+    const N = idxs.length;
+    const sumOf = c => { let s = 0; for (const r of idxs) s += d.matrix[r][c.idx]; return s; };
+    const rowMarg = A.keep.map(sumOf), colMarg = B.keep.map(sumOf);
+    const counts = A.keep.map(a => B.keep.map(b => { let s = 0; for (const r of idxs) s += d.matrix[r][a.idx] * d.matrix[r][b.idx]; return s; }));
+    const tests = [];
+    A.keep.forEach((a, i) => B.keep.forEach((b, j) => {
+      const n11 = counts[i][j], r1 = rowMarg[i], c1 = colMarg[j];
+      const t = test2x2(n11, r1 - n11, c1 - n11, N - r1 - c1 + n11, req.method);
+      t.optA = a.option; t.optB = b.option; t.fullA = a.full; t.fullB = b.full;
+      t.condPct = r1 > 0 ? n11 / r1 : null;
+      t.overall = N > 0 ? c1 / N : null;
+      t.lift = (t.condPct != null && t.overall > 0) ? t.condPct / t.overall : null;
+      tests.push(t);
+    }));
+    return { kind: 'mm', req: req, nameA: varLabel(req.a), nameB: varLabel(req.b), N: N,
+      optionsA: A.keep.map(c => c.option), optionsB: B.keep.map(c => c.option), lowA: A.low, lowB: B.low,
+      counts: counts, rowMarg: rowMarg, colMarg: colMarg, tests: tests, method: req.method, alpha: req.alpha, seg: segDescription() };
+  }
+
+  /* ---------- analysis: single-choice × multiple-choice ---------- */
+  function analyzeSingleMc(req){
+    const d = state.dummy;
+    const col = req.a.slice(2), qb = req.b.slice(2);
+    const B = splitByThreshold(groupColsOf(qb));
+    const idxs = filteredIdx().filter(r => cellText(r, col) !== '');
+    const N = idxs.length;
+    const catSet = new Map();
+    idxs.forEach(r => { const v = cellText(r, col); catSet.set(v, (catSet.get(v) || 0) + 1); });
+    const cats = Array.from(catSet.keys()).sort(naturalSort);
+    const catN = cats.map(c => catSet.get(c));
+    const k = cats.length;
+    const z = 1.959963985;
+    const tests = B.keep.map(b => {
+      const a = cats.map(() => 0);
+      let c1 = 0;
+      idxs.forEach(r => { if (d.matrix[r][b.idx]){ a[cats.indexOf(cellText(r, col))]++; c1++; } });
+      const P = N ? c1 / N : 0;
+      const t = { option: b.option, full: b.full, a: a, c1: c1, N: N, overall: P, df: k - 1, testable: k >= 2 && c1 > 0 && c1 < N };
+      t.cells = cats.map((cat, i) => {
+        const n = catN[i], rate = n ? a[i] / n : null;
+        const E = n * c1 / N;
+        const den = Math.sqrt(E * (1 - n / N) * (1 - P));
+        return { rate: rate, index: (rate != null && P > 0) ? rate / P * 100 : null, adjRes: den > 0 ? (a[i] - E) / den : null, exp: E };
+      });
+      if (!t.testable){ t.chi2 = null; t.p = null; t.minExp = null; t.usedMethod = k < 2 ? '無法檢定（類別不足 2 個）' : '無法檢定（無人勾選或全體皆勾選）'; return t; }
+      if (k === 2){
+        const r = test2x2(a[0], catN[0] - a[0], a[1], catN[1] - a[1], req.method);
+        Object.assign(t, { chi2: r.chi2, p: r.p, minExp: r.minExp, usedMethod: r.usedMethod });
+      } else {
+        let chi2 = 0, minExp = Infinity;
+        cats.forEach((cat, i) => {
+          const n = catN[i];
+          const e1 = n * c1 / N, e0 = n * (N - c1) / N;
+          chi2 += Math.pow(a[i] - e1, 2) / e1 + Math.pow((n - a[i]) - e0, 2) / e0;
+          minExp = Math.min(minExp, e1, e0);
+        });
+        t.chi2 = chi2; t.minExp = minExp; t.p = chi2Sf(chi2, k - 1); t.usedMethod = 'Pearson';
+        t.smallCells = cats.reduce((s, cat, i) => s + (catN[i] * c1 / N < 5 ? 1 : 0) + (catN[i] * (N - c1) / N < 5 ? 1 : 0), 0);
+      }
+      t.cells.forEach(cell => { cell.sig = t.p < req.alpha && cell.adjRes != null && Math.abs(cell.adjRes) >= z; });
+      return t;
+    });
+    return { kind: 'sm', req: req, nameA: col, nameB: varLabel(req.b), N: N, cats: cats, catN: catN, lowB: B.low,
+      tests: tests, method: req.method, alpha: req.alpha, seg: segDescription() };
+  }
+
+  /* ---------- rendering ---------- */
+  function lowNotice(list, label){
+    if (!list || !list.length) return '';
+    return '<div class="notice notice-info">「' + escapeHtml(label) + '」中全體勾選率低於 ' + minRateText() + ' 的選項未納入分析：' +
+      list.map(c => '「' + escapeHtml(c.option) + '」（' + pct1(c.overallRate) + '）').join('、') + '</div>';
+  }
+  function cardHead(res, title){
+    return '<div class="ct-head"><h3>' + title + '</h3><button type="button" class="btn-icon" data-role="remove" title="移除此結果">×</button></div>' +
+      '<p class="pca-meta">' + (res.seg ? '<span class="seg-tag">區隔：' + escapeHtml(res.seg) + '</span>' : '') +
+      '<span>' + (res.seg ? 'n' : 'N') + ' = ' + res.N + '</span><span>檢定方法：' + ({ auto: '自動', fisher: 'Fisher', pearson: 'Pearson' })[res.method] + '</span><span>α = ' + String(res.alpha).replace(/^0/, '') + '</span></p>';
+  }
+  function smallNNotice(res){
+    return (res.N > 0 && res.N < SMALL_N) ? '<div class="notice notice-warn">' + (res.seg ? '此區隔' : '樣本') + '僅 ' + res.N + ' 位受訪者，檢定力很低，「不顯著」不代表沒有關聯。</div>' : '';
+  }
+
+  function renderMm(res){
+    const T = res.tests, alpha = res.alpha, aS = String(alpha).replace(/^0/, '');
+    const testable = T.filter(t => t.testable);
+    const m = testable.length;
+    const nFisher = testable.filter(t => t.usedMethod === 'Fisher').length;
+    const nSmall = testable.filter(t => t.minExp < 5).length;
+    const nRaw = testable.filter(t => t.p < alpha).length;
+    let html = cardHead(res, escapeHtml(res.nameA) + ' × ' + escapeHtml(res.nameB));
+    html += smallNNotice(res) + lowNotice(res.lowA, res.nameA) + lowNotice(res.lowB, res.nameB);
+
+    /* ① 共同勾選次數表 */
+    html += '<h4 class="sub-h">① 共同勾選次數表</h4>';
+    html += '<p class="hint small">每格為同時勾選兩個選項的人數。小計為該選項實際勾選人數（並非跨列加總），因每位受訪者可同時勾選多個選項。</p>';
+    const headRow = '<tr><th></th>' + res.optionsB.map(b => '<th>' + escapeHtml(b) + '</th>').join('') + '<th class="marg">小計</th></tr>';
+    const bodyRows = res.optionsA.map((a, i) => '<tr><th class="rowlabel">' + escapeHtml(a) + '</th>' +
+      res.counts[i].map(v => '<td class="num">' + v + '</td>').join('') + '<td class="num marg">' + res.rowMarg[i] + '</td></tr>').join('');
+    const footRow = '<tr class="foot-row"><th>小計</th>' + res.colMarg.map(v => '<td class="num marg">' + v + '</td>').join('') + '<td class="num marg strong">N=' + res.N + '</td></tr>';
+    html += '<div class="table-scroll"><table class="ct-table"><thead>' + headRow + '</thead><tbody>' + bodyRows + footRow + '</tbody></table></div>';
+    html += '<div class="row-actions tight"><button type="button" class="btn btn-ghost" data-role="dl-count">下載共同勾選次數表 CSV</button></div>';
+
+    /* ② 檢定摘要 */
+    html += '<h4 class="sub-h">② 批次卡方檢定</h4>';
+    html += '<div class="summary">共 <strong>' + T.length + '</strong> 組選項配對（可檢定 <strong>' + m + '</strong> 組），其中 <strong>' + nFisher +
+      '</strong> 組使用 Fisher 精確檢定' + (res.method === 'auto' ? '（期望次數 &lt; 5 時自動採用）' : '') + '。p &lt; ' + aS + '：<strong>' + nRaw +
+      '</strong> 組；若各配對全無關聯，偶然也預期約有 <strong>' + (m * alpha).toFixed(1) + '</strong> 組達此標準。</div>';
+    const warns = [];
+    if (m && nSmall / m > 0.5) warns.push('超過一半的配對期望次數 &lt; 5，Pearson 卡方的近似不可靠，請以 Fisher 精確檢定的 p 值為準。');
+    if (res.method === 'pearson' && nSmall) warns.push('目前強制使用 Pearson 卡方，有 ' + nSmall + ' 組配對期望次數 &lt; 5，p 值可能失真。');
+    if (warns.length) html += '<div class="notice notice-warn"><ul>' + warns.map(w => '<li>' + w + '</li>').join('') + '</ul></div>';
+
+    html += '<h4 class="sub-h">③ 各「' + escapeHtml(res.nameA) + '」選項的傾向摘要</h4>';
+    html += '<p class="hint small">P(B|A) 為勾選 A 選項的人當中，也勾選 B 選項的比例；Lift ＝ P(B|A) ÷ P(B)，大於 1 代表比全體受訪者更常勾選。只列出 p &lt; α 者。</p>';
+    html += '<div class="sum-grid">' + res.optionsA.map((optA, i) => {
+      const rows = T.filter(t => t.optA === optA);
+      const nA = res.rowMarg[i];
+      const up = rows.filter(t => t.testable && t.p < alpha && t.lift > 1).sort((x, y) => y.lift - x.lift);
+      const down = rows.filter(t => t.testable && t.p < alpha && t.lift < 1).sort((x, y) => x.lift - y.lift);
+      const pill = t => escapeHtml(t.optB) + '〔Lift ' + fmtNum(t.lift, 2) + '｜' + fmtPct(t.condPct) + '｜' + pEq(t.p) + '〕';
+      let inner = '';
+      if (nA === 0) inner = '<div class="sum-none">無人勾選此選項，無法檢定。</div>';
+      else {
+        inner += up.length ? '<div class="sum-line"><b>顯著偏高：</b>' + up.map(t => '<span class="pill pill-up">' + pill(t) + '</span>').join('') + '</div>'
+                           : '<div class="sum-line sum-none">沒有顯著偏高的選項。</div>';
+        if (down.length) inner += '<div class="sum-line"><b>顯著偏低：</b>' + down.map(t => '<span class="pill pill-down">' + pill(t) + '</span>').join('') + '</div>';
+        if (nA < 5) inner += '<div class="sum-line sum-none">此選項僅 ' + nA + ' 人勾選，檢定力極低。</div>';
+      }
+      return '<div class="sum-item"><h4>' + escapeHtml(optA) + '<span class="n">n=' + nA + '</span></h4>' + inner + '</div>';
+    }).join('') + '</div>';
+
+    html += '<h4 class="sub-h">④ Lift 熱圖</h4>';
+    html += '<p class="hint small">列為「' + escapeHtml(res.nameA) + '」，欄為「' + escapeHtml(res.nameB) + '」。格內上方為 Lift、下方為 P(B|A)；綠色為偏高、橘色為偏低；* 表示 p &lt; α。游標停在格子上可看完整數據。</p>';
+    const head = '<tr><th></th>' + res.optionsB.map(b => '<th>' + escapeHtml(b) + '</th>').join('') + '</tr>';
+    const body = res.optionsA.map(a => '<tr><th class="rowlabel">' + escapeHtml(a) + '</th>' + res.optionsB.map(b => {
+      const t = T.find(x => x.optA === a && x.optB === b);
+      if (!t.testable) return '<td class="hm-cell" title="無法檢定"><span class="hm-lift">—</span></td>';
+      const tip = a + ' × ' + b + '\n兩者皆勾選 ' + t.a + ' 人（A 共 ' + t.r1 + ' 人、B 共 ' + t.c1 + ' 人、N=' + t.N + '）' +
+        '\nP(B|A)=' + fmtPct(t.condPct) + '，P(B)=' + fmtPct(t.overall) + '，Lift=' + fmtNum(t.lift, 2) + '\n' + t.usedMethod + ' p=' + fmtP(t.p);
+      return '<td class="hm-cell" style="background:' + ratioColor(t.lift) + '" title="' + escapeHtml(tip) + '">' +
+        '<span class="hm-lift">' + fmtNum(t.lift, 2) + '<span class="hm-star">' + (t.p < alpha ? '*' : '') + '</span></span>' +
+        '<span class="hm-pct">' + fmtPct(t.condPct) + '</span></td>';
+    }).join('') + '</tr>').join('');
+    html += '<div class="table-scroll"><table class="ct-table hm-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+
+    const sorted = testable.slice().sort((x, y) => x.p - y.p);
+    const shown = sorted.slice(0, 30);
+    html += '<h4 class="sub-h">⑤ 檢定結果長表（依 p 值由小到大，前 ' + shown.length + ' 組）</h4>';
+    html += '<div class="table-scroll"><table class="ct-table"><thead><tr>' +
+      ['選項 A', '選項 B', '兩者皆勾選', 'P(B|A)', 'P(B)', 'Lift', '方法', 'Pearson χ²', 'p', '方向'].map(h => '<th>' + h + '</th>').join('') +
+      '</tr></thead><tbody>' + shown.map(t => '<tr><td>' + escapeHtml(t.optA) + '</td><td>' + escapeHtml(t.optB) + '</td>' +
+        '<td class="num">' + t.a + '</td><td class="num">' + fmtPct(t.condPct) + '</td><td class="num">' + fmtPct(t.overall) + '</td>' +
+        '<td class="num">' + fmtNum(t.lift, 2) + '</td><td>' + t.usedMethod + '</td><td class="num">' + fmtNum(t.chi2, 2) + '</td>' +
+        '<td class="num">' + fmtP(t.p) + '</td><td>' + dirOf(t) + (t.p < alpha ? '（p&lt;α）' : '') + '</td></tr>').join('') +
+      '</tbody></table></div>';
+    html += '<p class="hint small">卡方統計量 df = 1。使用 Fisher 精確檢定的配對，p 值來自精確機率，「Pearson χ²」欄僅供參考。p 值未做多重比較校正，結果屬探索性用途。</p>';
+    html += '<div class="row-actions tight"><button type="button" class="btn btn-secondary" data-role="dl-tests">下載完整檢定結果長表 CSV</button></div>';
+    return html;
+  }
+
+  function renderSm(res){
+    const T = res.tests, alpha = res.alpha, aS = String(alpha).replace(/^0/, '');
+    const k = res.cats.length;
+    const testable = T.filter(t => t.testable);
+    const nSig = testable.filter(t => t.p < alpha).length;
+    let html = cardHead(res, escapeHtml(res.nameA) + ' × ' + escapeHtml(res.nameB));
+    html += smallNNotice(res) + lowNotice(res.lowB, res.nameB);
+    if (k < 2) return html + '<div class="notice notice-warn">「' + escapeHtml(res.nameA) + '」在目前條件下只有 ' + k + ' 個類別，無法檢定。</div>';
+
+    /* ① 交叉表 */
+    html += '<h4 class="sub-h">① 交叉表：各類別的勾選人數與勾選率</h4>';
+    html += '<p class="hint small">勾選率為該類別受訪者中勾選此選項的比例（列百分比）；最後一列為全體勾選率，作為比較基準。</p>';
+    const head = '<tr><th>' + escapeHtml(res.nameA) + '</th><th class="marg">人數</th>' + T.map(t => '<th>' + escapeHtml(t.option) + '</th>').join('') + '</tr>';
+    const body = res.cats.map((cat, i) => '<tr><th class="rowlabel">' + escapeHtml(cat) + '</th><td class="num">' + res.catN[i] + '</td>' +
+      T.map(t => '<td class="num">' + t.a[i] + '<span class="sub-num">' + fmtPct(t.cells[i].rate) + '</span></td>').join('') + '</tr>').join('');
+    const foot = '<tr class="foot-row"><th>全體</th><td class="num">' + res.N + '</td>' + T.map(t => '<td class="num">' + t.c1 + '<span class="sub-num">' + fmtPct(t.overall) + '</span></td>').join('') + '</tr>';
+    html += '<div class="table-scroll"><table class="ct-table cross-table"><thead>' + head + '</thead><tbody>' + body + foot + '</tbody></table></div>';
+    html += '<div class="row-actions tight"><button type="button" class="btn btn-ghost" data-role="dl-count">下載交叉表 CSV</button></div>';
+
+    /* ② 檢定結果 */
+    html += '<h4 class="sub-h">② 卡方獨立性檢定（每個選項各一次）</h4>';
+    html += '<div class="summary">共 <strong>' + T.length + '</strong> 個選項（可檢定 <strong>' + testable.length + '</strong> 個），p &lt; ' + aS + '：<strong>' + nSig +
+      '</strong> 個；若全無關聯，偶然也預期約有 <strong>' + (testable.length * alpha).toFixed(1) + '</strong> 個達此標準。每個選項為「' + escapeHtml(res.nameA) + '（' + k + ' 類）× 是否勾選」的 ' + k + '×2 交叉表，df = ' + (k - 1) + '。</div>';
+    const warns = [];
+    if (k > 2 && testable.some(t => t.smallCells)) warns.push('部分選項有期望次數 &lt; 5 的方格，卡方近似可能不準；Fisher 精確檢定只適用於 2×2，建議合併類別後再檢定。');
+    if (k > 2 && res.method === 'fisher') warns.push('類別超過 2 個時一律使用 Pearson 卡方。');
+    if (warns.length) html += '<div class="notice notice-warn"><ul>' + warns.map(w => '<li>' + w + '</li>').join('') + '</ul></div>';
+    const sorted = T.slice().sort((x, y) => (x.p == null ? 2 : x.p) - (y.p == null ? 2 : y.p));
+    html += '<div class="table-scroll"><table class="ct-table"><thead><tr>' +
+      ['選項', '全體勾選率', 'χ²', 'df', 'p', '方法', '最小期望次數', '結果'].map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' +
+      sorted.map(t => '<tr><td title="' + escapeHtml(t.full) + '">' + escapeHtml(t.option) + '</td><td class="num">' + fmtPct(t.overall) + '</td>' +
+        '<td class="num">' + fmtNum(t.chi2, 2) + '</td><td class="num">' + (t.testable ? t.df : '—') + '</td><td class="num">' + fmtP(t.p) + '</td>' +
+        '<td>' + escapeHtml(t.usedMethod) + '</td><td class="num">' + fmtNum(t.minExp, 1) + '</td>' +
+        '<td>' + (!t.testable ? '—' : (t.p < alpha ? '<span class="pill pill-up">顯著</span>' : '不顯著')) + '</td></tr>').join('') +
+      '</tbody></table></div>';
+
+    /* ③ 傾向摘要 */
+    html += '<h4 class="sub-h">③ 各類別的傾向摘要</h4>';
+    html += '<p class="hint small">指標值 ＝ 該類別勾選率 ÷ 全體勾選率 × 100，大於 100 為 over-index、小於 100 為 under-index。只列出檢定顯著（p &lt; α），且該方格調整後標準化殘差絕對值 ≥ 1.96 者。</p>';
+    html += '<div class="sum-grid">' + res.cats.map((cat, i) => {
+      const up = T.filter(t => t.testable && t.cells[i].sig && t.cells[i].adjRes > 0).sort((x, y) => y.cells[i].index - x.cells[i].index);
+      const down = T.filter(t => t.testable && t.cells[i].sig && t.cells[i].adjRes < 0).sort((x, y) => x.cells[i].index - y.cells[i].index);
+      const pill = t => escapeHtml(t.option) + '〔指標 ' + Math.round(t.cells[i].index) + '｜' + fmtPct(t.cells[i].rate) + '｜' + pEq(t.p) + '〕';
+      let inner = up.length ? '<div class="sum-line"><b>顯著偏高：</b>' + up.map(t => '<span class="pill pill-up">' + pill(t) + '</span>').join('') + '</div>'
+                            : '<div class="sum-line sum-none">沒有顯著偏高的選項。</div>';
+      if (down.length) inner += '<div class="sum-line"><b>顯著偏低：</b>' + down.map(t => '<span class="pill pill-down">' + pill(t) + '</span>').join('') + '</div>';
+      if (res.catN[i] < 5) inner += '<div class="sum-line sum-none">此類別僅 ' + res.catN[i] + ' 人，檢定力極低。</div>';
+      return '<div class="sum-item"><h4>' + escapeHtml(cat) + '<span class="n">n=' + res.catN[i] + '</span></h4>' + inner + '</div>';
+    }).join('') + '</div>';
+
+    /* ④ 指標值熱圖 */
+    html += '<h4 class="sub-h">④ 指標值熱圖</h4>';
+    html += '<p class="hint small">列為「' + escapeHtml(res.nameA) + '」的類別，欄為「' + escapeHtml(res.nameB) + '」的選項。格內上方為指標值、下方為該類別勾選率；綠色為 over-index、橘色為 under-index；* 表示該選項檢定顯著且該方格調整後標準化殘差絕對值 ≥ 1.96。</p>';
+    const hHead = '<tr><th></th>' + T.map(t => '<th>' + escapeHtml(t.option) + '</th>').join('') + '</tr>';
+    const hBody = res.cats.map((cat, i) => '<tr><th class="rowlabel">' + escapeHtml(cat) + '</th>' + T.map(t => {
+      const c = t.cells[i];
+      if (!t.testable || c.index == null) return '<td class="hm-cell"><span class="hm-lift">—</span></td>';
+      const tip = cat + ' × ' + t.option + '\n勾選 ' + t.a[i] + ' 人／' + res.catN[i] + ' 人（' + fmtPct(c.rate) + '），全體 ' + fmtPct(t.overall) +
+        '\n指標值 ' + Math.round(c.index) + '，調整後標準化殘差 ' + fmtNum(c.adjRes, 2) + '\n' + t.usedMethod + ' p=' + fmtP(t.p);
+      return '<td class="hm-cell" style="background:' + ratioColor(c.index / 100) + '" title="' + escapeHtml(tip) + '">' +
+        '<span class="hm-lift">' + Math.round(c.index) + '<span class="hm-star">' + (c.sig ? '*' : '') + '</span></span>' +
+        '<span class="hm-pct">' + fmtPct(c.rate) + '</span></td>';
+    }).join('') + '</tr>').join('');
+    html += '<div class="table-scroll"><table class="ct-table hm-table"><thead>' + hHead + '</thead><tbody>' + hBody + '</tbody></table></div>';
+    html += '<p class="hint small">p 值未做多重比較校正，結果屬探索性用途。</p>';
+    html += '<div class="row-actions tight"><button type="button" class="btn btn-secondary" data-role="dl-tests">下載完整檢定結果 CSV</button></div>';
+    return html;
+  }
+
+  /* ---------- CSV ---------- */
+  function csvOf(rows){ return rows.map(r => r.map(csvEscape).join(',')).join('\r\n'); }
+  function countCsv(res){
+    const rows = [['分析', res.nameA + ' × ' + res.nameB], ['區隔', res.seg || '全部受訪者'], [res.seg ? 'n' : 'N', res.N], []];
+    if (res.kind === 'mm'){
+      rows.push([''].concat(res.optionsB, ['小計']));
+      res.optionsA.forEach((a, i) => rows.push([a].concat(res.counts[i], [res.rowMarg[i]])));
+      rows.push(['小計'].concat(res.colMarg, ['N=' + res.N]));
+    } else {
+      rows.push(['勾選人數']);
+      rows.push([res.nameA, '人數'].concat(res.tests.map(t => t.option)));
+      res.cats.forEach((cat, i) => rows.push([cat, res.catN[i]].concat(res.tests.map(t => t.a[i]))));
+      rows.push(['全體', res.N].concat(res.tests.map(t => t.c1)));
+      rows.push([]);
+      rows.push(['勾選率（列百分比）']);
+      rows.push([res.nameA, '人數'].concat(res.tests.map(t => t.option)));
+      res.cats.forEach((cat, i) => rows.push([cat, res.catN[i]].concat(res.tests.map(t => t.cells[i].rate == null ? '' : Number(t.cells[i].rate.toFixed(4))))));
+      rows.push(['全體', res.N].concat(res.tests.map(t => Number(t.overall.toFixed(4)))));
+    }
+    return csvOf(rows);
+  }
+  function testsCsv(res){
+    const num = v => v == null ? '' : Number(v.toPrecision(6));
+    const aS = String(res.alpha).replace(/^0/, '');
+    if (res.kind === 'mm'){
+      const rows = [['題組A', '選項A', '原始選項A', '題組B', '選項B', '原始選項B', '區隔', 'N', 'A勾選人數', 'B勾選人數', '兩者皆勾選', 'A是B否', 'A否B是', '兩者皆否',
+        'P(B|A)', 'P(B)', 'Lift', '最小期望次數', '檢定方法', 'Pearson卡方', 'df', 'p', '方向', 'p<' + aS]];
+      res.tests.forEach(t => rows.push([res.nameA, t.optA, t.fullA, res.nameB, t.optB, t.fullB, res.seg || '全部', t.N, t.r1, t.c1, t.a, t.b, t.c, t.d,
+        num(t.condPct), num(t.overall), num(t.lift), num(t.minExp), t.usedMethod, num(t.chi2), t.testable ? 1 : '', num(t.p), dirOf(t), t.testable ? (t.p < res.alpha ? '是' : '否') : '']));
+      return csvOf(rows);
+    }
+    const rows = [['單選變數', '類別', '類別人數', '題組', '選項', '原始選項', '區隔', '類別內勾選人數', '類別內勾選率', '全體勾選率', '指標值', '調整後標準化殘差',
+      '方格是否顯著', '選項卡方', 'df', 'p', '檢定方法', '最小期望次數', '選項p<' + aS]];
+    res.tests.forEach(t => res.cats.forEach((cat, i) => {
+      const c = t.cells[i];
+      rows.push([res.nameA, cat, res.catN[i], res.nameB, t.option, t.full, res.seg || '全部', t.a[i], num(c.rate), num(t.overall),
+        c.index == null ? '' : Number(c.index.toFixed(1)), num(c.adjRes), c.sig ? '是' : '否', num(t.chi2), t.testable ? t.df : '', num(t.p), t.usedMethod, num(t.minExp),
+        t.testable ? (t.p < res.alpha ? '是' : '否') : '']);
+    }));
+    return csvOf(rows);
+  }
+
+  /* ---------- run / rerun ---------- */
+  let reqSeq = 0;
+  function runReq(req){
+    if (!state.dummy) return null;
+    const qs = state.dummy.qs;
+    const okG = v => v && v.startsWith('g:') && qs.some(q => 'g:' + q.id === v);
+    const okS = v => v && v.startsWith('s:') && singleCandidates().some(c => c.col === v.slice(2));
+    if (!okG(req.b) || !(okG(req.a) || okS(req.a)) || req.a === req.b) return null;
+    if (req.a.startsWith('s:') && req.a.slice(2) === state.seg.col) return { kind: 'paused', req: req, nameA: req.a.slice(2), nameB: varLabel(req.b) };
+    return req.a.startsWith('g:') ? analyzeMcMc(req) : analyzeSingleMc(req);
+  }
+  function rerunAll(){
+    const box = document.getElementById('cross-results');
+    if (!state.dummy){ box.innerHTML = ''; return; }
+    renderSegControls();
+    renderCrossControls();
+    const kept = [];
+    state.results = [];
+    state.crossReqs.forEach(req => {
+      const res = runReq(req);
+      if (res){ kept.push(req); state.results.push(res); }
+    });
+    state.crossReqs = kept;
+    box.innerHTML = state.results.map(res => '<article class="ct-card cross-card" data-rid="' + res.req.id + '">' +
+      (res.kind === 'mm' ? renderMm(res) : res.kind === 'sm' ? renderSm(res)
+        : '<div class="ct-head"><h3>' + escapeHtml(res.nameA) + ' × ' + escapeHtml(res.nameB) + '</h3><button type="button" class="btn-icon" data-role="remove" title="移除此結果">×</button></div>' +
+          '<p class="hint small">「' + escapeHtml(res.nameA) + '」目前被設為區隔變數，此分析暫停顯示；取消區隔或改用其他區隔變數後會自動恢復。</p>') +
+      '</article>').join('');
+  }
+
+  document.getElementById('btn-run-cross').addEventListener('click', function(){
+    if (!state.dummy) return;
+    const a = document.getElementById('cross-a').value, b = document.getElementById('cross-b').value;
+    if (!a || !b){ toast('請選擇列變數 A 與欄變數 B'); return; }
+    if (a === b){ toast('列變數 A 與欄變數 B 不可相同', 'error'); return; }
+    const req = { id: 'r' + (++reqSeq), a: a, b: b, method: document.getElementById('chisq-method').value, alpha: Number(document.getElementById('chisq-alpha').value) };
+    const res = runReq(req);
+    if (!res || res.kind === 'paused'){ toast('無法分析這組變數', 'error'); return; }
+    state.crossReqs.unshift(req);
+    rerunAll();
+    toast('已完成「' + res.nameA + ' × ' + res.nameB + '」', 'success');
+  });
+  document.getElementById('cross-results').addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-role]');
+    if (!btn) return;
+    const rid = btn.closest('[data-rid]').dataset.rid;
+    const res = (state.results || []).find(r => r.req.id === rid);
+    if (!res) return;
+    const base = safeName(res.nameA) + 'x' + safeName(res.nameB) + segSuffix() + '_' + dateStamp();
+    if (btn.dataset.role === 'remove'){
+      state.crossReqs = state.crossReqs.filter(r => r.id !== rid);
+      rerunAll();
+    } else if (btn.dataset.role === 'dl-count'){
+      saveFile((res.kind === 'mm' ? '共同勾選次數表_' : '交叉表_') + base + '.csv', countCsv(res));
+    } else if (btn.dataset.role === 'dl-tests'){
+      saveFile('卡方檢定結果_' + base + '.csv', testsCsv(res));
+    }
+  });
+
+  /* ---------- threshold & segment controls ---------- */
+  function syncMinRateInput(){
+    const el = document.getElementById('min-rate');
+    if (el) el.value = String(Math.round(state.minRate * 1000) / 10);
+  }
+  syncMinRateInput();
+  document.getElementById('min-rate').addEventListener('change', function(e){
+    let v = Number(e.target.value);
+    if (!isFinite(v) || v < 0) v = 0;
+    if (v > 50) v = 50;
+    state.minRate = v / 100;
+    syncMinRateInput();
+    saveConfig();
+    renderGroups();
+    rebuildAnalysis();
+    toast('已更新：勾選率低於 ' + minRateText() + ' 的選項不納入分析');
+  });
+  function onSegChange(){
+    if (!state.dummy) return;
+    rerunAll();
+    renderDummyResult();
+  }
+  document.getElementById('seg-col').addEventListener('change', function(e){
+    state.seg.col = e.target.value;
+    state.seg.value = '';
+    onSegChange();
+  });
+  document.getElementById('seg-value').addEventListener('change', function(e){
+    state.seg.value = e.target.value;
+    onSegChange();
+  });
+
+  /* ---------- boot ---------- */
+  updateVisibility();
+  renderGroups();
+})();
+</script>
+</body>
+</html>
