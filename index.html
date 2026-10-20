@@ -3,25 +3,95 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>問卷分析工具</title>
+<title>行銷研究工具箱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
-  body{margin:0;background:#f5f3ee;color:#232019;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7}
-  main{max-width:640px;margin:0 auto;padding:48px 16px}
-  h1{font-size:28px;margin:0 0 8px}
-  p{color:#655e4d;margin:0 0 24px}
-  a.tool{display:block;background:#fff;border:1px solid #ddd7c9;border-radius:12px;padding:16px 18px;margin-bottom:12px;color:inherit;text-decoration:none}
-  a.tool:hover{border-color:#28594f}
-  a.tool strong{display:block;font-size:17px;color:#1b4139}
-  a.tool span{font-size:14px;color:#655e4d}
+  :root{
+    --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9;
+    --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
+    --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33;
+      --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+      --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.7}
+  main{max-width:880px;margin:0 auto;padding:48px 16px 64px}
+  .eyebrow{margin:0 0 8px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+  h1{font-family:"Noto Serif TC",serif;font-size:clamp(26px,4vw,34px);margin:0 0 10px}
+  .lede{margin:0 0 28px;color:var(--ink-soft);max-width:62ch}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 32px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:14px}
+  .flow span.s{font-weight:700;color:var(--accent-strong)}
+  .flow span.a{color:var(--ink-faint)}
+  section{margin-bottom:30px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+  .no{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:15px;transform:translateY(4px)}
+  h2{font-family:"Noto Serif TC",serif;font-size:21px;margin:0}
+  .sec-desc{margin:0 0 12px 42px;color:var(--ink-soft);font-size:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px;margin-left:42px}
+  @media (max-width:560px){.sec-desc,.cards{margin-left:0}}
+  a.tool{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+  a.tool:hover{border-color:var(--accent);transform:translateY(-1px)}
+  a.tool strong{display:block;font-size:16.5px;color:var(--accent-strong);margin-bottom:2px}
+  a.tool span{display:block;font-size:13.5px;color:var(--ink-soft)}
+  a.tool em{display:inline-block;margin-top:8px;font-style:normal;font-size:12px;color:var(--ink-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:0 9px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--ink-faint);font-size:13px}
 </style>
 </head>
 <body>
 <main>
-  <h1>問卷分析工具</h1>
-  <p>請依序使用。所有計算都在您的瀏覽器中完成，不會上傳資料，也不使用 AI 服務。</p>
-  <a class="tool" href="./問卷資料整理器/"><strong>1. 問卷資料整理器</strong><span>整理 Google 表單回覆，輸出可分析的 Excel 檔。</span></a>
-  <a class="tool" href="./複選題組分析產生器/"><strong>2. 複選題組分析產生器</strong><span>勾選率、主成分分析、競爭圖與 AI 報告指令。</span></a>
-  <a class="tool" href="./複選題卡方檢定器/"><strong>3. 複選題卡方檢定器</strong><span>複選題的交叉分析與卡方檢定。</span></a>
+  <p class="eyebrow">行銷研究方法</p>
+  <h1>行銷研究工具箱</h1>
+  <p class="lede">從問卷設計、資料整理到統計分析與行銷應用，依研究流程排列。所有計算都在您的瀏覽器中完成，不會上傳資料。</p>
+
+  <div class="flow" aria-label="使用順序">
+    <span class="s">① 問卷設計</span><span class="a">→</span>
+    <span>收集資料（Google 表單）</span><span class="a">→</span>
+    <span class="s">② 資料整理</span><span class="a">→</span>
+    <span class="s">③ 統計分析</span><span class="a">→</span>
+    <span class="s">④ 行銷應用</span>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="no">1</span><h2>問卷設計</h2></div>
+    <p class="sec-desc">產生給 AI 的指令，製作符合 Pick any/J 複選格式的問卷。</p>
+    <div class="cards">
+      <a class="tool" href="./pickany/"><strong>Pick-any 問卷產生器</strong><span>市場定義：品牌、使用情境、通路、媒體接觸。</span><em>市場定義</em></a>
+      <a class="tool" href="./segment-survey/"><strong>市場區隔問卷產生器</strong><span>市場區隔：消費動機、個人特質與基本資料。</span><em>市場區隔</em></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">2</span><h2>資料整理</h2></div>
+    <p class="sec-desc">把 Google 表單回覆整理成可以直接分析的 Excel 檔。</p>
+    <div class="cards">
+      <a class="tool" href="./organizer/"><strong>問卷資料整理器</strong><span>篩選樣本、移除個人資料、複選題轉 0／1、重新命名欄位。</span><em>分析前必做</em></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">3</span><h2>統計分析</h2></div>
+    <p class="sec-desc">上傳問卷資料整理器產出的 Excel 檔進行分析。</p>
+    <div class="cards">
+      <a class="tool" href="./group-pca/"><strong>複選題組分析產生器</strong><span>勾選率、主成分分析、競爭圖與 AI 報告指令。</span><em>競爭圖</em></a>
+      <a class="tool" href="./chisq/"><strong>複選題卡方檢定器</strong><span>複選題的共同勾選、交叉分析與卡方檢定。</span><em>交叉分析</em></a>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="no">4</span><h2>行銷應用</h2></div>
+    <p class="sec-desc">把分析結果轉成行銷溝通的內容。</p>
+    <div class="cards">
+      <a class="tool" href="./scenario-copy/"><strong>情境文案產生器</strong><span>依消費情境區隔，產生分眾廣告文案與影片腳本的 AI 指令。</span><em>溝通策略</em></a>
+    </div>
+  </section>
+
+  <footer>本網站的工具只在瀏覽器中執行，不使用 AI 服務；需要 AI 的步驟，由工具產生指令，再由使用者貼到自己的 AI 對話中。</footer>
 </main>
 </body>
 </html>

@@ -1,0 +1,693 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<style>.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}.toolbox-back a{color:#28594f;text-decoration:none}.toolbox-back a:hover{text-decoration:underline}@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}</style>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<title>情境文案產生器</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg: #F2F5EF;
+    --surface: #FFFFFF;
+    --surface-2: #E9EFE4;
+    --border: #D5DECC;
+    --border-soft: #E3E9DB;
+    --ink: #1B241D;
+    --ink-soft: #52604F;
+    --ink-faint: #7C8A78;
+    --accent: #3F6B52;
+    --accent-strong: #2A4A38;
+    --accent-soft: #DCEAE0;
+    --accent-contrast: #FBFDF9;
+    --warm: #B4652F;
+    --warm-soft: #F3E4D4;
+    --danger: #A6432F;
+    --code-surface: #FBFAF3;
+    --code-border: #DED9BF;
+    --focus-ring: #3F6B5266;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #10160F;
+      --surface: #171F16;
+      --surface-2: #1E281C;
+      --border: #2D3A29;
+      --border-soft: #263323;
+      --ink: #E7EEE3;
+      --ink-soft: #AAB9A4;
+      --ink-faint: #7C8C77;
+      --accent: #7FBE9B;
+      --accent-strong: #9ED4B4;
+      --accent-soft: #22352A;
+      --accent-contrast: #0B120C;
+      --warm: #E0A472;
+      --warm-soft: #2E2419;
+      --danger: #E08A76;
+      --code-surface: #141B12;
+      --code-border: #2C3527;
+      --focus-ring: #7FBE9B66;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #10160F;
+    --surface: #171F16;
+    --surface-2: #1E281C;
+    --border: #2D3A29;
+    --border-soft: #263323;
+    --ink: #E7EEE3;
+    --ink-soft: #AAB9A4;
+    --ink-faint: #7C8C77;
+    --accent: #7FBE9B;
+    --accent-strong: #9ED4B4;
+    --accent-soft: #22352A;
+    --accent-contrast: #0B120C;
+    --warm: #E0A472;
+    --warm-soft: #2E2419;
+    --danger: #E08A76;
+    --code-surface: #141B12;
+    --code-border: #2C3527;
+    --focus-ring: #7FBE9B66;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC","Noto Sans",system-ui,sans-serif;
+    line-height: 1.65;
+  }
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+  }
+  header.page{
+    max-width: 780px;
+    margin: 0 0 30px;
+  }
+  .eyebrow{
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 38px);
+    margin: 0 0 12px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .lede{
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    margin: 0 0 6px;
+    max-width: 64ch;
+  }
+  .lede small{
+    display:block;
+    margin-top: 8px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+  }
+
+  .logic{
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+    margin: 22px 0 8px;
+  }
+  @media (max-width: 800px){ .logic{ grid-template-columns: 1fr 1fr; } }
+  .logic .step{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .logic .step .k{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    color: var(--accent-strong);
+    letter-spacing: .04em;
+  }
+  .logic .step .v{
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+  .logic .arrow{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color: var(--ink-faint);
+    font-size: 16px;
+  }
+  @media (max-width: 800px){ .logic .arrow{ display:none; } }
+
+  .grid{
+    display: grid;
+    grid-template-columns: minmax(0,1.05fr) minmax(0,1fr);
+    gap: 24px;
+    align-items: start;
+    margin-top: 26px;
+  }
+  @media (max-width: 940px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 26px 28px;
+  }
+  .card h2{
+    font-family: "Noto Serif TC", serif;
+    font-size: 18px;
+    margin: 0 0 4px;
+    display:flex;
+    align-items:baseline;
+    gap: 8px;
+  }
+  .card h2 .step-badge{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+  .card > p.hint{
+    margin: 0 0 20px;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+
+  .field{ margin-bottom: 18px; }
+  .field:last-child{ margin-bottom: 0; }
+  .field label{
+    display:block;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .field .field-hint{
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 5px;
+  }
+  .row2{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  input[type="text"], textarea, select{
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus, button:focus-visible, summary:focus-visible{
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  textarea.notes{ min-height: 56px; }
+
+  fieldset{ border:none; padding:0; margin: 0 0 18px; }
+  fieldset legend{ font-size: 13.5px; font-weight: 600; padding:0; margin-bottom: 8px; }
+  .check-row{
+    display:flex;
+    gap: 10px;
+    align-items:flex-start;
+    padding: 8px 10px;
+    border-radius: 9px;
+  }
+  .check-row:hover{ background: var(--surface-2); }
+  .check-row input[type="checkbox"]{
+    margin-top: 3px;
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    flex: none;
+  }
+  .check-row .label-txt{ font-size: 13.5px; font-weight: 500; }
+  .check-row .sub{ font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+
+  .seg-list{ display:flex; flex-direction:column; gap: 12px; }
+  .seg-card{
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    position: relative;
+  }
+  .seg-card .seg-top{
+    display:grid;
+    grid-template-columns: 1fr 110px;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .seg-card input[type="text"]{ background: var(--surface); }
+  .seg-card label.mini{
+    font-size: 11px;
+    color: var(--ink-faint);
+    display:block;
+    margin-bottom: 4px;
+  }
+  .seg-remove{
+    position:absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .seg-remove:hover{ color: var(--danger); background: var(--surface); }
+  .add-seg{
+    align-self: flex-start;
+    margin-top: 4px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  .add-seg:hover{ background: var(--accent); color: var(--accent-contrast); }
+
+  .output-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .output-head .live{
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .output-box{
+    background: var(--code-surface);
+    border: 1px solid var(--code-border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 640px;
+    overflow-y: auto;
+    color: var(--ink);
+  }
+  .output-box.empty{ color: var(--ink-faint); font-style: normal; }
+
+  .actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    align-items:center;
+  }
+  button.copy{
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  button.copy:hover{ background: var(--accent-strong); }
+  button.copy[data-copied="true"]{ background: var(--accent-strong); }
+  .actions .note{ font-size: 12px; color: var(--ink-faint); }
+
+  .callout{
+    margin-top: 22px;
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--warm);
+    background: var(--warm-soft);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .callout b{ display:block; margin-bottom: 4px; font-size: 13.5px; }
+
+  footer.page{
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  footer.page p{ margin: 0 0 4px; }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">行銷研究方法 · 從情境分析到廣告文案</p>
+    <h1>情境文案產生器</h1>
+    <p class="lede">
+      把消費情境區隔分析的結果（PCA消費情境圖、集群佔比、品牌定位角度）填進左側，
+      這個工具會依「屬性→利益→價值」的手段-終點鏈邏輯，組成一段可直接貼給 AI 的文案指令，
+      為每個情境各自生成語氣、訴求都不同的文案。
+      <small>設計依據：1.4b「溝通研究」之 laddering 與敘事傳輸（narrative transportation）邏輯。</small>
+    </p>
+    <div class="logic">
+      <div class="step"><div class="k">STEP 1</div><div class="v">情境區隔分析結果</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">STEP 2</div><div class="v">推導每個情境的核心價值</div></div>
+      <div class="arrow">→</div>
+      <div class="step"><div class="k">STEP 3</div><div class="v">價值戲劇化為故事情節</div></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="s1">
+      <h2 id="s1"><span class="step-badge">1</span> 填入你的情境分析結果</h2>
+      <p class="hint">左側會即時組成右側的 AI 指令，可以隨時增減情境、調整重來。</p>
+
+      <div class="row2">
+        <div class="field">
+          <label for="brand">品牌名稱</label>
+          <input type="text" id="brand" value="哈根達斯" placeholder="例如：哈根達斯">
+        </div>
+        <div class="field">
+          <label for="category">產品／品類</label>
+          <input type="text" id="category" value="冰淇淋" placeholder="例如：冰淇淋">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>消費情境區隔</label>
+        <div class="seg-list" id="segList"></div>
+        <button type="button" class="add-seg" id="addSeg">+ 新增一個情境</button>
+        <p class="field-hint">「定位策略／訴求方向」留空的話，會請 AI 依情境名稱與佔比自行推導。</p>
+      </div>
+
+      <fieldset>
+        <legend>要產出哪些文案形式？</legend>
+        <label class="check-row">
+          <input type="checkbox" data-fmt="ad" checked>
+          <span>
+            <span class="label-txt">廣告標題＋內文＋CTA</span>
+            <span class="sub">傳統平面／數位廣告的完整組合</span>
+          </span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-fmt="social" checked>
+          <span>
+            <span class="label-txt">社群貼文（含 hashtag）</span>
+            <span class="sub">IG／Facebook 貼文語氣，含 3–5 個對應 hashtag</span>
+          </span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-fmt="ecom">
+          <span>
+            <span class="label-txt">電商商品頁文案</span>
+            <span class="sub">商品標題＋賣點條列＋規格說明語氣</span>
+          </span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-fmt="slogan">
+          <span>
+            <span class="label-txt">海報標語／Slogan</span>
+            <span class="sub">單句或雙句，適合印在包裝或店頭 POP</span>
+          </span>
+        </label>
+        <label class="check-row">
+          <input type="checkbox" data-fmt="video">
+          <span>
+            <span class="label-txt">30 秒影片廣告腳本（故事大綱）</span>
+            <span class="sub">四拍結構：情境鉤子→衝突／價值缺口→產品進場→情緒收尾，含畫面提示</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="row2">
+        <div class="field">
+          <label for="tone">語氣風格（非必填）</label>
+          <input type="text" id="tone" placeholder="例如：溫馨家庭感、精緻奢華、俏皮輕鬆">
+        </div>
+        <div class="field">
+          <label for="lang">目標語言</label>
+          <select id="lang">
+            <option value="zh-TW" selected>繁體中文</option>
+            <option value="en">英文</option>
+            <option value="both">繁體中文＋英文各一版</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="extra">額外要求（非必填）</label>
+        <textarea id="extra" class="notes" placeholder="例如：避免使用「最」等誇大字眼、需符合食品廣告法規、字數限制..."></textarea>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="s2">
+      <h2 id="s2"><span class="step-badge">2</span> 產生給 AI 的指令</h2>
+      <p class="hint">把下面這段文字整段複製，貼到 Claude、ChatGPT 等 AI 對話視窗，就會依情境分別產出文案。</p>
+
+      <div class="output-head">
+        <span class="live">即時預覽 · 隨左側設定自動更新</span>
+        <span class="live" id="charcount">0 字</span>
+      </div>
+      <div class="output-box" id="output" aria-live="polite"></div>
+
+      <div class="actions">
+        <button class="copy" id="copyBtn" type="button">複製指令</button>
+        <span class="note" id="copyNote"></span>
+      </div>
+
+      <div class="callout">
+        <b>為什麼要先做情境區隔，才能寫文案？</b>
+        若情境彼此界線清楚（如 PCA 圖上分成兩群、很少重疊），代表消費者不會同時因為兩種理由購買——文案若想「兩邊都討好」，兩邊都會顯得不夠有說服力。分開寫、各自打中一個情境的核心價值，通常比一份「大雜燴」文案更有效。
+      </div>
+    </section>
+  </div>
+
+  <footer class="page">
+    <p>理論基礎：手段-終點鏈法（means-end chain / laddering，屬性→利益→價值）；敘事傳輸理論（narrative transportation）。</p>
+    <p>此工具只負責組出指令，實際的文案內容仍需要 AI 產生——記得檢查文案是否符合品牌調性與相關廣告法規。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var brandEl = document.getElementById('brand');
+  var categoryEl = document.getElementById('category');
+  var toneEl = document.getElementById('tone');
+  var langEl = document.getElementById('lang');
+  var extraEl = document.getElementById('extra');
+  var segList = document.getElementById('segList');
+  var addSegBtn = document.getElementById('addSeg');
+  var fmtChecks = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-fmt]'));
+  var output = document.getElementById('output');
+  var charcount = document.getElementById('charcount');
+  var copyBtn = document.getElementById('copyBtn');
+  var copyNote = document.getElementById('copyNote');
+
+  var FMT_LABELS = {
+    ad: '廣告標題＋內文＋CTA（一則完整組合）',
+    social: '社群貼文（含 3–5 個對應 hashtag）',
+    ecom: '電商商品頁文案（商品標題＋賣點條列）',
+    slogan: '海報標語／Slogan（單句或雙句）',
+    video: '30 秒影片廣告腳本／故事大綱（依四拍結構，含畫面提示）'
+  };
+
+  var DEFAULT_SEGS = [
+    { name: '日常甜點／零食', pct: '82.4%', pos: '日常主力品牌：強調性價比、家庭容量' },
+    { name: '自我犒賞（treat）', pct: '', pos: '強調treat的品牌：聚焦情緒訴求，打造自我犒賞儀式感' },
+    { name: '特殊場合／招待客人', pct: '特殊場合50%＋，招待客人近40%', pos: '主攻特殊場合品牌：限量包裝、節慶促銷，或與社交活動連結的宣傳語言' }
+  ];
+
+  function makeSegCard(seg){
+    var card = document.createElement('div');
+    card.className = 'seg-card';
+    card.innerHTML =
+      '<button type="button" class="seg-remove" aria-label="移除此情境">移除</button>' +
+      '<div class="seg-top">' +
+        '<div><label class="mini">情境名稱</label><input type="text" class="seg-name" placeholder="例如：日常甜點／零食"></div>' +
+        '<div><label class="mini">佔比（非必填）</label><input type="text" class="seg-pct" placeholder="例如：82.4%"></div>' +
+      '</div>' +
+      '<label class="mini">定位策略／訴求方向（非必填）</label>' +
+      '<input type="text" class="seg-pos" placeholder="例如：強調性價比、家庭容量">';
+    card.querySelector('.seg-name').value = seg.name || '';
+    card.querySelector('.seg-pct').value = seg.pct || '';
+    card.querySelector('.seg-pos').value = seg.pos || '';
+    card.querySelector('.seg-remove').addEventListener('click', function(){
+      card.remove();
+      render();
+    });
+    card.querySelectorAll('input').forEach(function(el){
+      el.addEventListener('input', render);
+    });
+    return card;
+  }
+
+  DEFAULT_SEGS.forEach(function(seg){ segList.appendChild(makeSegCard(seg)); });
+
+  addSegBtn.addEventListener('click', function(){
+    segList.appendChild(makeSegCard({ name: '', pct: '', pos: '' }));
+    render();
+  });
+
+  function readSegments(){
+    return Array.prototype.slice.call(segList.querySelectorAll('.seg-card')).map(function(card){
+      return {
+        name: card.querySelector('.seg-name').value.trim(),
+        pct: card.querySelector('.seg-pct').value.trim(),
+        pos: card.querySelector('.seg-pos').value.trim()
+      };
+    }).filter(function(s){ return s.name; });
+  }
+
+  function checkedFormats(){
+    return fmtChecks.filter(function(c){ return c.checked; }).map(function(c){ return c.dataset.fmt; });
+  }
+
+  function buildPrompt(){
+    var brand = brandEl.value.trim();
+    var category = categoryEl.value.trim();
+    if(!brand || !category){ return null; }
+    var segs = readSegments();
+    if(segs.length === 0){ return null; }
+    var formats = checkedFormats();
+    if(formats.length === 0){ return null; }
+    var tone = toneEl.value.trim();
+    var extra = extraEl.value.trim();
+    var lang = langEl.value;
+
+    var lines = [];
+    lines.push('你是一位資深廣告文案人員（copywriter），請根據以下消費情境區隔分析結果，為「' + brand + '」的「' + category + '」設計分眾文案。');
+    lines.push('');
+    lines.push('【理論邏輯，請依此推導，不要只條列賣點】');
+    lines.push('每個情境代表消費者賦予這個產品／服務不同的意義。請先用手段-終點鏈（means-end chain / laddering）的邏輯，為每個情境推導一條「屬性→利益→價值」的鏈——這個情境下，消費者在意的實際利益是什麼？這個利益最終代表了什麼樣的個人或社會價值？找到價值之後，再用敘事傳輸（narrative transportation）的方式，把這個價值戲劇化成一段簡短情節或畫面，而不是直接寫「好吃、方便、划算」這種條列賣點。');
+    lines.push('');
+    lines.push('【重要限制：情境之間要清楚區隔】');
+    lines.push('這些情境彼此界線明顯，消費者很少同時因為兩種情境而購買同一份「' + category + '」。因此每個情境的文案角度必須清楚區隔、不要互相混用——例如日常情境的文案不宜出現節慶、慶祝等字眼；特殊場合或社交情境的文案也不宜強調「省錢、划算、家庭份量」。');
+    lines.push('');
+    lines.push('【消費情境區隔】');
+    segs.forEach(function(s, i){
+      var line = (i+1) + '. ' + s.name;
+      if(s.pct) line += '（佔比：' + s.pct + '）';
+      lines.push(line);
+      if(s.pos){
+        lines.push('　定位策略／訴求方向：' + s.pos);
+      } else {
+        lines.push('　定位策略／訴求方向：（未提供，請你依情境名稱與佔比自行推導一個合理方向）');
+      }
+    });
+    lines.push('');
+    lines.push('【每個情境都要產出以下文案形式】');
+    formats.forEach(function(f, i){
+      lines.push((i+1) + '. ' + FMT_LABELS[f]);
+    });
+    lines.push('');
+
+    if(formats.indexOf('video') > -1){
+      lines.push('【關於「30秒影片廣告腳本」，請依以下四拍結構寫故事大綱，不要寫成賣點條列】');
+      lines.push('－0–5秒：情境鉤子。建立觀眾一眼就能代入的生活場景，此時先不出現產品。');
+      lines.push('－5–15秒：讓這個情境背後的情感缺口或衝突浮現——就是你在【理論邏輯】那一步推導出的「利益／價值」缺口，不是產品規格上的缺口。');
+      lines.push('－15–25秒：產品自然進場，作為解決這個缺口的動作。用畫面、動作、表情把這個轉折「秀出來」，不要用旁白直接唸出賣點或功能。');
+      lines.push('－25–30秒：情緒或畫面收在高潮，帶出品牌識別與 slogan／字卡。');
+      lines.push('－請依情境性質選擇合適的敘事視角：偏向個人情緒轉折的情境（如自我犒賞），適合內向收斂的敘事，鏡頭語言可以較慢、較私密；偏向人際或社交連結的情境（如特殊場合、招待客人），適合以關係為主軸，情緒高潮應落在人與人之間而非個人感受；偏向日常、高頻次的情境，適合輕快、低張力的生活切片。');
+      lines.push('－每個情境的腳本請包含：四拍各自的畫面內容描述、可能的一句關鍵台詞或字卡、建議的鏡頭步調（快／慢）。');
+      lines.push('－若同時有多個情境的腳本，請先用一句話定義貫穿所有情境的品牌核心承諾，列在所有腳本之前，確保各情境雖語氣、敘事視角不同，仍圍繞同一個核心價值展開。');
+      lines.push('');
+    }
+
+    lines.push('【格式與輸出規則】');
+    if(lang === 'zh-TW'){
+      lines.push('－全文使用繁體中文。');
+    } else if(lang === 'en'){
+      lines.push('－全文使用英文。');
+    } else {
+      lines.push('－每一則文案都需要繁體中文與英文各一版，各自完整、不要逐字直譯。');
+    }
+    if(tone){
+      lines.push('－整體語氣風格：' + tone + '。');
+    }
+    lines.push('－請以情境名稱作為小標題，依序列出該情境的所有文案形式，情境與情境之間清楚分段。');
+    lines.push('－每則文案前先用一句話寫出這則文案鎖定的核心價值（laddering 推導出的那個價值詞），再附上文案本身。');
+    lines.push('－純文字輸出，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。');
+    lines.push('－全部文案產出後，請在最下方為「每一個情境」各建議一個最適合投放的媒體或通路（如社群廣告、店頭POP、電商banner、CRM推播等），並用一句話說明為什麼適合。');
+    if(extra){
+      lines.push('');
+      lines.push('【額外要求】');
+      lines.push(extra);
+    }
+
+    return lines.join('\n');
+  }
+
+  function render(){
+    var text = buildPrompt();
+    if(text === null){
+      output.textContent = '請確認已填寫品牌名稱、產品／品類、至少一個消費情境，並勾選至少一種文案形式，指令會自動顯示在這裡。';
+      output.classList.add('empty');
+      charcount.textContent = '0 字';
+      copyBtn.disabled = true;
+    } else {
+      output.textContent = text;
+      output.classList.remove('empty');
+      charcount.textContent = text.length + ' 字';
+      copyBtn.disabled = false;
+    }
+  }
+
+  [brandEl, categoryEl, toneEl, extraEl].forEach(function(el){ el.addEventListener('input', render); });
+  langEl.addEventListener('change', render);
+  fmtChecks.forEach(function(c){ c.addEventListener('change', render); });
+
+  copyBtn.addEventListener('click', function(){
+    var text = buildPrompt();
+    if(!text) return;
+    function done(ok){
+      copyBtn.dataset.copied = 'true';
+      copyBtn.textContent = ok ? '已複製' : '複製失敗，請手動選取';
+      copyNote.textContent = ok ? '已複製到剪貼簿，貼到 AI 對話視窗即可' : '';
+      setTimeout(function(){
+        copyBtn.dataset.copied = 'false';
+        copyBtn.textContent = '複製指令';
+      }, 1600);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(false); });
+    } else {
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        done(true);
+      }catch(e){ done(false); }
+    }
+  });
+
+  render();
+})();
+</script>
+
+</body></html>

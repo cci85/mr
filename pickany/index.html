@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick-any 問卷產生器</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg: #F2F5EF;
+    --surface: #FFFFFF;
+    --surface-2: #E9EFE4;
+    --border: #D5DECC;
+    --border-soft: #E3E9DB;
+    --ink: #1B241D;
+    --ink-soft: #52604F;
+    --ink-faint: #7C8A78;
+    --accent: #3F6B52;
+    --accent-strong: #2A4A38;
+    --accent-soft: #DCEAE0;
+    --accent-contrast: #FBFDF9;
+    --danger: #A6432F;
+    --code-surface: #FBFAF3;
+    --code-border: #DED9BF;
+    --focus-ring: #3F6B5266;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #10160F;
+      --surface: #171F16;
+      --surface-2: #1E281C;
+      --border: #2D3A29;
+      --border-soft: #263323;
+      --ink: #E7EEE3;
+      --ink-soft: #AAB9A4;
+      --ink-faint: #7C8C77;
+      --accent: #7FBE9B;
+      --accent-strong: #9ED4B4;
+      --accent-soft: #22352A;
+      --accent-contrast: #0B120C;
+      --danger: #E08A76;
+      --code-surface: #141B12;
+      --code-border: #2C3527;
+      --focus-ring: #7FBE9B66;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #10160F;
+    --surface: #171F16;
+    --surface-2: #1E281C;
+    --border: #2D3A29;
+    --border-soft: #263323;
+    --ink: #E7EEE3;
+    --ink-soft: #AAB9A4;
+    --ink-faint: #7C8C77;
+    --accent: #7FBE9B;
+    --accent-strong: #9ED4B4;
+    --accent-soft: #22352A;
+    --accent-contrast: #0B120C;
+    --danger: #E08A76;
+    --code-surface: #141B12;
+    --code-border: #2C3527;
+    --focus-ring: #7FBE9B66;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Noto Sans TC","Noto Sans",system-ui,sans-serif;
+    line-height: 1.65;
+  }
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+  }
+  header.page{
+    max-width: 760px;
+    margin: 0 0 36px;
+  }
+  .eyebrow{
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--accent-strong);
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family: "Noto Serif TC", serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4vw, 38px);
+    margin: 0 0 12px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .lede{
+    color: var(--ink-soft);
+    font-size: 15.5px;
+    margin: 0 0 6px;
+    max-width: 62ch;
+  }
+  .lede small{
+    display:block;
+    margin-top: 8px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+  }
+
+  .grid{
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1.05fr);
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 900px){
+    .grid{ grid-template-columns: 1fr; }
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 26px 28px;
+  }
+  .card h2{
+    font-family: "Noto Serif TC", serif;
+    font-size: 18px;
+    margin: 0 0 4px;
+    display:flex;
+    align-items:baseline;
+    gap: 8px;
+  }
+  .card h2 .step{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+  .card > p.hint{
+    margin: 0 0 20px;
+    color: var(--ink-faint);
+    font-size: 13px;
+  }
+
+  .field{ margin-bottom: 18px; }
+  .field:last-child{ margin-bottom: 0; }
+  .field label{
+    display:block;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+  .field .field-hint{
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 5px;
+  }
+  input[type="text"], textarea, select{
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  select{ cursor: pointer; }
+  input[type="text"]:focus, textarea:focus, select:focus, button:focus-visible, summary:focus-visible{
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+  textarea.notes{ min-height: 64px; }
+
+  fieldset{
+    border: none;
+    padding: 0;
+    margin: 0 0 18px;
+  }
+  fieldset legend{
+    font-size: 13.5px;
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+  .check-row{
+    display:flex;
+    gap: 10px;
+    align-items:flex-start;
+    padding: 9px 10px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+  }
+  .check-row:hover{ background: var(--surface-2); }
+  .check-row input[type="checkbox"]{
+    margin-top: 3px;
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    flex: none;
+  }
+  .check-row .code{
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 1px 6px;
+    flex: none;
+    margin-top: 1px;
+  }
+  .check-row .label-txt{ font-size: 13.5px; font-weight: 500; }
+  .check-row .sub{ font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  .check-row .sub.dynamic{ color: var(--accent-strong); }
+  .field-hint.dynamic{ color: var(--accent-strong); }
+  .inline-count{
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    margin-left: 4px;
+  }
+  .inline-count input[type="number"]{
+    width: 52px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+
+  .output-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .output-head .live{
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .output-box{
+    background: var(--code-surface);
+    border: 1px solid var(--code-border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 13px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 560px;
+    overflow-y: auto;
+    color: var(--ink);
+  }
+  .output-box.empty{ color: var(--ink-faint); font-style: normal; }
+
+  .actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+    align-items:center;
+  }
+  button.copy{
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    cursor: pointer;
+  }
+  button.copy:hover{ background: var(--accent-strong); }
+  button.copy[data-copied="true"]{ background: var(--accent-strong); }
+  .actions .note{ font-size: 12px; color: var(--ink-faint); }
+
+  details.example{
+    margin-top: 28px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 4px 26px;
+  }
+  details.example summary{
+    cursor: pointer;
+    font-weight: 600;
+    padding: 16px 0;
+    font-size: 14.5px;
+    list-style: none;
+  }
+  details.example summary::-webkit-details-marker{ display:none; }
+  details.example summary::before{
+    content: "▸";
+    display:inline-block;
+    margin-right: 8px;
+    color: var(--accent-strong);
+    transition: transform .15s ease;
+  }
+  details.example[open] summary::before{ transform: rotate(90deg); }
+  .example-body{
+    padding: 0 0 22px;
+    border-top: 1px solid var(--border-soft);
+    margin-top: -2px;
+    padding-top: 16px;
+  }
+  .example-body p.src{
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+  .example-text{
+    font-size: 13px;
+    line-height: 1.85;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 16px 18px;
+    white-space: pre-wrap;
+  }
+
+  footer.page{
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  footer.page p{ margin: 0 0 4px; }
+</style>
+</head>
+<body>
+<style>.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}.toolbox-back a{color:#28594f;text-decoration:none}.toolbox-back a:hover{text-decoration:underline}@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}</style>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">行銷研究方法 · Pick any/J 複選題設計</p>
+    <h1>Pick-any 問卷產生器</h1>
+    <p class="lede">
+      輸入你想研究的產品或服務類別，這個工具會依「範圍設定六個問題」與 Pick any/J 複選格式的設計規則，
+      組合成一段可直接貼給 AI 的指令；AI 會依此指令幫你把完整問卷的品牌、情境、通路、媒體選項寫出來。
+      <small>設計依據：Edwards &amp; Allenby (2003), <em>Market Definition</em>；Fennell &amp; Allenby (2003) 策略六問。</small>
+    </p>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="step1-h">
+      <h2 id="step1-h"><span class="step">1</span> 設定你的研究主題</h2>
+      <p class="hint">左側的設定會即時組成右側的 AI 指令，可以隨時調整重來。</p>
+
+      <div class="field">
+        <label for="topic">研究主題（產品或服務類別）</label>
+        <input type="text" id="topic" value="手搖飲料" placeholder="例如：手搖飲料、運動鞋、外送平台">
+        <p class="field-hint">下面已先填入範例，清空後換成你自己的題目即可。</p>
+      </div>
+
+      <div class="field">
+        <label for="industry">產業類型</label>
+        <select id="industry">
+          <option value="retail" selected>零售／快消品（飲料、日用品、服飾、美妝等）</option>
+          <option value="food">餐飲／連鎖速食</option>
+          <option value="durable">耐久財／3C／家電／汽車</option>
+          <option value="service">一般消費服務業（美容、健身、教育、醫療等）</option>
+          <option value="digital">數位平台／App／訂閱服務</option>
+          <option value="attraction">景點／觀光／體驗</option>
+          <option value="b2b">B2B／企業採購</option>
+        </select>
+        <p class="field-hint">會決定「購買通路」的四個分類、使用頻率的問法，以及 B2B 情境下篩選題與使用情境的措辭。</p>
+        <p class="field-hint dynamic" id="industryAutoNote"></p>
+      </div>
+
+      <div class="field">
+        <label for="brands">已知品牌／業者（非必填，逗號分隔）</label>
+        <input type="text" id="brands" placeholder="例如：50嵐, 迷客夏, CoCo都可（留空則交給AI依市場實況補齊）">
+      </div>
+
+      <div class="field">
+        <label for="sample">目標受訪者描述（非必填）</label>
+        <input type="text" id="sample" placeholder="例如：18–35歲、過去一個月內曾購買過的消費者">
+        <p class="field-hint" id="sampleHint">留空的話會依你選的產業類型，帶入下面這句建議寫法。</p>
+      </div>
+
+      <div class="field">
+        <label for="optionLen">選項建議字數上限（品牌名稱除外）</label>
+        <input type="number" id="optionLen" value="12" min="6" max="30">
+        <p class="field-hint">使用情境、通路、媒體等選項常被 AI 寫成一整句話，受訪者不易快速閱讀；調小這個數字可強制 AI 寫成短詞組。</p>
+      </div>
+
+      <fieldset>
+        <legend>問卷要包含哪些區塊？</legend>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="screen" checked>
+          <span class="code">S1</span>
+          <span>
+            <span class="label-txt">品牌使用經驗篩選題</span>
+            <span class="sub">單選；不合格者直接排除樣本，是後續所有題目的前提</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="brand" checked>
+          <span class="code">S2</span>
+          <span>
+            <span class="label-txt">品牌購買行為（Pick any/J）</span>
+            <span class="sub">可複選；真實記錄品牌切換與共同購買行為</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="freq" checked>
+          <span class="code">S3</span>
+          <span>
+            <span class="label-txt">使用頻率</span>
+            <span class="sub">單選；每天／每週幾次／每月幾次的等距分級</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="context" checked>
+          <span class="code">S4</span>
+          <span>
+            <span class="label-txt"><span id="contextLabelText">使用情境</span>（Pick any）
+              <span class="inline-count">
+                設計
+                <input type="number" id="contextCount" value="6" min="3" max="15" aria-label="使用情境選項數量">
+                個選項
+              </span>
+            </span>
+            <span class="sub">可複選；捕捉品牌與情境之間的搭配關係——選項多寡依產品／服務的情境豐富度調整，速食店這類生活情境多的類別可以設多一點</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="channel" checked>
+          <span class="code">Q1</span>
+          <span>
+            <span class="label-txt">購買／使用通路（Pick any）
+              <span class="inline-count">
+                整體約
+                <input type="number" id="channelCount" value="8" min="4" max="20" aria-label="通路題選項總數">
+                個選項
+              </span>
+            </span>
+            <span class="sub dynamic" id="channelPreview">可複選；分實體通路／購物平台／直播帶貨／代買通路四類</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="media" checked>
+          <span class="code">Q2</span>
+          <span>
+            <span class="label-txt">媒體接觸習慣（Pick any）
+              <span class="inline-count">
+                整體約
+                <input type="number" id="mediaCount" value="9" min="6" max="15" aria-label="媒體題選項總數">
+                個選項
+              </span>
+            </span>
+            <span class="sub">可複選；分主動搜尋／付費品牌推播／口碑同儕擴散三類</span>
+          </span>
+        </label>
+
+        <label class="check-row">
+          <input type="checkbox" data-block="gas">
+          <span class="code">GAS</span>
+          <span>
+            <span class="label-txt">同時生成 Google Apps Script 程式碼</span>
+            <span class="sub">貼到 script.google.com 執行，會依上面的題目自動建立一份 Google 表單（含收集回覆用的試算表）</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <div class="field">
+        <label for="extra">額外要求（非必填）</label>
+        <textarea id="extra" class="notes" placeholder="例如：想聚焦Z世代消費者、想比較連鎖與獨立品牌、希望加入價格敏感度題目..."></textarea>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step2-h">
+      <h2 id="step2-h"><span class="step">2</span> 產生給 AI 的指令</h2>
+      <p class="hint">把下面這段文字整段複製，貼到 Claude、ChatGPT 等 AI 對話視窗，就會產生完整問卷。</p>
+
+      <div class="output-head">
+        <span class="live">即時預覽 · 隨左側設定自動更新</span>
+        <span class="live" id="charcount">0 字</span>
+      </div>
+      <div class="output-box" id="output" aria-live="polite"></div>
+
+      <div class="actions">
+        <button class="copy" id="copyBtn" type="button">複製指令</button>
+        <span class="note" id="copyNote"></span>
+      </div>
+    </section>
+  </div>
+
+  <details class="example">
+    <summary>查看範例：一份符合格式的 Pick any/J 問卷長什麼樣子</summary>
+    <div class="example-body">
+      <p class="src">節錄自任課教師提供的範例問卷（即飲包裝綠茶），供對照 AI 產出的問卷是否符合格式要求。</p>
+      <div class="example-text">親愛的小姐／先生您好：
+本問卷旨在瞭解您對「即飲包裝綠茶」（以下簡稱包裝綠茶）的看法與消費行為，作為本公司於飲料行銷規劃上的參考依據。市面上常見的包裝綠茶品牌，如原萃、純喫茶、御茶園、每朝健康、茶裏王、生活泡沫綠茶等，皆為本次調查範圍。懇請您撥冗填寫本問卷，答案無對錯之分，誠摯歡迎您依實際經驗與想法作答。您所提供的意見僅供本公司內部參考，並將嚴格保密，請您安心填寫。感謝您在百忙之中抽空協助填寫問卷，謹致上最誠摯的謝意，並祝一切順心如意！
+源典飲料企業 行銷企劃部
+
+第一部份　使用及購買行為
+
+S1. 請問您曾經喝過以下任一品牌的包裝綠茶嗎？（單選）
+□ 是，我曾喝過上述至少一個品牌
+□ 否，我從未喝過以上任何品牌　[勾選此項即不列入樣本]
+
+S3. 您平常都在哪裡購買包裝綠茶？（可複選）
+□ 便利商店（7-ELEVEN、全家、萊爾富等）
+□ 生鮮超市（全聯、楓康、美廉社等）
+□ 折扣量販店／超級市場（家樂福、愛買、大潤發等）
+□ 自動販賣機
+□ 線上購物平台（PChome、momo、家樂福線上購物等）
+
+S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
+□ 工作或學習疲勞時
+□ 運動後解渴
+□ 熬夜提神時
+□ 天氣炎熱時
+□ 搭配餐點</div>
+    </div>
+  </details>
+
+  <footer class="page">
+    <p>理論基礎：Edwards, Y. D., &amp; Allenby, G. M. (2003). <em>Market Definition: Establishing the Boundaries of Analysis</em>；Fennell, G., &amp; Allenby, G. M. (2003). <em>The Dimensions of a Product Market: Six Strategic Questions</em>。</p>
+    <p>此工具只負責組出指令，實際的品牌、情境、通路與媒體內容仍需要 AI 依你的主題產生——記得檢查 AI 給的答案是否符合台灣市場實況。</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var topicEl = document.getElementById('topic');
+  var industryEl = document.getElementById('industry');
+  var brandsEl = document.getElementById('brands');
+  var sampleEl = document.getElementById('sample');
+  var contextCountEl = document.getElementById('contextCount');
+  var channelCountEl = document.getElementById('channelCount');
+  var mediaCountEl = document.getElementById('mediaCount');
+  var optionLenEl = document.getElementById('optionLen');
+  var extraEl = document.getElementById('extra');
+  var checks = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-block]'));
+  var output = document.getElementById('output');
+  var charcount = document.getElementById('charcount');
+  var copyBtn = document.getElementById('copyBtn');
+  var copyNote = document.getElementById('copyNote');
+  var channelPreview = document.getElementById('channelPreview');
+  var sampleHint = document.getElementById('sampleHint');
+  var contextLabelText = document.getElementById('contextLabelText');
+  var industryAutoNote = document.getElementById('industryAutoNote');
+  var industryAutoSet = true;
+
+  var INDUSTRY_KEYWORDS = [
+    { key: 'b2b', words: ['顧問', '採購', '供應鏈', 'B2B', 'b2b', '原物料', '代工', 'ERP', '招標', '經銷授權'] },
+    { key: 'digital', words: ['App', 'app', 'APP', '訂閱', '串流', '雲端服務', '軟體', '線上課程', '遊戲', '會員制平台'] },
+    { key: 'attraction', words: ['景點', '樂園', '遊樂園', '觀光工廠', '展覽', '演唱會', '旅遊', '民宿', '飯店', '溫泉', '主題公園', '博物館'] },
+    { key: 'service', words: ['健身房', '健身', '美容', '美髮', '美甲', '補習班', '診所', '牙醫', '醫美', '按摩', 'SPA', '保險', '銀行', '家教', '清潔服務', '婚紗', '攝影服務', '維修服務'] },
+    { key: 'durable', words: ['手機', '筆電', '電腦', '家電', '冰箱', '洗衣機', '冷氣', '電視', '汽車', '機車', '相機', '平板', '耳機', '手錶', '吸塵器'] },
+    { key: 'food', words: ['餐廳', '速食', '火鍋', '燒烤', '燒肉', '牛排', '早餐店', '早午餐', '便當', '自助餐', '吃到飽', '咖啡廳', '咖啡店', '甜點店', '麵包店', '小吃店', '餐飲', '飲料店', '拉麵店', '壽司店', '居酒屋', '熱炒店'] },
+    { key: 'retail', words: ['飲料', '泡麵', '洗髮精', '沐浴乳', '洗衣精', '化妝品', '保養品', '服飾', '零食', '日用品', '衛生紙', '香水', '內衣', '手搖飲料', '啤酒', '尿布', '美妝', '鞋', '包包', '牙膏', '罐頭'] }
+  ];
+
+  function detectIndustryKey(topic){
+    if(!topic) return null;
+    for(var i = 0; i < INDUSTRY_KEYWORDS.length; i++){
+      var rule = INDUSTRY_KEYWORDS[i];
+      for(var j = 0; j < rule.words.length; j++){
+        if(topic.indexOf(rule.words[j]) !== -1){
+          return rule.key;
+        }
+      }
+    }
+    return null;
+  }
+
+  function updateIndustryAutoNote(key){
+    if(!industryAutoNote) return;
+    if(!industryAutoSet){
+      industryAutoNote.textContent = '';
+      return;
+    }
+    if(key){
+      industryAutoNote.textContent = '已依主題關鍵字自動選擇「產業類型」，如不合適請直接於上方選單更改。';
+    } else {
+      industryAutoNote.textContent = '尚未偵測到明確關鍵字，維持目前分類；如不合適請自行於上方選單選擇。';
+    }
+  }
+
+  function autoDetectIndustry(){
+    if(!industryAutoSet) return;
+    var key = detectIndustryKey(topicEl.value.trim());
+    if(key && INDUSTRIES[key] && industryEl.value !== key){
+      industryEl.value = key;
+    }
+    updateIndustryAutoNote(key);
+  }
+
+  var INDUSTRIES = {
+    retail: {
+      channels: ['實體通路（如便利商店、量販店、超市、品牌自有門市等不同型態，請至少列出2種不同型態的實體通路）', '購物平台', '直播帶貨', '代買通路'],
+      freq: 'high',
+      brandNoun: '品牌／業者',
+      channelLabel: '購買通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '購買或使用過',
+      samplePlaceholder: function(topic){ return '過去一段合理期間內曾購買過「' + topic + '」的消費者'; }
+    },
+    food: {
+      channels: ['內用', '外帶', '得來速', '外送平台（如Uber Eats、foodpanda等）'],
+      freq: 'high',
+      brandNoun: '品牌／業者',
+      channelLabel: '購買通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '購買或用餐過',
+      samplePlaceholder: function(topic){ return '過去一個月內曾在「' + topic + '」用餐或消費過的消費者'; }
+    },
+    durable: {
+      channels: ['實體門市或量販店（如燦坤、全國電子）', '官網或電商旗艦店', '經銷商或展示中心', '二手交易平台（如蝦皮、8891）'],
+      freq: 'low',
+      brandNoun: '品牌',
+      channelLabel: '購買通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '購買過',
+      samplePlaceholder: function(topic){ return '過去三年內曾購買過「' + topic + '」的消費者'; }
+    },
+    service: {
+      channels: ['實體門市或據點', '官網或App預約', '電話或客服預約', '代理或仲介或經銷商'],
+      freq: 'high',
+      brandNoun: '品牌／業者',
+      channelLabel: '使用通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '使用過',
+      samplePlaceholder: function(topic){ return '過去半年內曾使用過「' + topic + '」服務的消費者'; }
+    },
+    digital: {
+      channels: ['App商店下載', '官網直接訂閱', '隨其他服務綁定（如電信月租方案）', '第三方比價或推薦平台'],
+      freq: 'high',
+      brandNoun: '平台／品牌',
+      channelLabel: '取得或訂閱通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '使用過',
+      samplePlaceholder: function(topic){ return '過去一個月內曾使用過「' + topic + '」的使用者'; }
+    },
+    attraction: {
+      channels: ['現場購票', '官方網站或App訂票', '旅行社或團體套裝行程', '第三方訂票平台（如KKday、Klook、Trip.com等）'],
+      freq: 'low',
+      brandNoun: '景點／業者',
+      channelLabel: '購票或預訂通路',
+      contextLabel: '使用情境',
+      contextDesc: '實際生活情境',
+      screeningVerb: '造訪過',
+      samplePlaceholder: function(topic){ return '過去一年內曾造訪過「' + topic + '」的遊客'; }
+    },
+    b2b: {
+      channels: ['業務直接拜訪銷售', '經銷商或代理商', '線上採購平台或官網詢價', '招標或公開採購案'],
+      freq: 'low',
+      brandNoun: '供應商／品牌',
+      channelLabel: '採購管道',
+      contextLabel: '應用情境',
+      contextDesc: '企業實際應用場景',
+      screeningVerb: null,
+      samplePlaceholder: function(topic){ return '曾參與「' + topic + '」採購決策或評估流程的企業採購人員'; }
+    }
+  };
+
+  function currentIndustry(){
+    return INDUSTRIES[industryEl.value] || INDUSTRIES.retail;
+  }
+
+  function checked(name){
+    var el = checks.filter(function(c){ return c.dataset.block === name; })[0];
+    return el && el.checked;
+  }
+
+  function buildPrompt(){
+    var topic = topicEl.value.trim();
+    if(!topic){
+      return null;
+    }
+    var brands = brandsEl.value.trim();
+    var sample = sampleEl.value.trim();
+    var extra = extraEl.value.trim();
+    var optionLen = parseInt(optionLenEl.value, 10);
+    if(!optionLen || optionLen < 6) optionLen = 12;
+
+    var lines = [];
+    lines.push('你是一位行銷研究方法的專家顧問，請依照下列規格，為「' + topic + '」設計一份完整的消費者調查問卷。');
+    lines.push('這份問卷必須嚴格遵守「Pick any/J 複選格式」的設計邏輯：只要題目涉及品牌、情境、通路或媒體管道等「消費者可能同時擁有好幾個答案」的行為，都必須設計成可複選（□），不能強迫受訪者只選一個，才能真實記錄消費者的行為共現（co-occurrence），供後續共現矩陣、相關矩陣或文字探勘分析使用。');
+    lines.push('');
+    lines.push('【研究主題】');
+    lines.push(topic);
+    lines.push('');
+    lines.push('【已知品牌／業者】');
+    if(brands){
+      lines.push(brands + '（請優先採用；若不足6個，請你依台灣市場實況自行補足到6–10個之間，選項數量不宜過多，以免後續共現分析的交叉表數量過多、難以操作）');
+    } else {
+      lines.push('（未提供，請你依台灣市場實況，自行列出6–10個「' + topic + '」市場常見的品牌或業者，選項數量不宜過多，以免後續共現分析的交叉表數量過多、難以操作）');
+    }
+    var industry = currentIndustry();
+    lines.push('');
+    lines.push('【目標受訪者】');
+    lines.push(sample ? sample : industry.samplePlaceholder(topic) + '（此為依產業類型建議的母體描述，若不合適請自行調整）');
+    if(extra){
+      lines.push('');
+      lines.push('【額外要求】');
+      lines.push(extra);
+    }
+    lines.push('');
+    lines.push('【問卷必須包含以下區塊，請依序排列】');
+
+    var n = 1;
+    lines.push(n++ + '. 問候語與研究說明（開頭，非題目）：仿照正式市調問卷慣例，包含稱謂、研究目的簡述、保密聲明與感謝語，最後具名一個看起來合理的機構／企劃部門。');
+    if(checked('screen')){
+      if(industry.screeningVerb){
+        lines.push(n++ + '. 篩選題（S1）：單選題，詢問受訪者過去一段合理期間內是否曾' + industry.screeningVerb + '「' + topic + '」相關產品或服務；不合格的選項後方需加註「[勾選此項即不列入樣本]」。');
+      } else {
+        lines.push(n++ + '. 篩選題（S1）：單選題，詢問受訪者是否曾在所屬企業內參與過「' + topic + '」相關的採購決策或評估流程；不合格（未參與過）的選項後方需加註「[勾選此項即不列入樣本]」。');
+      }
+    }
+    if(checked('brand')){
+      lines.push(n++ + '. ' + industry.brandNoun + '使用經驗：Pick any/J 複選題，列出上述' + industry.brandNoun + '清單，每個選項前加「□」，並在選項最後加上「以上皆不符合」一個收尾選項；題目文字需註明「（可複選）」。');
+    }
+    if(checked('freq')){
+      if(industry.freq === 'high'){
+        lines.push(n++ + '. 使用頻率：單選題，詢問平均多久購買／使用一次，選項比照「每天／每週___次／每月___次／每月一次以下」的等距分級方式設計，並依「' + topic + '」的實際消費頻率特性調整。');
+      } else {
+        lines.push(n++ + '. 使用頻率：單選題，詢問受訪者距上次購買／使用／造訪「' + topic + '」已多久，或預期多久後會考慮再次購買／使用，選項比照「一年內／1–3年／3–5年／5年以上」的等距分級方式設計，並依「' + topic + '」的實際週期特性調整。');
+      }
+    }
+    if(checked('context')){
+      var ctxCount = parseInt(contextCountEl.value, 10);
+      if(!ctxCount || ctxCount < 3) ctxCount = 6;
+      lines.push(n++ + '. ' + industry.contextLabel + '：Pick any/J 複選題，請依「' + topic + '」的產品／服務特性，設計' + ctxCount + '個貼近' + industry.contextDesc + '的選項（須具體、避免空泛，但每個選項須是簡短短語，控制在' + optionLen + '字以內，不要寫成完整句子），並在選項最後加上「以上皆不符合」一個收尾選項，題目文字需註明「（可複選）」。');
+    }
+    if(checked('channel')){
+      var chLabel = industry.channels.map(function(c, i){ return '（' + (i+1) + '）' + c; }).join('');
+      var isVenueIndustry = (industryEl.value === 'food' || industryEl.value === 'service' || industryEl.value === 'attraction');
+      var channelCount = parseInt(channelCountEl.value, 10);
+      if(!channelCount || channelCount < 4) channelCount = 8;
+      var channelCountNote = '整體選項總數請控制在約' + channelCount + '個左右（不必剛好等於這個數字，依「' + topic + '」的市場現況分配到各類別即可）。';
+      if(industryEl.value === 'retail'){
+        var retailStoreBody = '「實體通路」這一類請列出2–4個具體、台灣消費者真的會用到的真實店家或連鎖品牌名稱，且名稱本身要正確、道地——直接使用該品牌在台灣消費者日常口語中會用的稱呼即可（例如「統一超商」或「統一7-11便利商店」、「全家便利商店」），不要在品牌名稱後面多加「實體門市」「實體賣場」這類累贅字樣；若要引用家樂福，請注意其量販店已於2026年更名為「萬家福」、超市改名為「樂家康」，請使用最新名稱，不要再寫「家樂福」；同一實體通路子類型（例如便利商店、超市、量販店等）不需要每個品牌都列出，只需列出該子類型中消費者最耳熟能詳的1–2個代表品牌即可（例如超市／量販類可列「全聯」「萬家福」「好市多」等知名度高的品牌，避免列出「樂家康」這類消費者較不熟悉、知名度低的品牌名稱）。「購物平台」與「直播帶貨」這兩類：若「' + topic + '」屬於一般日常快消品或便利品，這兩類通常只是次要、輔助的取得方式，各自只需要用類別本身當作一個籠統選項即可（例如選項就直接寫「購物網站」「直播帶貨」，不必列出蝦皮、momo 等特定平台名稱）；只有當「' + topic + '」本身就是以特定電商平台或直播銷售為核心商業模式時，才需要改列2–4個具體平台名稱。「代買通路」則用類別本身當作籠統選項即可（例如選項就直接寫「外送平台」「代購服務」），不需要列出foodpanda、Uber Eats等具體平台名稱；只有當「' + topic + '」本身就是以特定代買或外送平台為核心商業模式時，才需要改列2–4個具體平台名稱。每個選項只寫名稱本身，控制在' + optionLen + '字以內，不要加描述句。各類別的選項數量請依「' + topic + '」實際市場現況分配權重，不要平均分配：多數消費品類仍以實體通路為主要取得方式，除非「' + topic + '」本身就是以外送、直播帶貨銷售為主的商業模式，否則實體通路的選項數量應多於或至少不少於購物平台、直播帶貨、代買通路等其他類別，避免問卷選項過度偏重外送與直播。';
+        lines.push(n++ + '. 購買通路或商圈：Pick any/J 複選題。這一題請先判斷「' + topic + '」本身的性質，只設計以下（A）（B）兩種寫法中最適合的一種，不要同時列出兩種選項清單：（A）若「' + topic + '」是一般日常消費品或產品類別（例如飲料、泡麵、洗髮精、生活用品這類「產品」，消費者是透過不同店家或平台取得），請設計「購買通路」題：依以下' + industry.channels.length + '大類構思選項：' + chLabel + '。' + retailStoreBody + channelCountNote + '呈現給受訪者的選項清單不要顯示這些分類名稱或任何方括號／編號標記（例如不要出現「【' + industry.channels[0].replace(/（[^）]*）/g, '') + '】」「(1)' + industry.channels[0].replace(/（[^）]*）/g, '') + '」這類字樣），所有選項直接依序列出即可，分類僅供你構思時參考；（B）若「' + topic + '」本身指的就是一種特定的實體零售店型態或賣場類型（例如「生活用品店」「美妝店」「3C賣場」這類主題，本身就是通路或店家型態，此時再問一次「透過哪些通路取得」容易和主題本身重複），請改設計「商圈／地點選擇」題：列出4–7個台灣消費者實際會用來描述消費地點類型的選項（例如住家或社區周邊、辦公商圈、學校周邊、車站或交通樞紐周邊、百貨商場或購物中心內、觀光商圈或夜市等，請依「' + topic + '」的實際市場現況挑選並調整用詞，不要每種都列出），題目文字可寫成「請問您通常會在哪些類型的商圈或地點購買「' + topic + '」？」。無論採用（A）或（B），題目文字需註明「（可複選）」，選項最後加上「以上皆不符合」一個收尾選項，並在最下方的格式檢查附註中註明這一題最終採用（A）或（B），以及（若採用A）每個選項各自屬於哪一類。');
+      } else if(isVenueIndustry){
+        lines.push(n++ + '. 取得方式或商圈：Pick any/J 複選題。「' + topic + '」屬於地點型消費／服務業，這一題請先判斷「' + topic + '」的市場性質，只設計以下（A）（B）兩種寫法中最適合的一種，不要同時列出兩種選項清單：（A）若「' + topic + '」的消費者主要決策是在多個特定連鎖品牌／業者之間比較選擇（品牌本身就是消費者的主要決策依據），請設計「取得或消費方式」題：依以下' + industry.channels.length + '大類構思選項：' + chLabel + '，每一類列出1–4個具體、台灣消費者真的會用到的真實名稱或方式（例如具體品牌、平台或服務方式名稱，不是類別描述本身），題目文字可寫成「請問您通常透過哪些方式取得或消費「' + topic + '」？」；（B）若「' + topic + '」是較泛稱、地點導向的類別，消費者通常依「就近或方便」選擇消費地點、市場上沒有明顯強勢連鎖品牌主導（例如泛稱的「餐廳」「咖啡店」「健身房」這類主題常屬此類），此時再問一次取得或消費方式容易與品牌題重複，請改設計「商圈／地點選擇」題：列出4–7個台灣消費者實際會用來描述消費地點類型的選項（例如住家或社區周邊、辦公商圈、學校周邊、車站或交通樞紐周邊、百貨商場或購物中心內、觀光商圈或夜市等，請依「' + topic + '」的實際市場現況挑選並調整用詞，不要每種都列出），藉此捕捉這類地點型業態真正有市場邊界意義的商圈競爭關係，題目文字可寫成「請問您通常會在哪些類型的商圈或地點消費「' + topic + '」？」。無論選擇（A）或（B），每個選項只寫名稱本身，控制在' + optionLen + '字以內，不要加描述句，題目文字需註明「（可複選）」；' + channelCountNote + '若採用（A），呈現給受訪者的選項清單不要顯示' + industry.channels.length + '個分類名稱或任何方括號／編號標記，所有選項直接依序列出即可，分類僅供你構思時參考；選項最後加上「以上皆不符合」一個收尾選項；並在最下方的格式檢查附註中註明這一題最終採用（A）或（B），以及（若採用A）每個選項各自屬於哪一類。');
+      } else {
+        var channelBody2 = '這' + industry.channels.length + '個類別是「' + topic + '」實際的取得或使用方式，請不要套用零售業「便利商店／超市／購物平台」那種通路框架（除非「' + topic + '」本身也會透過那些通路販售）；每一類請列出1–4個具體、台灣消費者真的會用到的真實名稱或方式（例如具體品牌、平台或服務方式名稱，不是類別描述本身，也不要用「方式A」這類代稱），每個選項只寫名稱本身，控制在' + optionLen + '字以內，不要加描述句。各類別的選項數量請依「' + topic + '」實際市場現況分配權重，不要平均分配，消費者實際最常使用的方式可以列多一點選項。' + channelCountNote;
+        lines.push(n++ + '. ' + industry.channelLabel + '：Pick any/J 複選題，請依以下' + industry.channels.length + '大類構思選項：' + chLabel + '。' + channelBody2 + '題目文字需註明「（可複選）」；但呈現給受訪者的選項清單不要顯示這些分類名稱或任何方括號／編號標記（例如不要出現「【' + industry.channels[0].replace(/（[^）]*）/g, '') + '】」「(1)' + industry.channels[0].replace(/（[^）]*）/g, '') + '」這類字樣），所有選項直接依序列出即可，分類僅供你構思時參考，並在最下方的格式檢查附註中另外註明每個選項各自屬於哪一類；選項最後加上「以上皆不符合」一個收尾選項。');
+      }
+    }
+    if(checked('media')){
+      var mediaCount = parseInt(mediaCountEl.value, 10);
+      if(!mediaCount || mediaCount < 6) mediaCount = 9;
+      lines.push(n++ + '. 媒體接觸習慣：Pick any/J 複選題。請先把「' + topic + '」提升到消費者實際搜尋資訊時所對應的更一般化產品／服務類別（例如「手搖飲料」應提升為「美食」，「洗髮精」可提升為「個人清潔用品」），因為消費者取得資訊的管道通常是針對這個較大的類別，而不是只針對單一細分產品；題目文字與選項內容都改用這個一般化類別來描述（例如題目文字應寫成「請問您通常從哪些管道獲得美食的相關資訊？」，而不是「...手搖飲料的相關資訊？」）。請依以下三大類構思選項，每一類底下依此一般化類別的市場實況列出選項（每個選項只寫名稱本身，控制在' + optionLen + '字以內，不要加描述句）：（1）主動搜尋（2）付費／品牌可控推播（3）口碑與同儕擴散。每個選項都要用消費者實際會用到的具體平台或管道名稱，不要用「網頁搜尋引擎」「社群媒體」這類籠統說法（例如主動搜尋類應直接寫「Google搜尋引擎」，而不是「網頁搜尋引擎」）；請參考台灣目前的媒體使用現況挑選合適的代表性平台，例如通訊軟體類的LINE（含LINE Today、社群或群組）、影音平台類的YouTube、TikTok、社群媒體類的Facebook（35歲以上熟齡族群為主）、IG短影音（即Instagram Reels，35歲以下年輕族群為主，目前互動率與觸及率高於IG限時動態）、Threads（18–34歲話題討論為主）、新聞入口網站類的Yahoo奇摩新聞、聯合新聞網、ETtoday，以及網路論壇類的PTT、Dcard，並依「' + topic + '」的目標受眾與內容特性，為「（1）主動搜尋（2）付費／品牌可控推播（3）口碑與同儕擴散」這三類「各自」挑選最合適的平台；三類加總起來的選項總數請控制在約' + mediaCount + '個左右（不必剛好等於這個數字，也不必三類平均分配，依「' + topic + '」的市場實況決定各類別的選項數量，但不要為了求精簡而整題只給2到4個選項）；每一類底下不需要把上面舉例的所有平台都列出，只要從中或依市場實況挑出最貼切的幾個即可，但「口碑與同儕擴散」這一類務必包含「Threads話題討論」這個選項，不能省略。「付費／品牌可控推播」這一類請特別注意，官方LINE、社群廣告只是其中一種形式，「品牌官方網站」同樣是常見的品牌可控管道，尤其像景點、觀光、服務業這類消費者需要查詢營業時間、票價、預約等資訊的主題，消費者通常是直接查品牌官方網站而不是追蹤官方LINE，請依「' + topic + '」的實際使用情境判斷該用品牌官方網站、官方LINE、還是社群廣告，不要每次都預設寫官方LINE。題目文字需註明「（可複選）」；但呈現給受訪者的選項清單不要顯示這三個分類名稱或任何方括號／編號標記，所有選項直接依序列出即可，分類僅供你構思時參考，並在最下方的格式檢查附註中另外註明每個選項各自屬於哪一類；選項最後加上「以上皆不符合」一個收尾選項。');
+    }
+
+    lines.push('');
+    lines.push('【格式與輸出規則】');
+    lines.push('－全文使用繁體中文、正式書面問卷用語，語氣專業中性，避免引導性字眼。');
+    lines.push('－每一小題需標示題號（S1, S2, ... 或 Q1, Q2, ...），並在題號後標明「（單選）」或「（可複選）」。');
+    lines.push('－選項一律以「□」開頭，一行一個選項。');
+    lines.push('－除品牌／業者名稱本身外，所有選項文字（使用情境、通路、媒體等）都要簡短，控制在約' + optionLen + '字以內，只保留最關鍵的詞或短語，不要寫成完整句子、不要加額外的形容或原因說明，確保受訪者能快速掃視作答。');
+    lines.push('－每個選項只能代表一個具體項目，不要用「／」或「/」把兩個以上不同的項目合併寫成同一個選項（例如不要寫成「量販店／超市」），若原本想合併的項目其實是不同的通路或情境，請拆成各自獨立的選項分開列出；選項文字中也不要包含任何空格（半形或全形空白）。');
+    lines.push('－最終輸出為可直接複製貼上到 Word 或 Google 表單的純文字，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。');
+    lines.push('－完成後，請在最下方另外條列：這份問卷中哪一題是篩選題、哪些題目屬於 Pick any/J 複選格式，以及通路題、媒體題底下每個選項各自屬於哪一個分類，方便授課教師檢查是否符合格式要求；這段附註只給授課教師看，不要出現在問卷本身裡。');
+
+    if(checked('gas')){
+      lines.push('');
+      lines.push('【額外產出：Google Apps Script 建立表單程式碼】');
+      lines.push('除了上面的問卷文字，請另外提供一段完整、可直接貼到 Google Apps Script 編輯器（script.google.com）執行的 JavaScript 程式碼，需求如下：');
+      lines.push('－用一個具名函式包起來（例如 function createSurveyForm() { ... }），並用程式碼區塊（三個反引號）包起來，方便整段複製。');
+      lines.push('－用 FormApp.create(\'表單標題\') 建立新表單，並用 setDescription() 帶入問候語／研究說明的內容。');
+      lines.push('－依上面問卷的題目順序逐題建立：單選題（如篩選題、使用頻率）用 addMultipleChoiceItem()＋setChoiceValues()；Pick any/J 可複選題用 addCheckboxItem()＋setChoiceValues()；除了篩選題以外的題目都設定 setRequired(true)。');
+      lines.push('－若篩選題設計為「不合格即不列入樣本」，請用 addPageBreakItem() 搭配該選項的 .createChoice(文字, 目標頁面) 設定跳題邏輯：不合格者跳到表單最後一頁並顯示「感謝您的參與，本次問卷到此結束」，合格者則正常進入下一頁繼續作答。');
+      lines.push('－建立一份新的 Google 試算表（SpreadsheetApp.create(\'表單標題 - 回覆\')），並用 form.setDestination(FormApp.DestinationType.SPREADSHEET, 試算表ID) 把表單回覆連結到這份試算表。');
+      lines.push('－最後用 Logger.log() 印出表單的填答網址（getPublishedUrl()）與編輯網址（getEditUrl()），方便執行完在「執行紀錄」查看。');
+      lines.push('－程式碼之後，附上三、四行以內的操作步驟提示：開啟 script.google.com 建立新專案、貼上程式碼、執行 createSurveyForm 函式、依提示完成 Google 帳號授權、執行完成後到左側「執行項目」查看紀錄取得表單網址。');
+    }
+
+    return lines.join('\n');
+  }
+
+  function render(){
+    autoDetectIndustry();
+    var industry = currentIndustry();
+    if(industryEl.value === 'food' || industryEl.value === 'service' || industryEl.value === 'attraction'){
+      channelPreview.textContent = '可複選；AI會依主題性質自動判斷，改問「取得或消費方式」或「商圈／地點選擇」二者之一';
+    } else if(industryEl.value === 'retail'){
+      channelPreview.textContent = '可複選；分' + industry.channels.join('／') + '四類；若主題本身是特定店家型態（如生活用品店），AI會改問「商圈／地點選擇」';
+    } else {
+      channelPreview.textContent = '可複選；分' + industry.channels.join('／') + '四類';
+    }
+    contextLabelText.textContent = industry.contextLabel;
+    var topicForHint = topicEl.value.trim() || '{主題}';
+    sampleHint.textContent = '留空的話會帶入：「' + industry.samplePlaceholder(topicForHint) + '」';
+    var text = buildPrompt();
+    if(text === null){
+      output.textContent = '請先在左側「研究主題」填入你想研究的產品或服務類別，指令會自動顯示在這裡。';
+      output.classList.add('empty');
+      charcount.textContent = '0 字';
+      copyBtn.disabled = true;
+    } else {
+      output.textContent = text;
+      output.classList.remove('empty');
+      charcount.textContent = text.length + ' 字';
+      copyBtn.disabled = false;
+    }
+  }
+
+  [topicEl, brandsEl, sampleEl, extraEl, contextCountEl, channelCountEl, mediaCountEl, optionLenEl].forEach(function(el){
+    el.addEventListener('input', render);
+  });
+  industryEl.addEventListener('change', function(){
+    industryAutoSet = false;
+    render();
+  });
+  checks.forEach(function(c){ c.addEventListener('change', render); });
+
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '0';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){ return false; }
+  }
+
+  function selectOutputText(){
+    try{
+      var range = document.createRange();
+      range.selectNodeContents(output);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }catch(e){}
+  }
+
+  copyBtn.addEventListener('click', function(){
+    var text = buildPrompt();
+    if(!text) return;
+    function done(ok){
+      copyBtn.dataset.copied = 'true';
+      copyBtn.textContent = ok ? '已複製' : '複製失敗，已為你選取下方文字，請按 Ctrl/Cmd+C';
+      copyNote.textContent = ok ? '已複製到剪貼簿，貼到 AI 對話視窗即可' : '';
+      if(!ok) selectOutputText();
+      setTimeout(function(){
+        copyBtn.dataset.copied = 'false';
+        copyBtn.textContent = '複製指令';
+      }, ok ? 1600 : 3600);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ done(true); }).catch(function(){ done(fallbackCopy(text)); });
+    } else {
+      done(fallbackCopy(text));
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
