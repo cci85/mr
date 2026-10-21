@@ -103,6 +103,14 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
       <label for="org">研究單位<span class="opt">選填，未填時署名「本研究團隊」</span></label>
       <input type="text" id="org" placeholder="例：源典飲料企業 行銷企劃部">
     </div>
+    <div class="field">
+      <label for="outMode">問卷輸出方式</label>
+      <select id="outMode">
+        <option value="word" selected>純文字預覽，確認後產生 Word 檔</option>
+        <option value="text">只要純文字（不產生檔案）</option>
+      </select>
+      <p class="help">兩種方式都會先在 AI 對話中輸出純文字預覽，供您檢查與修改。</p>
+    </div>
     <div class="row2">
       <div class="field">
         <label for="industry">產業類型</label>
@@ -189,8 +197,8 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
   <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
   <ol>
-    <li>用上方的指令請 AI 產生問卷，確認無誤後下載 Word 檔。</li>
-    <li>在同一個 AI 對話中上傳問卷 Word 檔，再接著貼上「建立 Google 表單指令」，AI 會產生完整的程式碼。</li>
+    <li>用上方的指令請 AI 產生問卷並確認內容；選擇產生 Word 檔者，請下載 Word 檔。</li>
+    <li>在同一個 AI 對話中接著貼上「建立 Google 表單指令」（若有 Word 檔，請先上傳），AI 會產生完整的程式碼。</li>
     <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
     <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
   </ol>
@@ -200,10 +208,10 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </div>
   <details>
     <summary>檢視指令內容</summary>
-    <pre id="gasPrompt">請根據我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
+    <pre id="gasPrompt">請根據本對話中已確認的問卷內容或我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
 
 一、問卷內容解析
-1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。只依上傳的問卷檔案建立表單,不納入對話中的附註或檢查結果。
+1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。只依問卷本身建立表單,不納入對話中的附註或檢查結果。
 2. 判斷每一題的題型(單選、複選、李克特量表、簡答、段落文字、矩陣量表等),並轉換為對應的 Google Form 題型(MultipleChoiceItem、CheckboxItem、ScaleItem、TextItem、ParagraphTextItem、GridItem 等)。
 3. 若問卷分為多個構面或區塊(例如人口統計變數、各研究構面),請以 PageBreakItem 或章節標題(SectionHeaderItem)呈現,並保留區塊名稱。
 4. 判斷各題是否為必填,並在程式碼中設定 setRequired(true/false)。
@@ -353,12 +361,12 @@ const TRAITS = [
   "即使我對所屬團體不滿意，只要團體需要我，我還是會留在團體中。"
 ];
 const LEISURE = ["滑短影音","逛社群網站","追劇","看電影","聽音樂／Podcast","閱讀","打電玩遊戲","逛街","美食探店","唱 KTV","參加聚會","旅遊","藝文展演活動","球類運動","健身運動","戶外運動","觀賞運動賽事"];
-const NONE_EXCL = "□ 以上皆非（勾選此項者請勿再勾選其他選項）";
-const NONE_STOP = "□ 以上皆非（勾選此項者請勿再勾選其他選項，並請停止作答，感謝您的協助）";
+const NONE_EXCL = "□ 以上皆非（勿再勾其他選項）";
+const NONE_STOP = "□ 以上皆非（請停止作答）";
 
 /* ---------- 元素 ---------- */
 const $ = id => document.getElementById(id);
-const F = ["target","org","industry","freqType","freqLevels","brands","channels","chanMode","situations","media","motives"];
+const F = ["target","org","outMode","industry","freqType","freqLevels","brands","channels","chanMode","situations","media","motives"];
 const el = {}; F.forEach(k => el[k] = $(k));
 
 INDUSTRIES.forEach(i => { const o=document.createElement("option"); o.value=i.id; o.textContent=i.label; el.industry.appendChild(o); });
@@ -400,6 +408,7 @@ const PENDING = s => "【尚未填寫："+s+"】";
 function build(){
   const target = el.target.value.trim();
   const org = el.org.value.trim() || "本研究團隊";
+  const wordOut = el.outMode.value !== "text";
   const ind = INDUSTRIES.find(i => i.id===el.industry.value) || INDUSTRIES[0];
   const fq = FREQS.find(f => f.id===el.freqType.value) || FREQS[0];
   $("brandLabel").textContent = ind.noun;
@@ -494,14 +503,15 @@ function build(){
   L.push("=====================");
   L.push("【作業步驟】");
   L.push("=====================");
-  L.push("步驟一：先在對話中輸出完整問卷的純文字預覽，不要產生檔案。預覽須依【問卷內容】的順序完整列出所有部份、題目與選項（含你依規則填入的內容），整份預覽請放在一個程式碼區塊中輸出（前後各以一行 ``` 包住），避免對話介面把題號自動轉成清單，造成題目被合併或重新編號。預覽中每一題、每一個選項各占一行，題與題之間空一行；選項以「□」開頭，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。李克特量表題每題獨立一行，格式為「題號. 題目敘述　1 □　2 □　3 □　4 □　5 □」，不得把兩題寫在同一行。預覽之後，接著列出【作答規則】要求的自行填入內容附註，並完成【產出前檢查】。最後請詢問研究者：「預覽內容是否需要修改？確認無誤請回覆『確認』，我將產生 Word 檔。」然後停止，等待研究者回覆。");
-  L.push("步驟二：研究者回覆「確認」後，依確認後的預覽內容與【版面規格】，直接產生可下載的 Microsoft Word（.docx）檔案。內容須與預覽完全一致，不得再增刪或改寫；附註不放入檔案。若研究者提出修改意見，請先依意見修改並重新輸出純文字預覽，待研究者確認後再產生檔案。");
+  L.push("步驟一：先在對話中輸出完整問卷的純文字預覽，不要產生檔案。預覽須依【問卷內容】的順序完整列出所有部份、題目與選項（含你依規則填入的內容），整份預覽請放在一個程式碼區塊中輸出（前後各以一行 ``` 包住），避免對話介面把題號自動轉成清單，造成題目被合併或重新編號。預覽中每一題、每一個選項各占一行，題與題之間空一行；選項以「□」開頭，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。李克特量表題每題獨立一行，格式為「題號. 題目敘述　1 □　2 □　3 □　4 □　5 □」，不得把兩題寫在同一行。預覽之後，接著列出【作答規則】要求的自行填入內容附註，並完成【產出前檢查】。最後請詢問研究者：「預覽內容是否需要修改？確認無誤請回覆『確認』"+(wordOut?"，我將產生 Word 檔":"")+"。」然後停止，等待研究者回覆。");
+  L.push(wordOut ? "步驟二：研究者回覆「確認」後，依確認後的預覽內容與【版面規格】，直接產生可下載的 Microsoft Word（.docx）檔案。內容須與預覽完全一致，不得再增刪或改寫；附註不放入檔案。若研究者提出修改意見，請先依意見修改並重新輸出純文字預覽，待研究者確認後再產生檔案。" : "步驟二：研究者回覆「確認」後，回覆「問卷已定稿」即可，不需要產生任何檔案。若研究者提出修改意見，請先依意見修改並重新輸出純文字預覽，待研究者確認。");
   L.push("");
   L.push("=====================");
   L.push("【作答規則】");
   L.push("=====================");
   rules.forEach((r,i)=>L.push((i+1)+". "+r));
   L.push("");
+  if (wordOut){
   L.push("=====================");
   L.push("【版面規格】");
   L.push("=====================");
@@ -512,6 +522,7 @@ function build(){
   L.push("- 選項一律以「□」作為勾選方格，每個選項各占一行。");
   L.push("- 李克特量表以表格呈現：第一欄為題目敘述，右側五欄依序為 1、2、3、4、5，每格放一個「□」。");
   L.push("");
+  }
   L.push("=====================");
   L.push("【問卷內容】");
   L.push("=====================");
@@ -624,10 +635,11 @@ el.industry.addEventListener("change", () => {
 });
 el.freqType.addEventListener("change", build);
 el.chanMode.addEventListener("change", build);
+el.outMode.addEventListener("change", build);
 
 $("btnClear").addEventListener("click", () => {
   F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
-  el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; industryManual=false; autoIndustry(); build(); toast("已清除");
+  el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="word"; industryManual=false; autoIndustry(); build(); toast("已清除");
 });
 $("btnCopy").addEventListener("click", async () => {
   const text=$("out").textContent;
@@ -641,7 +653,7 @@ $("btnCopy").addEventListener("click", async () => {
 });
 
 F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
-el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto";
+el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="word";
 autoIndustry();
 build();
 })();
