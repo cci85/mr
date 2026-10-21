@@ -160,7 +160,8 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </div>
 </section>
 
-<section class="panel sticky" aria-labelledby="h-out">
+<div class="right-col">
+<section class="panel" aria-labelledby="h-out">
   <div class="out-head">
     <h2 id="h-out"><span class="step">2</span>給 AI 的指令</h2>
     <button type="button" class="primary" id="btnCopy">複製指令</button>
@@ -169,11 +170,10 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   <p class="status" id="status"></p>
   <pre id="out"></pre>
 </section>
-</main>
-<div style="padding:0 16px">
+
 <section class="gas-card" aria-labelledby="gas-h">
   <style>
-    .gas-card{max-width:1180px;margin:24px auto 0;background:var(--surface,var(--panel,#fff));border:1px solid var(--border,var(--line,#dcdfd8));border-radius:12px;padding:22px 24px;color:var(--ink,#1f2a24)}
+    .gas-card{margin:20px 0 0;background:var(--surface,var(--panel,#fff));border:1px solid var(--border,var(--line,#dcdfd8));border-radius:12px;padding:22px 24px;color:var(--ink,#1f2a24)}
     .gas-card h2{font-family:"Noto Serif TC",serif;font-size:18px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
     .gas-card .gas-step{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff));font-size:13px;font-weight:700}
     .gas-card p.gas-lead{margin:0 0 12px;color:var(--ink-soft,var(--muted,#5f6b64));font-size:14px}
@@ -254,6 +254,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </script>
 </section>
 </div>
+</main>
 <footer>指令產生後，請檢查 AI 輸出的問卷是否完整照錄所有選項，以及 AI 自行填入的簡稱與頻率級距是否合理。</footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
