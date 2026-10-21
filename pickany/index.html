@@ -469,15 +469,6 @@
             <span class="sub">可複選；分主動搜尋／付費品牌推播／口碑同儕擴散三類</span>
           </span>
         </label>
-
-        <label class="check-row">
-          <input type="checkbox" data-block="gas">
-          <span class="code">GAS</span>
-          <span>
-            <span class="label-txt">同時生成 Google Apps Script 程式碼</span>
-            <span class="sub">貼到 script.google.com 執行，會依上面的題目自動建立一份 Google 表單（含收集回覆用的試算表）</span>
-          </span>
-        </label>
       </fieldset>
 
       <div class="field">
@@ -502,6 +493,90 @@
       </div>
     </section>
   </div>
+
+
+<section class="gas-card" aria-labelledby="gas-h">
+  <style>
+    .gas-card{max-width:1180px;margin:24px auto 0;background:var(--surface,var(--panel,#fff));border:1px solid var(--border,var(--line,#dcdfd8));border-radius:12px;padding:22px 24px;color:var(--ink,#1f2a24)}
+    .gas-card h2{font-family:"Noto Serif TC",serif;font-size:18px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+    .gas-card .gas-step{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff));font-size:13px;font-weight:700}
+    .gas-card p.gas-lead{margin:0 0 12px;color:var(--ink-soft,var(--muted,#5f6b64));font-size:14px}
+    .gas-card ol{margin:0 0 14px;padding-left:22px;font-size:14px;line-height:1.75}
+    .gas-card ol a{color:var(--accent-strong,var(--accent,#2f6b4f));font-weight:600}
+    .gas-card .gas-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    .gas-card button{font:inherit;font-weight:700;font-size:14px;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff))}
+    .gas-card .gas-note{font-size:13px;color:var(--ink-faint,var(--muted,#5f6b64))}
+    .gas-card details{margin-top:12px}
+    .gas-card summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64))}
+    .gas-card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--code-border,var(--line,#dcdfd8));border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:360px;overflow:auto}
+  </style>
+  <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
+  <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
+  <ol>
+    <li>用上方的指令請 AI 產生問卷，確認無誤後把問卷文字貼到 Word 存檔。</li>
+    <li>開一個新的 AI 對話，上傳這份 Word 檔，再貼上「建立 Google 表單指令」，AI 會產生完整的程式碼。</li>
+    <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，刪除預設內容後貼上程式碼並儲存，選擇函式 <code>createForm</code> 後按「執行」，依畫面完成 Google 帳號授權。</li>
+    <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
+  </ol>
+  <div class="gas-actions">
+    <button type="button" id="gasCopyBtn">複製建立 Google 表單指令</button>
+    <span class="gas-note" id="gasCopyNote">此指令固定不變，不受左側設定影響。</span>
+  </div>
+  <details>
+    <summary>檢視指令內容</summary>
+    <pre id="gasPrompt">請根據我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
+
+一、問卷內容解析
+1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。
+2. 判斷每一題的題型(單選、複選、李克特量表、簡答、段落文字、矩陣量表等),並轉換為對應的 Google Form 題型(MultipleChoiceItem、CheckboxItem、ScaleItem、TextItem、ParagraphTextItem、GridItem 等)。
+3. 若問卷分為多個構面或區塊(例如人口統計變數、各研究構面),請以 PageBreakItem 或章節標題(SectionHeaderItem)呈現,並保留區塊名稱。
+4. 判斷各題是否為必填,並在程式碼中設定 setRequired(true/false)。
+5. 篩選題的跳題:單選題中標示「停止作答」的選項,請在該題之後以 PageBreakItem 分頁,並以 createChoice(選項文字, FormApp.PageNavigationType.SUBMIT) 設定為直接跳至表單結尾,其他選項則繼續作答。複選題(CheckboxItem)無法設定跳題,若複選題有標示停止作答的選項,請改以 setHelpText() 註明。
+6. 複選題若有「以上皆非」選項,請以 setHelpText("選以上皆非者,勿勾其他選項") 加註說明。
+
+二、Google Apps Script 程式碼撰寫規範
+1. 使用 FormApp.create("表單標題") 建立新表單,並設定表單說明(description)。
+2. 所有題目與選項文字必須與原問卷完全一致,包含量表的最低與最高說明文字(如「非常不同意」、「非常同意」)。
+3. 李克特量表請使用 addScaleItem(),並設定正確的最小值、最大值與兩端文字標籤。
+4. 程式碼需可直接貼入 script.google.com 的 Apps Script 編輯器執行,執行後直接產生表單,不需額外手動設定。
+5. 在程式碼中適當加入註解,標示對應的問卷區塊與題號,方便日後核對與修改。
+6. 若問卷需要收集受試者基本資料(如性別、年齡、服務單位等),請依原問卷格式建立對應題目。
+
+三、輸出要求
+1. 直接輸出完整、可執行的 .gs 程式碼,不要分段或省略任何題目。
+2. 在程式碼最後加上 Logger.log(form.getPublishedUrl()) 與 Logger.log(form.getEditUrl()),方便取得表單連結。
+3. 若問卷題目過多導致單一程式碼過長,可將程式碼拆成多個函式(如依構面分函式),並在主函式 createForm() 中依序呼叫。
+
+請先確認你已完整解析問卷的所有題目與題型,再開始撰寫程式碼。</pre>
+  </details>
+  <script>
+  (function(){
+    var btn = document.getElementById('gasCopyBtn');
+    var note = document.getElementById('gasCopyNote');
+    var pre = document.getElementById('gasPrompt');
+    function done(ok){
+      btn.textContent = ok ? '已複製' : '請手動選取下方文字複製';
+      note.textContent = ok ? '已複製到剪貼簿，貼到 AI 對話視窗即可' : '';
+      if (!ok){ pre.closest('details').open = true; }
+      setTimeout(function(){ btn.textContent = '複製建立 Google 表單指令'; }, 1800);
+    }
+    btn.addEventListener('click', function(){
+      var text = pre.textContent;
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok){ done(true); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); });
+      } else { done(false); }
+    });
+  })();
+  </script>
+</section>
 
   <details class="example">
     <summary>查看範例：一份符合格式的 Pick any/J 問卷長什麼樣子</summary>
@@ -779,19 +854,6 @@ S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
     lines.push('－每個選項只能代表一個具體項目，不要用「／」或「/」把兩個以上不同的項目合併寫成同一個選項（例如不要寫成「量販店／超市」），若原本想合併的項目其實是不同的通路或情境，請拆成各自獨立的選項分開列出；選項文字中也不要包含任何空格（半形或全形空白）。');
     lines.push('－最終輸出為可直接複製貼上到 Word 或 Google 表單的純文字，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。');
     lines.push('－完成後，請在最下方另外條列：這份問卷中哪一題是篩選題、哪些題目屬於 Pick any/J 複選格式，以及通路題、媒體題底下每個選項各自屬於哪一個分類，方便授課教師檢查是否符合格式要求；這段附註只給授課教師看，不要出現在問卷本身裡。');
-
-    if(checked('gas')){
-      lines.push('');
-      lines.push('【額外產出：Google Apps Script 建立表單程式碼】');
-      lines.push('除了上面的問卷文字，請另外提供一段完整、可直接貼到 Google Apps Script 編輯器（script.google.com）執行的 JavaScript 程式碼，需求如下：');
-      lines.push('－用一個具名函式包起來（例如 function createSurveyForm() { ... }），並用程式碼區塊（三個反引號）包起來，方便整段複製。');
-      lines.push('－用 FormApp.create(\'表單標題\') 建立新表單，並用 setDescription() 帶入問候語／研究說明的內容。');
-      lines.push('－依上面問卷的題目順序逐題建立：單選題（如篩選題、使用頻率）用 addMultipleChoiceItem()＋setChoiceValues()；Pick any/J 可複選題用 addCheckboxItem()＋setChoiceValues()；除了篩選題以外的題目都設定 setRequired(true)。');
-      lines.push('－若篩選題設計為「不合格即不列入樣本」，請用 addPageBreakItem() 搭配該選項的 .createChoice(文字, 目標頁面) 設定跳題邏輯：不合格者跳到表單最後一頁並顯示「感謝您的參與，本次問卷到此結束」，合格者則正常進入下一頁繼續作答。');
-      lines.push('－建立一份新的 Google 試算表（SpreadsheetApp.create(\'表單標題 - 回覆\')），並用 form.setDestination(FormApp.DestinationType.SPREADSHEET, 試算表ID) 把表單回覆連結到這份試算表。');
-      lines.push('－最後用 Logger.log() 印出表單的填答網址（getPublishedUrl()）與編輯網址（getEditUrl()），方便執行完在「執行紀錄」查看。');
-      lines.push('－程式碼之後，附上三、四行以內的操作步驟提示：開啟 script.google.com 建立新專案、貼上程式碼、執行 createSurveyForm 函式、依提示完成 Google 帳號授權、執行完成後到左側「執行項目」查看紀錄取得表單網址。');
-    }
 
     return lines.join('\n');
   }

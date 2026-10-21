@@ -170,6 +170,90 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   <pre id="out"></pre>
 </section>
 </main>
+<div style="padding:0 16px">
+<section class="gas-card" aria-labelledby="gas-h">
+  <style>
+    .gas-card{max-width:1180px;margin:24px auto 0;background:var(--surface,var(--panel,#fff));border:1px solid var(--border,var(--line,#dcdfd8));border-radius:12px;padding:22px 24px;color:var(--ink,#1f2a24)}
+    .gas-card h2{font-family:"Noto Serif TC",serif;font-size:18px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+    .gas-card .gas-step{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff));font-size:13px;font-weight:700}
+    .gas-card p.gas-lead{margin:0 0 12px;color:var(--ink-soft,var(--muted,#5f6b64));font-size:14px}
+    .gas-card ol{margin:0 0 14px;padding-left:22px;font-size:14px;line-height:1.75}
+    .gas-card ol a{color:var(--accent-strong,var(--accent,#2f6b4f));font-weight:600}
+    .gas-card .gas-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    .gas-card button{font:inherit;font-weight:700;font-size:14px;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff))}
+    .gas-card .gas-note{font-size:13px;color:var(--ink-faint,var(--muted,#5f6b64))}
+    .gas-card details{margin-top:12px}
+    .gas-card summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64))}
+    .gas-card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--code-border,var(--line,#dcdfd8));border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:360px;overflow:auto}
+  </style>
+  <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
+  <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
+  <ol>
+    <li>用上方的指令請 AI 產生問卷，確認無誤後下載 Word 檔。</li>
+    <li>開一個新的 AI 對話，上傳這份 Word 檔，再貼上「建立 Google 表單指令」，AI 會產生完整的程式碼。</li>
+    <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，刪除預設內容後貼上程式碼並儲存，選擇函式 <code>createForm</code> 後按「執行」，依畫面完成 Google 帳號授權。</li>
+    <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
+  </ol>
+  <div class="gas-actions">
+    <button type="button" id="gasCopyBtn">複製建立 Google 表單指令</button>
+    <span class="gas-note" id="gasCopyNote">此指令固定不變，不受左側設定影響。</span>
+  </div>
+  <details>
+    <summary>檢視指令內容</summary>
+    <pre id="gasPrompt">請根據我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
+
+一、問卷內容解析
+1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。
+2. 判斷每一題的題型(單選、複選、李克特量表、簡答、段落文字、矩陣量表等),並轉換為對應的 Google Form 題型(MultipleChoiceItem、CheckboxItem、ScaleItem、TextItem、ParagraphTextItem、GridItem 等)。
+3. 若問卷分為多個構面或區塊(例如人口統計變數、各研究構面),請以 PageBreakItem 或章節標題(SectionHeaderItem)呈現,並保留區塊名稱。
+4. 判斷各題是否為必填,並在程式碼中設定 setRequired(true/false)。
+5. 篩選題的跳題:單選題中標示「停止作答」的選項,請在該題之後以 PageBreakItem 分頁,並以 createChoice(選項文字, FormApp.PageNavigationType.SUBMIT) 設定為直接跳至表單結尾,其他選項則繼續作答。複選題(CheckboxItem)無法設定跳題,若複選題有標示停止作答的選項,請改以 setHelpText() 註明。
+6. 複選題若有「以上皆非」選項,請以 setHelpText("選以上皆非者,勿勾其他選項") 加註說明。
+
+二、Google Apps Script 程式碼撰寫規範
+1. 使用 FormApp.create("表單標題") 建立新表單,並設定表單說明(description)。
+2. 所有題目與選項文字必須與原問卷完全一致,包含量表的最低與最高說明文字(如「非常不同意」、「非常同意」)。
+3. 李克特量表請使用 addScaleItem(),並設定正確的最小值、最大值與兩端文字標籤。
+4. 程式碼需可直接貼入 script.google.com 的 Apps Script 編輯器執行,執行後直接產生表單,不需額外手動設定。
+5. 在程式碼中適當加入註解,標示對應的問卷區塊與題號,方便日後核對與修改。
+6. 若問卷需要收集受試者基本資料(如性別、年齡、服務單位等),請依原問卷格式建立對應題目。
+
+三、輸出要求
+1. 直接輸出完整、可執行的 .gs 程式碼,不要分段或省略任何題目。
+2. 在程式碼最後加上 Logger.log(form.getPublishedUrl()) 與 Logger.log(form.getEditUrl()),方便取得表單連結。
+3. 若問卷題目過多導致單一程式碼過長,可將程式碼拆成多個函式(如依構面分函式),並在主函式 createForm() 中依序呼叫。
+
+請先確認你已完整解析問卷的所有題目與題型,再開始撰寫程式碼。</pre>
+  </details>
+  <script>
+  (function(){
+    var btn = document.getElementById('gasCopyBtn');
+    var note = document.getElementById('gasCopyNote');
+    var pre = document.getElementById('gasPrompt');
+    function done(ok){
+      btn.textContent = ok ? '已複製' : '請手動選取下方文字複製';
+      note.textContent = ok ? '已複製到剪貼簿，貼到 AI 對話視窗即可' : '';
+      if (!ok){ pre.closest('details').open = true; }
+      setTimeout(function(){ btn.textContent = '複製建立 Google 表單指令'; }, 1800);
+    }
+    btn.addEventListener('click', function(){
+      var text = pre.textContent;
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok){ done(true); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); });
+      } else { done(false); }
+    });
+  })();
+  </script>
+</section>
+</div>
 <footer>指令產生後，請檢查 AI 輸出的問卷是否完整照錄所有選項，以及 AI 自行填入的簡稱與頻率級距是否合理。</footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
