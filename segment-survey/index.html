@@ -191,7 +191,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   <ol>
     <li>用上方的指令請 AI 產生問卷，確認無誤後下載 Word 檔。</li>
     <li>開一個新的 AI 對話，上傳這份 Word 檔，再貼上「建立 Google 表單指令」，AI 會產生完整的程式碼。</li>
-    <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，刪除預設內容後貼上程式碼並儲存，選擇函式 <code>createForm</code> 後按「執行」，依畫面完成 Google 帳號授權。</li>
+    <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
     <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
   </ol>
   <div class="gas-actions">
@@ -221,7 +221,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
 三、輸出要求
 1. 直接輸出完整、可執行的 .gs 程式碼,不要分段或省略任何題目。
 2. 在程式碼最後加上 Logger.log(form.getPublishedUrl()) 與 Logger.log(form.getEditUrl()),方便取得表單連結。
-3. 若問卷題目過多導致單一程式碼過長,可將程式碼拆成多個函式(如依構面分函式),並在主函式 createForm() 中依序呼叫。
+3. 若問卷題目過多導致單一程式碼過長,可將程式碼拆成多個函式(如依構面分函式),並在主函式 createForm() 中依序呼叫。主函式 createForm() 須放在程式碼最前面。
 
 請先確認你已完整解析問卷的所有題目與題型,再開始撰寫程式碼。</pre>
   </details>
