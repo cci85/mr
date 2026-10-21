@@ -513,7 +513,7 @@
   <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
   <ol>
     <li>用上方的指令請 AI 產生問卷，確認無誤後把問卷文字貼到 Word 存檔。</li>
-    <li>在同一個 AI 對話中接著貼上「建立 Google 表單指令」，AI 會產生完整的程式碼；若改開新的對話，請先上傳問卷 Word 檔再貼上指令。</li>
+    <li>在同一個 AI 對話中上傳問卷 Word 檔，再接著貼上「建立 Google 表單指令」，AI 會產生完整的程式碼。</li>
     <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
     <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
   </ol>
@@ -523,7 +523,7 @@
   </div>
   <details>
     <summary>檢視指令內容</summary>
-    <pre id="gasPrompt">請根據本對話中已確認的問卷內容(或我上傳的問卷檔案),撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
+    <pre id="gasPrompt">請根據我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
 
 一、問卷內容解析
 1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。
