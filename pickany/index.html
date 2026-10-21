@@ -526,7 +526,7 @@
     <pre id="gasPrompt">請根據我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
 
 一、問卷內容解析
-1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。
+1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。只依上傳的問卷檔案建立表單,不納入對話中的附註或檢查結果。
 2. 判斷每一題的題型(單選、複選、李克特量表、簡答、段落文字、矩陣量表等),並轉換為對應的 Google Form 題型(MultipleChoiceItem、CheckboxItem、ScaleItem、TextItem、ParagraphTextItem、GridItem 等)。
 3. 若問卷分為多個構面或區塊(例如人口統計變數、各研究構面),請以 PageBreakItem 或章節標題(SectionHeaderItem)呈現,並保留區塊名稱。
 4. 判斷各題是否為必填,並在程式碼中設定 setRequired(true/false)。
