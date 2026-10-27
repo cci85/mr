@@ -489,7 +489,7 @@ function analyze(){
   const adq=Stats.adequacy(R,n,eig);
   const kaiser=Math.max(1,eig.filter(e=>e.value>1).length);
   if (!S.userNf || !S.nf || S.nf>=cols.length) { S.nf=kaiser; S.userNf=false; }
-  S.res={cols,keep,n,dropped,R,z,eig,adq,kaiser,binary:cols.every(c=>c.binary)};
+  S.res={cols,keep,n,dropped,R,z,eig,adq,kaiser,binary:cols.every(c=>c.binary),means:data.map(v=>v.reduce((a,b)=>a+b,0)/v.length)};
   renderAdequacy(); renderEigen(); compute();
 }
 function compute(){
@@ -511,7 +511,7 @@ function compute(){
     const dom=row[best]>=cut;
     const cross=dom?row.map((x,j)=>j!==best&&Math.abs(x)>=cut?j:-1).filter(j=>j>=0):[];
     const neg=row.map((x,j)=>x<=-cut?j:-1).filter(j=>j>=0);
-    return {c,i,row,best,dom,cross,neg,comm:sol.comm[i],uniq:sol.uniq[i],msa:r.adq.msa?r.adq.msa[i]:null};
+    return {c,i,row,best,dom,cross,neg,mean:r.means[i],comm:sol.comm[i],uniq:sol.uniq[i],msa:r.adq.msa?r.adq.msa[i]:null};
   });
   r.order=r.items.slice().sort((a,b)=>{
     if (a.dom!==b.dom) return a.dom?-1:1;
@@ -563,11 +563,11 @@ function renderEigen(){
 function renderLoadings(){
   const r=S.res, sol=r.sol, k=S.nf, cut=r.cut.v, hide=$("hide-low").checked;
   $("sec-load").hidden=false;
-  let t='<table><thead><tr><th class="l">題項</th><th class="l">題目內容</th>';
+  let t='<table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th>平均數</th>';
   for (let j=0;j<k;j++) t+='<th>因素'+(j+1)+'</th>';
   t+='<th>共同性</th><th>獨特性</th><th>MSA</th></tr></thead><tbody>';
   r.order.forEach(it=>{
-    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?"":' <span class="tag">'+(it.neg.length?"負負荷":"未達截斷值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td>';
+    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?"":' <span class="tag">'+(it.neg.length?"負負荷":"未達截斷值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
     it.row.forEach((x,j)=>{
       let cls="", show=true;
       if (it.dom&&j===it.best) cls="dom";
@@ -579,8 +579,8 @@ function renderLoadings(){
     t+='<td>'+f2(it.comm)+'</td><td class="'+(it.uniq>.45?"flag":"")+'">'+f2(it.uniq)+'</td><td>'+(it.msa!=null?f2(it.msa):"—")+'</td></tr>';
   });
   const p=r.cols.length; let cum=0;
-  t+='<tr><td class="l" colspan="2"><b>轉軸後解釋變異量</b></td>'; sol.ss.forEach(v=>{ t+='<td>'+pct(v/p)+'</td>'; }); t+='<td colspan="3"></td></tr>';
-  t+='<tr><td class="l" colspan="2"><b>累積解釋變異量</b></td>'; sol.ss.forEach(v=>{ cum+=v/p; t+='<td>'+pct(cum)+'</td>'; }); t+='<td colspan="3"></td></tr>';
+  t+='<tr><td class="l" colspan="3"><b>轉軸後解釋變異量</b></td>'; sol.ss.forEach(v=>{ t+='<td>'+pct(v/p)+'</td>'; }); t+='<td colspan="3"></td></tr>';
+  t+='<tr><td class="l" colspan="3"><b>累積解釋變異量</b></td>'; sol.ss.forEach(v=>{ cum+=v/p; t+='<td>'+pct(cum)+'</td>'; }); t+='<td colspan="3"></td></tr>';
   t+='</tbody></table>';
   $("load-table").innerHTML=t;
   const m=[];
@@ -673,9 +673,9 @@ function renderPrompt(){
   L.push("截斷值："+f2(r.cut.v));
   L.push("");
   L.push("轉軸後負荷量矩陣（題項依主要負荷所在的因素排列）：");
-  L.push(["題項","題目內容"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA"]).join("｜"));
+  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA"]).join("｜"));
   r.order.forEach(it=>{
-    L.push([it.c.name, it.c.stem||"（同題項欄名）"].concat(it.row.map(f2)).concat([f2(it.comm),f2(it.uniq),it.msa!=null?f2(it.msa):"—"]).join("｜"));
+    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm),f2(it.uniq),it.msa!=null?f2(it.msa):"—"]).join("｜"));
   });
   const text=L.join("\n");
   $("prompt").textContent=text;
@@ -689,11 +689,11 @@ function stamp(){ return S.fileName.replace(/\.(xlsx|csv)$/i,""); }
 function dlLoadings(){
   const r=S.res; if (!r) return; const k=S.nf, p=r.cols.length, sol=r.sol;
   const wb=XLSX.utils.book_new();
-  const a1=[["題項","題目內容"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA","主要負荷因素"])];
-  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||""].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?"因素"+(it.best+1):(it.neg.length?"負負荷（因素"+it.neg.map(j=>j+1).join("、")+"）":"未達截斷值")])));
+  const a1=[["題項","題目內容","平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA","主要負荷因素"])];
+  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?"因素"+(it.best+1):(it.neg.length?"負負荷（因素"+it.neg.map(j=>j+1).join("、")+"）":"未達截斷值")])));
   let cum=0;
-  a1.push([]); a1.push(["轉軸後解釋變異量 (%)",""].concat(sol.ss.map(v=>round(v/p*100,2))));
-  a1.push(["累積解釋變異量 (%)",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
+  a1.push([]); a1.push(["轉軸後解釋變異量 (%)","",""].concat(sol.ss.map(v=>round(v/p*100,2))));
+  a1.push(["累積解釋變異量 (%)","",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
   a1.push([]); a1.push(["萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）；截斷值 "+f2(r.cut.v)+"（"+r.cut.why+"）"]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),"轉軸後負荷量");
   const a2=[["成分","特徵值","解釋變異量 (%)","累積解釋變異量 (%)","保留"]]; cum=0;
