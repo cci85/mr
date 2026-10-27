@@ -590,8 +590,8 @@
       <select id="select-sheet"></select>
     </div>
     <label class="dropzone" id="dropzone">
-      <input type="file" id="input-csv" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-      <span id="dropzone-label">選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡</span>
+      <input type="file" id="input-csv" accept=".csv,.xlsx,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dropzone-label">選擇或拖曳 CSV／Excel (.xlsx)／jamovi (.omv) 檔案到這裡</span>
     </label>
     <div class="row-actions sample-row" id="sample-row" hidden>
       <button class="btn btn-text" id="btn-load-sample" type="button">載入範例：冰淇淋品牌購買 0／1 資料（100 筆）</button>
@@ -730,6 +730,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../omv-reader.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1026,13 +1028,13 @@
     document.getElementById('encoding-row').hidden = true;
     state.csvRawBuffer = null;
     const reader = new FileReader();
-    reader.onload = function(){
+    reader.onload = async function(){
       try{
         if (typeof XLSX === 'undefined'){
           toast('Excel 解析功能載入失敗，請檢查網路連線，或改用 CSV 上傳', 'error');
           return;
         }
-        const wb = XLSX.read(new Uint8Array(reader.result), { type: 'array' });
+        const wb = OMV.isOmv(file) ? await OMV.toWorkbook(reader.result) : XLSX.read(new Uint8Array(reader.result), { type: 'array' });
         if (!wb.SheetNames.length){ toast('這個 Excel 檔案沒有工作表', 'error'); return; }
         state.xlsxWorkbook = wb;
         state.csvFileName = file.name;
@@ -1045,9 +1047,10 @@
           sheetRow.hidden = true;
         }
         loadSheet(wb.SheetNames.indexOf('資料') !== -1 ? '資料' : wb.SheetNames[0]);
+        if (wb.omvInfo && wb.omvInfo.removed) toast('已依 jamovi 的篩選條件排除 ' + wb.omvInfo.removed + ' 筆資料', 'success');
       }catch(err){
         console.error(err);
-        toast('無法解析此 Excel 檔案，請確認格式是否正確', 'error');
+        toast(OMV.isOmv(file) ? '無法解析此 jamovi 檔案，請確認檔案是否完整，或在 jamovi 中匯出 CSV 後上傳' : '無法解析此 Excel 檔案，請確認格式是否正確', 'error');
       }
     };
     reader.onerror = function(){ toast('讀取檔案失敗', 'error'); };
@@ -1060,7 +1063,7 @@
 
   function handleUploadedFile(file){
     if (!file) return;
-    if (/\.xlsx$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
+    if (/\.(xlsx|omv)$/i.test(file.name) || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){
       handleXLSXFile(file);
     } else {
       handleCSVFile(file);
@@ -1093,7 +1096,7 @@
     document.getElementById('select-encoding').value = 'auto';
     document.getElementById('encoding-row').hidden = false;
     document.getElementById('sheet-row').hidden = true;
-    document.getElementById('dropzone-label').textContent = '選擇或拖曳 CSV／Excel (.xlsx) 檔案到這裡';
+    document.getElementById('dropzone-label').textContent = '選擇或拖曳 CSV／Excel (.xlsx)／jamovi (.omv) 檔案到這裡';
     document.getElementById('csv-summary').hidden = true;
     document.getElementById('csv-preview-wrap').hidden = true;
     document.getElementById('csv-actions').hidden = true;

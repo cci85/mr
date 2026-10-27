@@ -112,10 +112,10 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 1 上傳 -->
   <section class="panel" aria-labelledby="h1s">
     <h2 id="h1s"><span class="step">1</span>上傳資料</h2>
-    <p class="hint">支援 Excel (.xlsx) 與 CSV（UTF-8）。若是問卷資料整理器產出的檔案，工具會讀取「資料」工作表，並以「欄名對照表」的原題目作為題目內容。</p>
+    <p class="hint">支援 Excel (.xlsx)、CSV（UTF-8）與 jamovi 資料檔 (.omv)。若是問卷資料整理器產出的檔案，工具會讀取「資料」工作表，並以「欄名對照表」的原題目作為題目內容。</p>
     <label class="dropzone" id="dropzone">
-      <input type="file" id="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-      <span id="dz-label">選擇或拖曳 Excel／CSV 檔案到這裡</span>
+      <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
     </label>
     <div class="row" id="sheet-row" hidden>
       <label class="inline">工作表 <select id="sheet"></select></label>
@@ -218,6 +218,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../omv-reader.js"></script>
 <script>
 /* ===== STATS-BEGIN（純計算函式，可單獨測試） ===== */
 const Stats = (function(){
@@ -382,16 +384,18 @@ function readFile(file){
   if (typeof XLSX==="undefined"){ toast("Excel 解析功能載入失敗，請檢查網路連線"); return; }
   const isCsv=/\.csv$/i.test(file.name);
   const rd=new FileReader();
-  rd.onload=()=>{
+  const isOmv=OMV.isOmv(file);
+  rd.onload=async()=>{
     try{
-      const wb=isCsv?XLSX.read(rd.result,{type:"string"}):XLSX.read(new Uint8Array(rd.result),{type:"array"});
+      const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string"}):XLSX.read(new Uint8Array(rd.result),{type:"array"}));
       if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
       S.wb=wb; S.fileName=file.name;
       $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
       $("sheet-row").hidden=false;
       const first=wb.SheetNames.includes("資料")?"資料":wb.SheetNames[0];
       $("sheet").value=first; loadSheet(first);
-    }catch(e){ console.error(e); toast("無法解析此檔案，請確認格式"); }
+      if (wb.omvInfo&&wb.omvInfo.removed){ $("dz-label").textContent+="；已依 jamovi 的篩選條件排除 "+wb.omvInfo.removed+" 筆"; }
+    }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案，請確認檔案是否完整，或在 jamovi 中匯出 CSV 後上傳":"無法解析此檔案，請確認格式"); }
   };
   if (isCsv) rd.readAsText(file,"utf-8"); else rd.readAsArrayBuffer(file);
 }
@@ -739,7 +743,7 @@ dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.fil
 $("sheet").addEventListener("change",e=>loadSheet(e.target.value));
 $("btn-remove").addEventListener("click",()=>{
   S.wb=null; S.rows=[]; S.headers=[]; S.res=null; $("file").value="";
-  $("dz-label").textContent="選擇或拖曳 Excel／CSV 檔案到這裡"; $("sheet-row").hidden=true; $("sec-items").hidden=true; hideFrom("sec-adequacy");
+  $("dz-label").textContent="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡"; $("sheet-row").hidden=true; $("sec-items").hidden=true; hideFrom("sec-adequacy");
 });
 $("nf").addEventListener("input",()=>{
   const r=S.res; if (!r) return;
