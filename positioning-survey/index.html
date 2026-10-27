@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知覺定位問卷產生器</title>
+<meta name="description" content="輸入競爭品牌與市場區隔分析的結果，產生可貼給 AI 製作品牌定位問卷的指令。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f5f1; --panel:#ffffff; --ink:#1f2a24; --muted:#5f6b64; --line:#dcdfd8;
+  --accent:#2f6b4f; --accent-ink:#ffffff; --accent-soft:#e6efe9;
+  --warn:#9a4b12; --warn-soft:#fbefe4; --ok:#2f6b4f;
+  --code-bg:#fbfbf8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151a17; --panel:#1d2420; --ink:#e7ece8; --muted:#a3ada7; --line:#334039;
+    --accent:#7fc29f; --accent-ink:#0f1a14; --accent-soft:#25352c;
+    --warn:#f0b07c; --warn-soft:#3a2a1d; --ok:#7fc29f; --code-bg:#181e1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151a17; --panel:#1d2420; --ink:#e7ece8; --muted:#a3ada7; --line:#334039;
+  --accent:#7fc29f; --accent-ink:#0f1a14; --accent-soft:#25352c;
+  --warn:#f0b07c; --warn-soft:#3a2a1d; --ok:#7fc29f; --code-bg:#181e1b;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.65}
+header{max-width:1280px;margin:0 auto;padding:32px 16px 8px}
+h1{font-family:"Noto Serif TC",serif;font-size:28px;margin:0 0 4px;letter-spacing:.02em}
+.sub{color:var(--muted);margin:0 0 12px}
+.intro{max-width:820px;color:var(--ink);margin:0}
+main{max-width:1280px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start}
+@media (max-width:980px){main{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+.panel h2{font-family:"Noto Serif TC",serif;font-size:19px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:"Noto Sans TC";font-size:14px;font-weight:700}
+.panel > p.hint{color:var(--muted);margin:0 0 16px;font-size:14px}
+.group{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.group-title{font-weight:700;font-size:14px;color:var(--accent);margin:0 0 8px;letter-spacing:.04em}
+.field{margin-bottom:14px}
+label{display:block;font-weight:500;margin-bottom:4px}
+.req{color:var(--warn);font-size:12px;margin-left:6px;font-weight:500}
+.opt{color:var(--muted);font-size:12px;margin-left:6px;font-weight:400}
+.help{color:var(--muted);font-size:13px;margin:4px 0 0}
+input[type=text],select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+textarea{min-height:110px;resize:vertical;line-height:1.55}
+textarea.tall{min-height:200px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+.meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:6px;font-size:13px}
+.count{background:var(--accent-soft);color:var(--ok);border-radius:999px;padding:1px 10px;font-weight:500}
+.count.zero{background:var(--warn-soft);color:var(--warn)}
+.note{color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+button{font:inherit;border-radius:6px;padding:7px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.sticky{position:sticky;top:12px}
+@media (max-width:980px){.sticky{position:static}}
+.out-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.status{font-size:13px;color:var(--muted)}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:8px 12px;font-size:14px;margin-bottom:10px}
+.warnbox ul{margin:4px 0 0;padding-left:20px}
+pre#out{margin:0;white-space:pre-wrap;word-break:break-word;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:14px;font-family:"Noto Sans TC",system-ui,sans-serif;font-size:13.5px;line-height:1.7;max-height:calc(100vh - 190px);overflow:auto}
+@media (max-width:980px){pre#out{max-height:none}}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<style>.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}.toolbox-back a{color:#28594f;text-decoration:none}.toolbox-back a:hover{text-decoration:underline}@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}</style>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<header>
+  <h1>知覺定位問卷產生器</h1>
+  <p class="sub">行銷研究方法 · 品牌定位問卷設計</p>
+  <p class="intro">請將競爭品牌與市場區隔分析的結果填入左側，右側會即時組成一段指令。複製後貼到 Gemini、ChatGPT 或 Claude，AI 會把需求因素轉為品牌聯想選項（定位基礎），並產生品牌定位問卷：最近一次購買的品牌、各品牌的聯想與評價，以及選擇品牌時重視的特質。</p>
+</header>
+
+<main>
+<section class="panel" aria-labelledby="h-in">
+  <h2 id="h-in"><span class="step">1</span>填入研究設定</h2>
+  <p class="hint">研究標的、競爭品牌與因素分析結果為必填。品牌欄位可一次貼上多個品牌，一行一項，或以頓號、逗號分隔；行首的編號、□、•、- 等符號與重複的品牌會自動移除。</p>
+  <div class="toolbar">
+    <button type="button" id="btnClear">清除全部</button>
+  </div>
+
+  <div class="group">
+    <p class="group-title">研究標的</p>
+    <div class="field">
+      <label for="target">研究標的<span class="req">必填</span></label>
+      <input type="text" id="target" placeholder="例：即飲包裝綠茶">
+      <p class="help">應與市場區隔問卷的研究標的相同。簡稱由 AI 判斷。</p>
+    </div>
+    <div class="field">
+      <label for="org">研究單位<span class="opt">選填，未填時署名「本研究團隊」</span></label>
+      <input type="text" id="org" placeholder="例：源典飲料企業 行銷企劃部">
+    </div>
+    <div class="field">
+      <label for="outMode">問卷輸出方式</label>
+      <select id="outMode">
+        <option value="word" selected>純文字預覽，確認後產生 Word 檔</option>
+        <option value="text">只要純文字（不產生檔案）</option>
+      </select>
+      <p class="help">兩種方式都會先在 AI 對話中輸出純文字預覽，供您檢查與修改。</p>
+    </div>
+  </div>
+
+  <div class="group">
+    <p class="group-title">競爭範圍</p>
+    <div class="field">
+      <label for="brands">競爭品牌<span class="req">必填，3～8 個</span></label>
+      <textarea id="brands" placeholder="一行一項，或以頓號分隔，例：&#10;原萃、純喫茶、御茶園、每朝健康、茶裏王、生活泡沫綠茶"></textarea>
+      <div class="meta"><span class="count" id="c-brands"></span><span class="note" id="n-brands"></span></div>
+      <p class="help">請填目標區隔實際購買或考慮的品牌；若區隔剖析的卡方檢定顯示目標區隔集中購買某些品牌，以這些品牌為準。每個品牌都要重複一組題目，品牌愈多，受訪者負擔愈重。</p>
+    </div>
+  </div>
+
+  <div class="group">
+    <p class="group-title">市場區隔分析的結果</p>
+    <div class="field">
+      <label for="factors">因素分析結果<span class="req">必填</span></label>
+      <textarea id="factors" class="tall" placeholder="請貼上各需求因素的名稱與主導變數（含因素負荷量），例：&#10;因素一：日常作息習慣&#10;主導變數：規律作息（.78）、日常習慣（.75）、提振精神（.67）……&#10;因素二：自我形象表達&#10;主導變數：外觀品味（.82）、環保永續（.73）……"></textarea>
+      <div class="meta"><span class="count" id="c-factors"></span></div>
+      <p class="help">可直接貼上區隔報告中的因素命名段落；交叉負荷、獨特性偏高等說明也請一併保留，AI 會據以略過歸屬不明的變數。</p>
+    </div>
+    <div class="field">
+      <label for="chisq">區隔剖析結果（卡方檢定）<span class="opt">選填</span></label>
+      <textarea id="chisq" placeholder="請貼上目標區隔與使用情境、品牌使用等變數的顯著結果，例：&#10;目標區隔：健康功效型&#10;使用情境：運動後解渴（χ²＝12.3，p＜.01），該區隔勾選率高於其他區隔"></textarea>
+      <div class="meta"><span class="count" id="c-chisq"></span></div>
+      <p class="help">目標區隔顯著偏高的使用情境，會轉為使用情境型的品牌聯想選項（例：適合運動後喝），補上因素分析無法提供的替代性定位基礎。</p>
+    </div>
+  </div>
+</section>
+
+<div class="right-col">
+<section class="panel" aria-labelledby="h-out">
+  <div class="out-head">
+    <h2 id="h-out"><span class="step">2</span>給 AI 的指令</h2>
+    <button type="button" class="primary" id="btnCopy">複製指令</button>
+  </div>
+  <div id="warn" class="warnbox" hidden></div>
+  <p class="status" id="status"></p>
+  <pre id="out"></pre>
+</section>
+
+<section class="gas-card" aria-labelledby="gas-h">
+  <style>
+    .gas-card{margin:20px 0 0;background:var(--surface,var(--panel,#fff));border:1px solid var(--border,var(--line,#dcdfd8));border-radius:12px;padding:22px 24px;color:var(--ink,#1f2a24)}
+    .gas-card h2{font-family:"Noto Serif TC",serif;font-size:18px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+    .gas-card .gas-step{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff));font-size:13px;font-weight:700}
+    .gas-card p.gas-lead{margin:0 0 12px;color:var(--ink-soft,var(--muted,#5f6b64));font-size:14px}
+    .gas-card ol{margin:0 0 14px;padding-left:22px;font-size:14px;line-height:1.75}
+    .gas-card ol a{color:var(--accent-strong,var(--accent,#2f6b4f));font-weight:600}
+    .gas-card .gas-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    .gas-card button{font:inherit;font-weight:700;font-size:14px;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;background:var(--accent,#2f6b4f);color:var(--accent-contrast,var(--accent-ink,#fff))}
+    .gas-card .gas-note{font-size:13px;color:var(--ink-faint,var(--muted,#5f6b64))}
+    .gas-card details{margin-top:12px}
+    .gas-card summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64))}
+    .gas-card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--code-border,var(--line,#dcdfd8));border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:360px;overflow:auto}
+  </style>
+  <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
+  <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
+  <ol>
+    <li>用上方的指令請 AI 產生問卷並確認內容；選擇產生 Word 檔者，請下載 Word 檔。</li>
+    <li>在同一個 AI 對話中接著貼上「建立 Google 表單指令」（若有 Word 檔，請先上傳），AI 會產生完整的程式碼。</li>
+    <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
+    <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
+  </ol>
+  <div class="gas-actions">
+    <button type="button" id="gasCopyBtn">複製建立 Google 表單指令</button>
+    <span class="gas-note" id="gasCopyNote">此指令固定不變，不受左側設定影響。</span>
+  </div>
+  <details>
+    <summary>檢視指令內容</summary>
+    <pre id="gasPrompt">請根據本對話中已確認的問卷內容或我上傳的問卷檔案,撰寫一份完整的 Google Apps Script 程式碼,用於自動建立對應的 Google 表單。請依照以下要求執行:
+
+一、問卷內容解析
+1. 逐題讀取問卷中的所有題目,保留原始文字用語與題號順序,不得省略或改寫。只依問卷本身建立表單,不納入對話中的附註或檢查結果。
+2. 判斷每一題的題型(單選、複選、李克特量表、簡答、段落文字、矩陣量表等),並轉換為對應的 Google Form 題型(MultipleChoiceItem、CheckboxItem、ScaleItem、TextItem、ParagraphTextItem、GridItem 等)。
+3. 若問卷分為多個構面或區塊(例如人口統計變數、各研究構面),請以 PageBreakItem 或章節標題(SectionHeaderItem)呈現,並保留區塊名稱。
+4. 判斷各題是否為必填,並在程式碼中設定 setRequired(true/false)。
+5. 篩選題的跳題:單選題中標示「停止作答」的選項,請在該題之後以 PageBreakItem 分頁,並以 createChoice(選項文字, FormApp.PageNavigationType.SUBMIT) 設定為直接跳至表單結尾,其他選項則繼續作答。複選題(CheckboxItem)無法設定跳題,若複選題有標示停止作答的選項,請改以 setHelpText() 註明。
+6. 複選題若有「以上皆非」選項,請以 setHelpText("選以上皆非者,勿勾其他選項") 加註說明。
+
+二、Google Apps Script 程式碼撰寫規範
+1. 使用 FormApp.create("表單標題") 建立新表單,並設定表單說明(description)。
+2. 所有題目與選項文字必須與原問卷完全一致,包含量表的最低與最高說明文字(如「非常不同意」、「非常同意」)。
+3. 李克特量表請使用 addScaleItem(),並設定正確的最小值、最大值與兩端文字標籤。
+4. 程式碼需可直接貼入 script.google.com 的 Apps Script 編輯器執行,執行後直接產生表單,不需額外手動設定。
+5. 在程式碼中適當加入註解,標示對應的問卷區塊與題號,方便日後核對與修改。
+6. 若問卷需要收集受試者基本資料(如性別、年齡、服務單位等),請依原問卷格式建立對應題目。
+
+三、輸出要求
+1. 直接輸出完整、可執行的 .gs 程式碼,不要分段或省略任何題目。
+2. 在程式碼最後加上 Logger.log(form.getPublishedUrl()) 與 Logger.log(form.getEditUrl()),方便取得表單連結。
+3. 若問卷題目過多導致單一程式碼過長,可將程式碼拆成多個函式(如依構面分函式),並在主函式 createForm() 中依序呼叫。主函式 createForm() 須放在程式碼最前面。
+
+請先確認你已完整解析問卷的所有題目與題型,再開始撰寫程式碼。</pre>
+  </details>
+  <script>
+  (function(){
+    var btn = document.getElementById('gasCopyBtn');
+    var note = document.getElementById('gasCopyNote');
+    var pre = document.getElementById('gasPrompt');
+    function done(ok){
+      btn.textContent = ok ? '已複製' : '請手動選取下方文字複製';
+      note.textContent = ok ? '已複製到剪貼簿，貼到 AI 對話視窗即可' : '';
+      if (!ok){ pre.closest('details').open = true; }
+      setTimeout(function(){ btn.textContent = '複製建立 Google 表單指令'; }, 1800);
+    }
+    btn.addEventListener('click', function(){
+      var text = pre.textContent;
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok){ done(true); return; }
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ done(true); }, function(){ done(false); });
+      } else { done(false); }
+    });
+  })();
+  </script>
+</section>
+</div>
+</main>
+<footer>指令產生後，請檢查 AI 輸出的問卷是否完整照錄所有品牌，以及 AI 產生的品牌聯想選項是否涵蓋每一個需求因素；附註中的對照表可用來核對每個選項的來源。</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+
+const NONE_EXCL = "□ 以上皆非（勿再勾其他選項）";
+
+/* ---------- 元素 ---------- */
+const $ = id => document.getElementById(id);
+const F = ["target","org","outMode","brands","factors","chisq"];
+const el = {}; F.forEach(k => el[k] = $(k));
+
+/* ---------- 批次解析（同市場區隔問卷產生器） ---------- */
+const LEAD = /^\s*(?:[□■☐☑✓✔•·●○◦▪\-–—*＊]+|[（(]?\d{1,3}[\.．、)）:：]|[（(]\d{1,3}[)）]|[a-zA-Z][\.)）])\s*/;
+function parseList(text, inlineSep){
+  let parts = (text||"").split(/\r?\n|\t/);
+  if (inlineSep) parts = parts.flatMap(p => p.split(/[、,，;；／\/]/));
+  const out=[], seen=new Set(); let dup=0, none=0, stripped=0;
+  for (let raw of parts){
+    let s = raw.trim(); if(!s) continue;
+    let prev;
+    do { prev=s; s=s.replace(LEAD,"").trim(); } while (s!==prev && s);
+    if (s!==raw.trim()) stripped++;
+    if (!s) continue;
+    if (/^以上皆非/.test(s)) { none++; continue; }
+    if (seen.has(s)) { dup++; continue; }
+    seen.add(s); out.push(s);
+  }
+  return {items:out, dup, none, stripped};
+}
+function lineCount(text){ return (text||"").split(/\r?\n/).filter(s=>s.trim()).length; }
+
+/* ---------- 組成指令 ---------- */
+const PENDING = s => "【尚未填寫："+s+"】";
+const ASSOC = "〔品牌聯想選項：由 AI 依作答規則生成，每項前加「□」，各品牌與第三部份使用同一份清單、同一順序〕";
+const SC_SAT = ["非常不滿意","非常滿意"];
+const SC_LIKE = ["完全不可能","極為可能"];
+function scale(lo, hi){ return "　"+lo+"　1 □　2 □　3 □　4 □　5 □　"+hi; }
+
+function build(){
+  const target = el.target.value.trim();
+  const org = el.org.value.trim() || "本研究團隊";
+  const wordOut = el.outMode.value !== "text";
+  const B = parseList(el.brands.value, true);
+  const factors = el.factors.value.trim();
+  const chisq = el.chisq.value.trim();
+  const hasChi = chisq.length > 0;
+
+  /* 欄位提示 */
+  const cb=$("c-brands"), nb=$("n-brands");
+  cb.textContent = B.items.length ? "已辨識 "+B.items.length+" 個品牌" : "尚未填寫";
+  cb.classList.toggle("zero", B.items.length<3 || B.items.length>8);
+  const notes=[];
+  if (B.stripped) notes.push("已移除行首編號或符號");
+  if (B.dup) notes.push("已剔除重複 "+B.dup+" 項");
+  if (B.none) notes.push("已剔除「以上皆非」");
+  nb.textContent = notes.join("；");
+  const cf=$("c-factors"); cf.textContent = factors ? "已貼上 "+lineCount(factors)+" 行" : "尚未填寫"; cf.classList.toggle("zero", !factors);
+  const cc=$("c-chisq"); cc.textContent = hasChi ? "已貼上 "+lineCount(chisq)+" 行" : "未填，不產生使用情境選項"; cc.classList.toggle("zero", false);
+
+  const missing=[], cautions=[];
+  if (!target) missing.push("研究標的");
+  if (!B.items.length) missing.push("競爭品牌");
+  else if (B.items.length<3) missing.push("競爭品牌至少 3 個（目前 "+B.items.length+" 個）");
+  if (!factors) missing.push("因素分析結果");
+  if (B.items.length>8) cautions.push("競爭品牌超過 8 個，每個品牌都要重複一組題目，受訪者負擔較重，建議只保留目標區隔實際購買或考慮的品牌。");
+
+  const T = target || PENDING("研究標的");
+  const brands = B.items.length ? B.items : ["〔品牌一〕","〔品牌二〕","〔品牌三〕"];
+  const brandsTxt = brands.join("、");
+
+  /* ---- 作答規則 ---- */
+  const rules = [];
+  rules.push("【問卷內容】中的品牌名稱與順序已由研究者決定，請逐字照錄，不得增加、刪減、改寫或調整順序。其餘題目、選項與說明文字為固定內容，亦請逐字照錄。只有標示「〔　〕」之處，須依下列規則由你填入。");
+  rules.push("〔簡稱〕：研究標的為「"+T+"」。若此名稱已相當簡短，請以原名稱取代所有〔簡稱〕，並刪除問候語中的「（以下簡稱〔簡稱〕）」；若名稱較長，請訂定一個簡短且不失原意的簡稱，取代所有〔簡稱〕。");
+  rules.push("〔經驗動詞〕與〔購買動詞〕：請依研究標的選擇消費者最自然的說法。〔經驗動詞〕用於「是否曾經……」，例如包裝綠茶用「喝過」、手機用「使用過」、餐廳用「去過」；〔購買動詞〕用於購買或消費行為，例如包裝綠茶用「購買」、餐廳用「消費」。全份問卷同一個動詞須一致。");
+  rules.push("〔品牌聯想選項〕：這份清單是本問卷的定位基礎，也就是消費者比較品牌時所依據的屬性或利益，請依【市場區隔分析的結果】與下列步驟生成。\n"
+    + "（1）來源：以因素分析的需求因素為主要來源。每個需求因素都要轉出 1～3 個選項，不可只挑部分因素，因為知覺圖須呈現整個市場。每個因素優先採用因素負荷量最高、語意最清楚的主導變數；研究者註明交叉負荷、獨特性偏高或歸屬不明的變數，不轉為選項。\n"
+    + "（2）轉換方式：需求以消費者為主詞，描述消費者想要什麼；品牌聯想選項以品牌為對象，描述品牌被認為具備什麼。請針對每個入選的主導變數自問：「品牌要具備什麼，才算回應了這個需求？」再把答案寫成選項。例如需求「包裝綠茶是相對健康的飲品選擇」轉為「健康的選擇」；需求「我會選擇外觀設計精美的包裝」轉為「包裝有質感」。若某個需求描述的是消費者的習慣或狀態（例如已成為日常生活的一部分），品牌能回應的是讓習慣容易延續的條件，應轉為「隨處買得到」「口味穩定」「適合每天喝」這類選項，而不是重述習慣本身。\n"
+    + "（3）層次：選項以消費者不必具備專業知識也能判斷的抽象屬性（如茶香明顯）與直接效益（如飯後解膩）為主；具象徵或情感意義的需求，可寫成間接效益（如有品味）；只有消費者能直接辨認的規格才寫成實體屬性（如富含兒茶素），不寫需要查看規格表才能判斷的數值。"
+    + (hasChi
+      ? "\n（4）使用情境選項：研究者提供了區隔剖析的卡方檢定結果。目標區隔顯著偏高的使用情境，請轉為 1～2 個使用情境型選項（例：「運動後解渴」顯著偏高，轉為「適合運動後喝」）。品牌使用的檢定結果只用來確認競爭品牌，不轉為選項；人口統計或其他非情境變數也不轉為選項。若結果中沒有與使用情境有關的顯著項目，略過此步驟並在附註說明。"
+      : "")
+    + "\n（"+(hasChi?"5":"4")+"）另加 2 個選項：1 個品類基本條件（各品牌普遍都被期待具備的條件，例如「品質可靠」或「解渴」，若已由需求因素轉出則不重複），以及「物超所值」（價格知覺）。\n"
+    + "（"+(hasChi?"6":"5")+"）寫法：每個選項 2～6 字，以名詞或形容詞短語寫成（如「口感清爽」「包裝有質感」），不寫完整句子、不寫「這個品牌」、不加程度副詞（非常、最、超）、不以「／」合併兩個概念；每個選項只代表一個概念，且各品牌都能被評，不可是只有單一品牌具備的事實（如特定代言人、特定認證或產地）。\n"
+    + "（"+(hasChi?"7":"6")+"）數量與排列：總數 10～14 個，不含「以上皆非」；混合排列，不依需求因素分組，避免受訪者從順序猜出分類。所有品牌與第三部份使用同一份清單、同一順序。");
+  rules.push("所有複選題的最後一個選項一律為「以上皆非」；受訪者勾選「以上皆非」時，不得再勾選同題的其他選項。");
+  rules.push("第二部份每個品牌的五題，所有受訪者都須作答；沒有"+"〔經驗動詞〕"+"該品牌的受訪者，依主觀印象作答。");
+  rules.push("輸出純文字預覽時，請在問卷之後另外列出附註，供研究者檢查：（a）你填入的〔簡稱〕、〔經驗動詞〕、〔購買動詞〕；（b）品牌聯想選項對照表，每個選項一列，欄位為「選項｜來源（需求因素名稱與主導變數"+(hasChi?"、卡方檢定的使用情境":"")+"、品類基本條件或價格知覺）｜Crawford 定位基礎類型（實體屬性、抽象屬性、直接效益、間接效益、替代性基礎）」；（c）未轉為選項的主導變數及原因。附註接在純文字預覽之後，不要出現在問卷本身，也不要放進 Word 檔。");
+
+  /* ---- 指令 ---- */
+  const L=[];
+  L.push("你是一位協助行銷研究者製作消費者問卷的助理。研究者已完成市場區隔分析，現在要製作品牌定位問卷，用來測量各品牌在消費者心中的位置（知覺圖）、消費者重視的定位基礎，以及品牌的忠誠度與市場占有率。請依照以下規則、【市場區隔分析的結果】與【問卷內容】製作問卷，並分兩個步驟完成。");
+  L.push("");
+  L.push("=====================");
+  L.push("【作業步驟】");
+  L.push("=====================");
+  L.push("步驟一：先在對話中輸出完整問卷的純文字預覽，不要產生檔案。預覽須依【問卷內容】的順序完整列出所有部份、題目與選項（含你依規則填入的內容），整份預覽請放在一個程式碼區塊中輸出（前後各以一行 ``` 包住），避免對話介面把題號自動轉成清單，造成題目被合併或重新編號。預覽中每一題、每一個選項各占一行，題與題之間空一行；選項以「□」開頭，不要使用表格或 Markdown 語法（不要出現 **、#、| 等符號）。量表題的題目獨立一行，下一行為「兩端文字　1 □　2 □　3 □　4 □　5 □　兩端文字」。預覽之後，接著列出【作答規則】要求的附註，並完成【產出前檢查】。最後請詢問研究者：「預覽內容是否需要修改？確認無誤請回覆『確認』"+(wordOut?"，我將產生 Word 檔":"")+"。」然後停止，等待研究者回覆。");
+  L.push(wordOut ? "步驟二：研究者回覆「確認」後，依確認後的預覽內容與【版面規格】，直接產生可下載的 Microsoft Word（.docx）檔案。內容須與預覽完全一致，不得再增刪或改寫；附註不放入檔案。若研究者提出修改意見，請先依意見修改並重新輸出純文字預覽，待研究者確認後再產生檔案。" : "步驟二：研究者回覆「確認」後，回覆「問卷已定稿」即可，不需要產生任何檔案。若研究者提出修改意見，請先依意見修改並重新輸出純文字預覽，待研究者確認。");
+  L.push("");
+  L.push("=====================");
+  L.push("【作答規則】");
+  L.push("=====================");
+  rules.forEach((r,i)=>L.push((i+1)+". "+r));
+  L.push("");
+  if (wordOut){
+  L.push("=====================");
+  L.push("【版面規格】");
+  L.push("=====================");
+  L.push("- A4 直式，上下左右邊界 2.54 公分。");
+  L.push("- 中文字型：標楷體；英數字型：Times New Roman；內文 12 pt，行距 1.15 倍。");
+  L.push("- 問卷標題置中、粗體、16 pt；各「部份」標題粗體、14 pt。");
+  L.push("- 問候語置於加框文字方塊中；各部份的作答說明以單格表格或灰色底紋呈現。");
+  L.push("- 選項一律以「□」作為勾選方格，每個選項各占一行。");
+  L.push("- 量表題：題目一行，下一行置中排列，左端文字、1～5 的數字與「□」、右端文字依序排列；數字置於方格上方。");
+  L.push("- 第二部份每個品牌的題組之間空一行，品牌題組不跨頁為佳。");
+  L.push("");
+  }
+  L.push("=====================");
+  L.push("【市場區隔分析的結果】");
+  L.push("=====================");
+  L.push("一、因素分析結果（需求因素與主導變數）");
+  L.push(factors || PENDING("因素分析結果"));
+  if (hasChi){
+    L.push("");
+    L.push("二、區隔剖析結果（卡方檢定）");
+    L.push(chisq);
+  }
+  L.push("");
+  L.push("=====================");
+  L.push("【問卷內容】");
+  L.push("=====================");
+  L.push("");
+  L.push("（標題）〔簡稱〕品牌印象調查問卷");
+  L.push("");
+  L.push("（問候語，加框）");
+  L.push("親愛的小姐／先生您好：");
+  L.push("本問卷旨在瞭解您對「"+T+"」（以下簡稱〔簡稱〕）各品牌的印象與看法，作為本單位行銷規劃之參考依據。本次調查的品牌包括"+brandsTxt+"。請您依據自身的經驗與想法作答，沒有"+"〔經驗動詞〕"+"的品牌，也請依您的印象回答，答案無對錯之分。您所提供的意見僅供學術與內部參考，並將嚴格保密，請您安心填寫。感謝您在百忙之中抽空協助，謹致上最誠摯的謝意，並祝一切順心如意！");
+  L.push("（靠右）"+org);
+  L.push("");
+  L.push("第一部份　購買行為");
+  L.push("（作答說明）請依您的實際情形，在最適當的方格打「V」。");
+  L.push("");
+  L.push("1. 請問您最近一次〔購買動詞〕的〔簡稱〕是哪一個品牌？（單選）");
+  brands.forEach(b => L.push("□ "+b));
+  L.push("□ 其他品牌");
+  L.push("□ 不記得");
+  L.push("");
+  L.push("第二部份　品牌印象與評價");
+  L.push("（作答說明）這個部份請您依序針對 "+brands.length+" 個〔簡稱〕品牌，依您個人對該品牌的想法、感受或經驗回答問題。");
+  brands.forEach((b,i) => {
+    const n=i+1, q=s=>"「"+b+"」";
+    L.push("");
+    L.push(n+".1 請問您曾經〔經驗動詞〕"+q()+"嗎？（單選）");
+    L.push("□ 是（請依照您對"+q()+"的實際體驗及感受回答以下各題）");
+    L.push("□ 否（請依照您對"+q()+"的主觀印象及想法回答以下各題）");
+    L.push("");
+    L.push(n+".2 "+q()+"會讓您聯想到以下哪些特質？（可複選）");
+    L.push(ASSOC);
+    L.push(NONE_EXCL);
+    L.push("");
+    L.push(n+".3 整體而言，您對"+q()+"的滿意程度為何？");
+    L.push(scale(SC_SAT[0], SC_SAT[1]));
+    L.push("");
+    L.push(n+".4 下次〔購買動詞〕〔簡稱〕時，您選擇"+q()+"的可能性為何？");
+    L.push(scale(SC_LIKE[0], SC_LIKE[1]));
+    L.push("");
+    L.push(n+".5 整體而言，您會向別人推薦"+q()+"的可能性為何？");
+    L.push(scale(SC_LIKE[0], SC_LIKE[1]));
+  });
+  L.push("");
+  L.push("第三部份　選擇品牌時重視的特質");
+  L.push("");
+  L.push("1. 整體而言，您會優先選擇具備以下哪些特質的〔簡稱〕品牌？（可複選）");
+  L.push(ASSOC);
+  L.push(NONE_EXCL);
+  L.push("");
+  L.push("（問卷結尾，置中）本問卷到此結束，再次感謝您的協助！");
+  L.push("");
+  L.push("=====================");
+  L.push("【產出前檢查】");
+  L.push("=====================");
+  L.push("輸出預覽後，請逐項確認並回報結果：");
+  L.push("（1）共三個部份；第二部份共 "+brands.length+" 個品牌題組，每組 5 題，題號為「品牌序號.1」至「品牌序號.5」；");
+  L.push("（2）品牌名稱與順序與【問卷內容】完全一致，第一部份第 1 題的品牌選項後依序為「其他品牌」「不記得」；");
+  L.push("（3）每一個需求因素都至少轉出 1 個品牌聯想選項，選項總數 10～14 個（不含「以上皆非」），並包含 1 個品類基本條件與「物超所值」"+(hasChi?"，以及依卡方檢定結果轉出的使用情境選項":"")+"；");
+  L.push("（4）各品牌的聯想題與第三部份使用同一份選項清單、同一順序，且最後一個選項都是「以上皆非」；");
+  L.push("（5）每個品牌聯想選項為 2～6 字的短語，只含一個概念，沒有「這個品牌」、程度副詞或單一品牌獨有的事實；");
+  L.push("（6）每一題量表題都有兩端文字與 5 個勾選方格；");
+  L.push("（7）全文已無殘留「〔　〕」符號。");
+
+  const text = L.join("\n");
+  $("out").textContent = text;
+  $("status").textContent = "即時預覽 · 隨左側設定自動更新 · 共 "+text.length.toLocaleString()+" 字";
+
+  const w=$("warn");
+  const parts=[];
+  if (missing.length) parts.push("請先完成以下欄位，才能複製指令：<ul>"+missing.map(m=>"<li>"+m+"</li>").join("")+"</ul>");
+  if (cautions.length) parts.push("<ul>"+cautions.map(m=>"<li>"+m+"</li>").join("")+"</ul>");
+  w.hidden = parts.length===0;
+  w.innerHTML = parts.join("");
+  $("btnCopy").disabled = missing.length>0;
+}
+
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1800); }
+
+/* ---------- 事件 ---------- */
+F.forEach(k => el[k].addEventListener("input", build));
+el.outMode.addEventListener("change", build);
+
+$("btnClear").addEventListener("click", () => {
+  F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
+  el.outMode.value="word"; build(); toast("已清除");
+});
+$("btnCopy").addEventListener("click", async () => {
+  const text=$("out").textContent;
+  try { await navigator.clipboard.writeText(text); toast("已複製指令"); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("已複製指令"); }catch(err){ toast("複製失敗，請手動選取文字"); }
+    ta.remove();
+  }
+});
+
+F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
+el.outMode.value="word";
+build();
+})();
+</script>
+</body>
+</html>
