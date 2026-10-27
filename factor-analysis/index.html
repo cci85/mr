@@ -126,7 +126,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 2 選題項 -->
   <section class="panel" id="sec-items" aria-labelledby="h2s" hidden>
     <h2 id="h2s"><span class="step">2</span>選擇題項</h2>
-    <p class="hint">只列出數值欄位，並依欄名的英文代碼分組（例如 M1、M2⋯⋯為同一量表）。請勾選要一起進行因素分析的題項，通常是同一個量表的全部題項；任一勾選題項缺漏的受訪者，會整筆排除。</p>
+    <p class="hint">只列出數值欄位，並依欄名開頭的英文代碼分組，開頭英文相同者為同一組（例如 M1、M2⋯⋯為同一量表，CH_便利商店、CH_生鮮超市為同一題組）。請勾選要一起進行因素分析的題項，通常是同一個量表的全部題項；任一勾選題項缺漏的受訪者，會整筆排除。</p>
     <div class="groups" id="groups"></div>
     <div id="item-msg"></div>
   </section>
@@ -430,7 +430,7 @@ function detectNumeric(){
     let cnt=0, bad=0; const vals=new Set();
     for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; const x=num(v); if (x===null){ bad++; break; } cnt++; vals.add(x); }
     if (bad||cnt<3||vals.size<2) return;
-    const m=h.match(/^([A-Za-z]+)\d+/);
+    const m=h.match(/^([A-Za-z]+)/);
     S.numCols.push({ci, name:h, prefix:m?m[1]:"", binary:[...vals].every(x=>x===0||x===1), stem:S.stems[h]||""});
   });
 }
