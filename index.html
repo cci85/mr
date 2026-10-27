@@ -10,13 +10,13 @@
   :root{
     --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9;
     --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
-    --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7;
+    --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7; --on-accent:#ffffff;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33;
       --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
-      --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34;
+      --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --on-accent:#0c1210;
     }
   }
   *{box-sizing:border-box}
@@ -25,21 +25,29 @@
   .eyebrow{margin:0 0 8px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
   h1{font-family:"Noto Serif TC",serif;font-size:clamp(26px,4vw,34px);margin:0 0 10px}
   .lede{margin:0 0 28px;color:var(--ink-soft);max-width:62ch}
-  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 32px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:14px}
-  .flow span.s{font-weight:700;color:var(--accent-strong)}
-  .flow span.a{color:var(--ink-faint)}
-  section{margin-bottom:30px}
-  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
-  .no{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:15px;transform:translateY(4px)}
+  .timeline{margin-top:8px}
+  section{position:relative;display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:0 28px;padding-bottom:30px}
+  section::before{content:"";position:absolute;left:14px;top:34px;bottom:0;width:2px;background:var(--border)}
+  section.last{padding-bottom:0}
+  section.last::before{display:none}
+  .sec-head{grid-column:1;grid-row:1;display:flex;align-items:center;gap:12px;position:relative}
+  .no{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:15px;box-shadow:0 0 0 5px var(--bg)}
   h2{font-family:"Noto Serif TC",serif;font-size:21px;margin:0}
-  .sec-desc{margin:0 0 12px 42px;color:var(--ink-soft);font-size:14px}
-  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px;margin-left:42px}
-  @media (max-width:560px){.sec-desc,.cards{margin-left:0}}
-  a.tool{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
-  a.tool:hover{border-color:var(--accent);transform:translateY(-1px)}
-  a.tool strong{display:block;font-size:16.5px;color:var(--accent-strong);margin-bottom:2px}
-  a.tool span{display:block;font-size:13.5px;color:var(--ink-soft)}
-  a.tool em{display:inline-block;margin-top:8px;font-style:normal;font-size:12px;color:var(--ink-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:0 9px}
+  .sec-desc{grid-column:1;grid-row:2;margin:6px 0 0 42px;color:var(--ink-soft);font-size:14px}
+  .cards{grid-column:2;grid-row:1 / span 3;display:grid;gap:10px;align-content:start}
+  .gap-note{position:relative;margin:-14px 0 16px;padding:4px 0 4px 42px;font-size:13px;color:var(--ink-faint)}
+  .gap-note::before{content:"";position:absolute;left:14px;top:-16px;bottom:-16px;border-left:2px dashed var(--border-strong,var(--border))}
+  a.tool{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+  a.tool:hover{border-color:var(--accent);transform:translateX(2px)}
+  a.tool strong{grid-column:1;font-size:16.5px;color:var(--accent-strong)}
+  a.tool span{grid-column:1;font-size:13.5px;color:var(--ink-soft)}
+  a.tool em{grid-column:2;grid-row:1 / span 2;font-style:normal;font-size:12px;color:var(--ink-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:0 9px;white-space:nowrap}
+  @media (max-width:720px){
+    section{grid-template-columns:minmax(0,1fr)}
+    .cards{grid-column:1;grid-row:auto;margin:12px 0 0 42px}
+    a.tool{grid-template-columns:minmax(0,1fr)}
+    a.tool em{grid-column:1;grid-row:auto;justify-self:start;margin-top:6px}
+  }
   footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--border);color:var(--ink-faint);font-size:13px}
 </style>
 </head>
@@ -49,14 +57,8 @@
   <h1>行銷研究工具箱</h1>
   <p class="lede">從問卷設計、資料整理到統計分析與行銷應用，依研究流程排列。所有計算都在您的瀏覽器中完成，不會上傳資料。</p>
 
-  <div class="flow" aria-label="使用順序">
-    <span class="s">① 問卷設計</span><span class="a">→</span>
-    <span>收集資料（Google 表單）</span><span class="a">→</span>
-    <span class="s">② 資料整理</span><span class="a">→</span>
-    <span class="s">③ 統計分析</span><span class="a">→</span>
-    <span class="s">④ 行銷應用</span>
-  </div>
 
+  <div class="timeline">
   <section>
     <div class="sec-head"><span class="no">1</span><h2>問卷設計</h2></div>
     <p class="sec-desc">產生給 AI 的指令，製作符合 Pick any/J 複選格式的問卷。</p>
@@ -66,6 +68,8 @@
       <a class="tool" href="./positioning-survey/"><strong>知覺定位問卷產生器</strong><span>品牌定位：依區隔分析結果產生品牌聯想、評價與重視特質。</span><em>品牌定位</em></a>
     </div>
   </section>
+
+  <p class="gap-note">收集資料（Google 表單）</p>
 
   <section>
     <div class="sec-head"><span class="no">2</span><h2>資料整理</h2></div>
@@ -85,13 +89,14 @@
     </div>
   </section>
 
-  <section>
+  <section class="last">
     <div class="sec-head"><span class="no">4</span><h2>行銷應用</h2></div>
     <p class="sec-desc">把分析結果轉成行銷溝通的內容。</p>
     <div class="cards">
       <a class="tool" href="./scenario-copy/"><strong>情境文案產生器</strong><span>依消費情境區隔，產生分眾廣告文案與影片腳本的 AI 指令。</span><em>溝通策略</em></a>
     </div>
   </section>
+  </div>
 
   <footer>本網站的工具只在瀏覽器中執行，不使用 AI 服務；需要 AI 的步驟，由工具產生指令，再由使用者貼到自己的 AI 對話中。</footer>
 </main>
