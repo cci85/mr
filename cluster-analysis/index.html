@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>集群分析報告產生器</title>
+<meta name="description" content="上傳因素分數，以 K 平均法進行市場區隔，並產生區隔命名與行銷意涵的 AI 報告指令。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9; --border-strong:#c7bea9;
+  --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
+  --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7; --accent-contrast:#ffffff;
+  --warn:#95591b; --warn-soft:#f6ecda; --danger:#9c3b3b; --danger-soft:#f7e6e4;
+  --good:#3c6e3f; --good-soft:#e7f0e2; --pos:#1f6b55; --neg:#a24a3a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+    --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+    --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+    --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+    --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+  --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+  --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+  --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+  --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.7}
+.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}
+.toolbox-back a{color:#28594f;text-decoration:none}
+.toolbox-back a:hover{text-decoration:underline}
+@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}
+main{max-width:1080px;margin:0 auto;padding:32px 16px 64px}
+.eyebrow{margin:0 0 6px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:"Noto Serif TC",serif;font-size:clamp(25px,4vw,32px);margin:0 0 8px}
+.lede{margin:0 0 24px;color:var(--ink-soft);max-width:70ch}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:18px}
+.panel h2{font-family:"Noto Serif TC",serif;font-size:19px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+.step{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-family:"Noto Sans TC",sans-serif;font-size:14px;font-weight:700}
+.hint{color:var(--ink-soft);font-size:14px;margin:0 0 12px}
+.small{font-size:13px}
+h3{font-size:15.5px;margin:18px 0 8px;color:var(--accent-strong)}
+.dropzone{display:flex;align-items:center;justify-content:center;gap:10px;min-height:90px;border:2px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);cursor:pointer;padding:14px;text-align:center;color:var(--ink-soft)}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+select,input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+input[type=text]{width:100%}
+button{font:inherit;font-size:14px;border-radius:7px;padding:7px 14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:700}
+button.ghost{padding:3px 10px;font-size:13px}
+.varlist{display:grid;gap:6px}
+.var{display:grid;grid-template-columns:auto minmax(0,180px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+.var .vname{font-size:14px;font-weight:500;overflow-wrap:anywhere}
+.var .vname small{display:block;font-weight:400;color:var(--ink-faint);font-size:12px}
+@media (max-width:620px){.var{grid-template-columns:auto minmax(0,1fr)}.var input[type=text]{grid-column:1 / -1}}
+.notice{border-radius:8px;padding:9px 13px;font-size:14px;margin:10px 0}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.bad{background:var(--danger-soft);color:var(--danger)}
+.notice.ok{background:var(--good-soft);color:var(--good)}
+.table-scroll{overflow-x:auto;margin:6px 0}
+table{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:100%}
+th,td{padding:6px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{background:var(--surface-2);font-weight:700;color:var(--ink-soft)}
+th.l,td.l{text-align:left;white-space:normal;min-width:110px}
+tr.sugg td{background:var(--accent-soft)}
+td.pos{color:var(--pos)}
+td.neg{color:var(--neg)}
+td.max{font-weight:700;background:var(--accent-soft)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+.kpick{display:flex;flex-wrap:wrap;gap:8px}
+.kpick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.kpick label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:8px 0}
+.chart{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface-2)}
+.chart p{margin:0 0 2px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+svg.mini{width:100%;max-width:380px;height:auto;display:block;margin:0 auto}
+svg.mini text{font-size:11px;fill:var(--ink-soft);font-family:inherit}
+textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;min-height:64px;resize:vertical}
+pre.prompt{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:420px;overflow:auto}
+details summary{cursor:pointer;font-size:13.5px;color:var(--ink-soft);margin-top:10px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
+</style>
+</head>
+<body>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<main>
+  <p class="eyebrow">行銷研究方法 · 統計分析</p>
+  <h1>集群分析報告產生器</h1>
+  <p class="lede">上傳因素分析報告產生器下載的「因素分數」Excel 檔，以 K 平均法（K-means）將受訪者分成 3～5 個區隔。工具會比較不同群數並給出建議，產生各群人數與群中心值表，並組成市場區隔命名與行銷意涵的 AI 報告指令。下載的資料檔多一欄「集群」，可接著用複選題卡方檢定器進行區隔剖析。</p>
+
+  <!-- 1 上傳 -->
+  <section class="panel" aria-labelledby="h1s">
+    <h2 id="h1s"><span class="step">1</span>上傳資料</h2>
+    <p class="hint">支援 Excel (.xlsx) 與 CSV（UTF-8）。工具會優先讀取「資料」工作表。</p>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dz-label">選擇或拖曳 Excel／CSV 檔案到這裡</span>
+    </label>
+    <div class="row" id="sheet-row" hidden>
+      <label class="inline">工作表 <select id="sheet"></select></label>
+      <button type="button" class="ghost" id="btn-remove">移除檔案</button>
+    </div>
+  </section>
+
+  <!-- 2 分群變數 -->
+  <section class="panel" id="sec-vars" aria-labelledby="h2s" hidden>
+    <h2 id="h2s"><span class="step">2</span>分群變數與構面名稱</h2>
+    <p class="hint">預設勾選「因素1、因素2⋯⋯」等因素分數欄。請在右側填入因素分析報告中的因素名稱，群中心值表與 AI 指令都會使用這些名稱。勾選的變數若尚未標準化，工具會先轉為標準分數（平均數 0、標準差 1）再分群。</p>
+    <div class="varlist" id="varlist"></div>
+    <div id="var-msg"></div>
+  </section>
+
+  <!-- 3 群數 -->
+  <section class="panel" id="sec-k" aria-labelledby="h3s" hidden>
+    <h2 id="h3s"><span class="step">3</span>決定群數</h2>
+    <p class="hint">工具分別以 3、4、5 群進行 K 平均法，每種群數從 50 組起始中心中取組內平方和最小的解；亂數種子固定，同一份資料每次執行結果相同。建議群數為平均輪廓係數最高、且最小群人數不少於全體 10% 者。</p>
+    <div class="table-scroll" id="k-table"></div>
+    <div class="charts" id="k-charts"></div>
+    <div id="k-msg"></div>
+    <h3>採用的群數</h3>
+    <div class="kpick" id="kpick"></div>
+  </section>
+
+  <!-- 4 結果 -->
+  <section class="panel" id="sec-res" aria-labelledby="h4s" hidden>
+    <h2 id="h4s"><span class="step">4</span>分群結果</h2>
+    <p class="hint">集群依人數由多到少編號。群中心值為各群在各構面上的平均標準分數，正值代表高於全體平均，負值代表低於全體平均；每列最高值以粗體加底色標示。</p>
+    <div class="table-scroll" id="res-table"></div>
+    <div id="res-msg"></div>
+    <h3>下載</h3>
+    <div class="row">
+      <button type="button" id="dl-data">下載含集群欄的資料 Excel</button>
+      <button type="button" id="dl-center">下載群中心值 Excel</button>
+    </div>
+    <p class="hint small">資料檔在原始資料後方加上「集群」欄（1～K），並保留「欄名對照表」與「題組」工作表；因缺漏而排除的受訪者，集群欄為空白。群中心值檔包含群中心值表與群數比較表。</p>
+  </section>
+
+  <!-- 5 AI 指令 -->
+  <section class="panel" id="sec-prompt" aria-labelledby="h5s" hidden>
+    <h2 id="h5s"><span class="step">5</span>AI 報告指令</h2>
+    <p class="hint">指令已自動填入（A）各群人數與比例、（B）群中心值表；請在下方填寫（C），讓行銷意涵能扣合產品情境。</p>
+    <label for="topic"><b>（C）研究主題／產品類別簡述</b></label>
+    <textarea id="topic" placeholder="例：即飲包裝綠茶，研究對象為大學生"></textarea>
+    <div class="row">
+      <button type="button" class="primary" id="btn-copy">複製 AI 報告指令</button>
+      <span class="small" id="prompt-len"></span>
+    </div>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="prompt"></pre>
+    </details>
+  </section>
+
+  <footer>所有計算都在您的瀏覽器中完成，資料不會上傳。本工具不使用 AI 服務；報告由您把指令貼到自己的 AI 對話中產生。</footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<pre id="tpl" hidden>市場區隔分析報告生成提示詞（供研究者貼上K平均法分群結果後直接使用）
+================================================================
+
+【角色與任務】
+你是一位熟悉市場區隔分析流程的行銷研究助理。市場區隔分析的標準流程分為三個階段：
+（一）調查階段：以問卷蒐集受訪者在多項消費動機或需求陳述句上的態度；
+（二）分析階段：先以因素分析將原始題項縮減為少數幾個動機／需求構面，再以K平均法
+　　（K-means）依這些構面分數將受訪者分成數個區隔；
+（三）剖析階段：依各區隔在各構面上的群中心值（即組平均數）為其命名，並推導對應的
+　　行銷意涵。
+
+研究者已完成前兩個階段的統計分析，接下來只會貼上兩項結果，不會提供逐題原始資料，
+你也不需要、也不應該要求更細部的逐題資料或任何額外的統計檢驗（例如逐題平均數比對、
+受訪者內標準化等），僅需依下列兩項資訊完成第三階段的命名與行銷意涵推導：
+
+（A）「各群人數與人數比例」：K平均法分群後，各群的樣本數與其占總樣本之百分比。
+
+（B）「群中心值表」：各消費動機／需求構面（因素分析所萃取之因素）在各群上的平均數
+　　（即集群中心值），通常為標準化分數，正值代表高於全體平均，負值代表低於全體平均。
+
+（C）「研究主題／產品類別簡述」：請研究者簡要說明本次資料所屬的產品類別或研究情境
+　　（例如「包裝咖啡飲料」「SUV汽車」「行動支付服務」等），以利後續行銷意涵能扣合
+　　具體產品情境，而非流於空泛描述。
+
+請根據以上三項資訊，依序完成以下輸出。全部內容請以「純文字」呈現，不需要另外製作
+成Word檔；若研究者提供的群中心值表需要重新整理呈現，可用Markdown表格格式輸出。
+
+【輸出一：方法論簡述】
+以一段文字簡要說明本分析之邏輯：先以因素分析將原始消費動機／需求題項縮減為少數幾個
+核心構面，再以K平均法依構面分數將受訪者分為若干區隔，最後依各區隔在各構面上的相對
+高低為其命名，並推導對應之行銷意涵。此段落不需要冗長的統計原理說明，重點在於讓報告
+讀者理解「這張表是怎麼來的」。
+
+【輸出二：群中心值表格重製】
+將研究者提供的群中心值表，以Markdown表格格式重新整理輸出，列為各消費動機／需求構面，
+欄為各區隔，並在最後一列加上各群人數與人數比例。每一列（即每一個構面）數值最高的
+儲存格請以**粗體**標示，代表該構面在哪一群的相對表現最突出。若同一群在多個構面上
+同時是最高值，全部予以標示，不需要只挑一個。
+
+【輸出三：各群命名與描述】
+針對每一個區隔，依下列邏輯完成命名與描述：
+
+一、命名原則：以該群在群中心值表中「相對最高」的那個構面作為命名依據，命名格式為
+　　「該構面名稱＋群」（例如「嫌貴嫌甜群」「挑選嘗試群」）。若該群同時在兩個構面上
+　　數值皆明顯偏高且相近，可合併命名或並列說明，不必勉強只取一個構面。
+
+二、務必誠實處理「沒有明確正向峰值」的情況：命名前請先檢查該群在所有構面上的數值是
+　　否「全部為負值或接近零」。如果是，代表這一群人在所有構面上都低於全體平均，並沒
+　　有真正突出的正向需求，此時雖然仍可依「相對最不負」的那個構面命名（例如若某群在
+　　四個構面上都是負值，其中一個構面是-0.09、其餘為-0.5以下，仍可用該構面命名），
+　　但務必在描述文字中明確註明「此群並無明顯正向峰值，命名係依相對最不負的構面而
+　　定」，不要讓讀者誤以為這一群對該構面有真正強烈的偏好。這一點請務必落實，不可
+　　省略。
+
+三、每一群的描述段落，請包含：群名、樣本數與百分比、支持命名的群中心值數字、以及
+　　用一到兩句話說明這群人可能的消費動機輪廓。描述請以連貫的段落呈現，不要條列式
+　　清單。
+
+【輸出四：行銷意涵推導】
+請以連貫的論述段落，依下列邏輯推導行銷意涵，段落之間需有邏輯銜接：
+
+一、逐群對應：針對每一群，將其命名所依據的構面，轉譯為研究者於（C）所描述之產品
+　　類別下的具體產品設計方向或溝通訴求（例如「嫌貴嫌甜群」對應到「推出平價或低糖
+　　版本產品」，「挑選嘗試群」對應到「強化新口味／限定款上市溝通」）。轉譯時請扣合
+　　（C）的產品情境，避免給出與產品類別無關的空泛建議。
+
+二、以人數比例判斷目標市場：說明若以各群人數比例作為衡量該區隔市場吸引力之依據，
+　　人數最多的一群通常可優先列為目標市場候選；並具體建議廠商可鎖定該群，推出對應
+　　之產品或溝通訴求。同時請提醒：人數僅為衡量區隔吸引力的其中一種簡化指標，實際
+　　目標市場選擇仍可能需要一併考量該群之購買力、成長潛力、競爭者涉入程度等其他
+　　因素，人數多寡不必然等同於商業價值最高。
+
+三、研究限制提醒：說明本次命名與行銷意涵推導，僅依據集群中心值與人數兩項簡化資訊
+　　進行，屬於探索性分析；受訪者在問卷上對某項動機給予較高評價，不代表其在實際購買
+　　行為中必然會因此支付溢價或改變選擇，這些構面所能提供的，是後續研究值得聚焦的
+　　候選方向，實際行銷決策仍建議搭配其他資料（如購買行為、聯合分析等）進一步驗證。
+
+【格式與用語提醒】
+- 全文使用繁體中文學術書面語，語氣嚴謹、避免口語化。
+- 一律使用「變數」，不使用「變項」。
+- 全部內容以純文字輸出即可，不需要另外做成Word檔；表格請用Markdown格式呈現。
+- 若研究者貼上的群數、構面數或欄位名稱與上述格式略有出入，請先合理判斷對應關係後
+  再進行分析，並在說明中簡要註明你的判讀方式。
+- 請勿主動要求研究者提供逐題原始資料或進行任何額外的統計檢驗（如逐題平均數比對、
+  受訪者內標準化等），本提示詞之分析僅依（A）（B）（C）三項資訊完成。
+
+================================================================
+【研究者請將資料貼於下方】
+
+（A）各群人數與人數比例：
+（請貼上）
+
+（B）群中心值表（各消費動機／需求因素於各群之平均數）：
+（請貼上）
+
+（C）研究主題／產品類別簡述：
+（請填寫）</pre>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/* ===== STATS-BEGIN（純計算函式，可單獨測試） ===== */
+const Clus = (function(){
+  function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+  function d2(a,b){ let s=0; for (let j=0;j<a.length;j++){ const d=a[j]-b[j]; s+=d*d; } return s; }
+  /* k-means++ 起始 */
+  function initPP(X,k,rand){
+    const n=X.length, C=[X[Math.floor(rand()*n)].slice()];
+    const D=X.map(x=>d2(x,C[0]));
+    while (C.length<k){
+      const tot=D.reduce((s,x)=>s+x,0);
+      let r=rand()*tot, i=0;
+      if (tot>0){ for (i=0;i<n;i++){ r-=D[i]; if (r<=0) break; } if (i>=n) i=n-1; }
+      else i=Math.floor(rand()*n);
+      C.push(X[i].slice());
+      for (let t=0;t<n;t++){ const d=d2(X[t],C[C.length-1]); if (d<D[t]) D[t]=d; }
+    }
+    return C;
+  }
+  function lloyd(X,C){
+    const n=X.length, k=C.length, p=X[0].length, lab=new Array(n).fill(-1);
+    for (let it=0;it<300;it++){
+      let changed=0;
+      for (let i=0;i<n;i++){ let b=0, bd=Infinity; for (let c=0;c<k;c++){ const d=d2(X[i],C[c]); if (d<bd){ bd=d; b=c; } } if (lab[i]!==b){ lab[i]=b; changed++; } }
+      const S=C.map(()=>new Array(p).fill(0)), N=new Array(k).fill(0);
+      for (let i=0;i<n;i++){ N[lab[i]]++; for (let j=0;j<p;j++) S[lab[i]][j]+=X[i][j]; }
+      for (let c=0;c<k;c++){
+        if (N[c]===0){ /* 空群：移到離所屬中心最遠的點 */
+          let far=0, fd=-1; for (let i=0;i<n;i++){ const d=d2(X[i],C[lab[i]]); if (d>fd){ fd=d; far=i; } }
+          C[c]=X[far].slice(); lab[far]=c; changed++;
+        } else C[c]=S[c].map(x=>x/N[c]);
+      }
+      if (!changed) break;
+    }
+    let sse=0; for (let i=0;i<n;i++) sse+=d2(X[i],C[lab[i]]);
+    return {lab, C, sse};
+  }
+  function kmeans(X,k,starts,seed){
+    const rand=rng(seed);
+    let best=null;
+    for (let s=0;s<starts;s++){ const r=lloyd(X,initPP(X,k,rand)); if (!best||r.sse<best.sse-1e-9) best=r; }
+    /* 依人數由多到少重新編號 */
+    const N=new Array(k).fill(0); best.lab.forEach(l=>N[l]++);
+    const order=N.map((c,i)=>i).sort((a,b)=>N[b]-N[a]||a-b), map=new Array(k); order.forEach((o,i)=>map[o]=i);
+    return {lab:best.lab.map(l=>map[l]), C:order.map(o=>best.C[o]), N:order.map(o=>N[o]), sse:best.sse};
+  }
+  function silhouette(X,lab,k){
+    const n=X.length; let tot=0;
+    const N=new Array(k).fill(0); lab.forEach(l=>N[l]++);
+    for (let i=0;i<n;i++){
+      const S=new Array(k).fill(0);
+      for (let j=0;j<n;j++){ if (i===j) continue; S[lab[j]]+=Math.sqrt(d2(X[i],X[j])); }
+      const own=lab[i];
+      if (N[own]<=1) continue;
+      const a=S[own]/(N[own]-1);
+      let b=Infinity; for (let c=0;c<k;c++){ if (c===own||!N[c]) continue; b=Math.min(b,S[c]/N[c]); }
+      tot+=(b-a)/Math.max(a,b);
+    }
+    return tot/n;
+  }
+  return {kmeans, silhouette, rng};
+})();
+/* ===== STATS-END ===== */
+
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const KS=[3,4,5], STARTS=50, SEED=20261028, MINP=.10;
+function f2(x){ const v=Math.round(x*100)/100; return (v===0?0:v).toFixed(2); }
+function pct(x){ return (x*100).toFixed(1)+"%"; }
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2000); }
+
+const S={ wb:null, fileName:"", headers:[], rows:[], numCols:[], sel:new Map(), runs:null, k:null };
+
+/* ---------- 讀檔 ---------- */
+function readFile(file){
+  if (!file) return;
+  if (typeof XLSX==="undefined"){ toast("Excel 解析功能載入失敗，請檢查網路連線"); return; }
+  const isCsv=/\.csv$/i.test(file.name), rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const wb=isCsv?XLSX.read(rd.result,{type:"string"}):XLSX.read(new Uint8Array(rd.result),{type:"array"});
+      if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
+      S.wb=wb; S.fileName=file.name;
+      $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
+      $("sheet-row").hidden=false;
+      const first=wb.SheetNames.includes("資料")?"資料":wb.SheetNames[0];
+      $("sheet").value=first; loadSheet(first);
+    }catch(e){ console.error(e); toast("無法解析此檔案，請確認格式"); }
+  };
+  if (isCsv) rd.readAsText(file,"utf-8"); else rd.readAsArrayBuffer(file);
+}
+function num(v){ if (v===""||v===null||v===undefined) return null; const x=typeof v==="number"?v:Number(String(v).trim()); return Number.isFinite(x)?x:null; }
+function loadSheet(name){
+  const aoa=XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
+  S.headers=(aoa[0]||[]).map(h=>String(h).trim()); S.rows=aoa.slice(1);
+  $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 筆）";
+  S.numCols=[];
+  S.headers.forEach((h,ci)=>{
+    if (!h||/^id$/i.test(h)||h==="集群") return;
+    let cnt=0, bad=false; const vals=new Set();
+    for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; const x=num(v); if (x===null){ bad=true; break; } cnt++; vals.add(x); }
+    if (bad||cnt<3||vals.size<2) return;
+    S.numCols.push({ci,name:h});
+  });
+  const prev=S.sel; S.sel=new Map();
+  S.numCols.forEach(c=>{ if (/^因素\s*\d+$/.test(c.name)) S.sel.set(c.ci,(prev.get(c.ci))||""); });
+  if (S.headers.includes("集群")) toast("此檔已有「集群」欄，下載時會以新的分群結果覆蓋");
+  renderVars(); run();
+}
+
+/* ---------- 變數 ---------- */
+function renderVars(){
+  $("sec-vars").hidden=false;
+  const box=$("varlist");
+  if (!S.numCols.length){ box.innerHTML='<div class="notice bad">這個工作表沒有可分析的數值欄位。</div>'; return; }
+  const list=S.numCols.slice().sort((a,b)=>(S.sel.has(b.ci)-S.sel.has(a.ci))||(a.ci-b.ci));
+  box.innerHTML=list.map(c=>{
+    const on=S.sel.has(c.ci);
+    return '<div class="var"><input type="checkbox" data-ci="'+c.ci+'"'+(on?" checked":"")+' aria-label="選用 '+esc(c.name)+'">'
+      +'<span class="vname">'+esc(c.name)+'</span>'
+      +'<input type="text" data-name="'+c.ci+'" placeholder="構面名稱，例：日常作息習慣"'+(on?"":" disabled")+' value="'+esc(S.sel.get(c.ci)||"")+'"></div>';
+  }).join("");
+  box.querySelectorAll("input[data-ci]").forEach(i=>i.addEventListener("change",()=>{
+    const ci=+i.dataset.ci;
+    if (i.checked) S.sel.set(ci,""); else S.sel.delete(ci);
+    renderVars(); run();
+  }));
+  box.querySelectorAll("input[data-name]").forEach(i=>i.addEventListener("input",()=>{
+    S.sel.set(+i.dataset.name,i.value.trim()); if (S.runs) { renderResult(); renderPrompt(); }
+  }));
+}
+function label(c){ return S.sel.get(c.ci)||c.name; }
+
+/* ---------- 分群 ---------- */
+function hideAfter(){ ["sec-k","sec-res","sec-prompt"].forEach(s=>$(s).hidden=true); }
+function run(){
+  const msg=$("var-msg"); S.runs=null;
+  const cols=S.numCols.filter(c=>S.sel.has(c.ci));
+  if (cols.length<2){ msg.innerHTML='<div class="notice warn">請至少勾選 2 個分群變數（目前 '+cols.length+' 個）。</div>'; hideAfter(); return; }
+  const keep=[]; S.rows.forEach((r,ri)=>{ if (cols.every(c=>num(r[c.ci])!==null)) keep.push(ri); });
+  const n=keep.length;
+  if (n<30){ msg.innerHTML='<div class="notice bad">有效樣本 '+n+' 筆，太少，無法進行有意義的分群。</div>'; hideAfter(); return; }
+  /* 標準化 */
+  const raw=cols.map(c=>keep.map(ri=>num(S.rows[ri][c.ci])));
+  const stdz=[];
+  const Z=raw.map((v,j)=>{
+    const m=v.reduce((s,x)=>s+x,0)/n, sd=Math.sqrt(v.reduce((s,x)=>s+(x-m)*(x-m),0)/(n-1));
+    const already=Math.abs(m)<.05&&Math.abs(sd-1)<.05;
+    if (!already) stdz.push(cols[j].name);
+    return v.map(x=>(x-m)/sd);
+  });
+  const X=keep.map((_,i)=>Z.map(col=>col[i]));
+  let h='<div class="notice ok">分群變數 '+cols.length+' 個，有效樣本 '+n+' 筆'+(S.rows.length-n?"（排除缺漏 "+(S.rows.length-n)+" 筆）":"")+'。</div>';
+  if (stdz.length) h+='<div class="notice warn">以下變數不是標準分數，已先標準化再分群：'+stdz.map(esc).join("、")+'。</div>';
+  msg.innerHTML=h;
+  const runs=KS.map(k=>{
+    const r=Clus.kmeans(X,k,STARTS,SEED+k);
+    r.k=k; r.sil=Clus.silhouette(X,r.lab,k); r.minP=Math.min(...r.N)/n;
+    return r;
+  });
+  const ok=runs.filter(r=>r.minP>=MINP);
+  const pool=ok.length?ok:runs;
+  const sugg=pool.reduce((a,b)=>b.sil>a.sil+1e-12?b:a);
+  S.runs={cols,keep,n,X,runs,sugg,noneOk:!ok.length};
+  if (!KS.includes(S.k)||!S.userK) S.k=sugg.k;
+  renderK(); renderResult(); renderPrompt();
+}
+
+/* ---------- 呈現 ---------- */
+function miniChart(vals,fmt,hl){
+  const W=300,H=150,L=44,R=26,T=12,B=28;
+  const lo=Math.min(...vals), hi=Math.max(...vals), pad=(hi-lo)*.25||Math.abs(hi)*.1||.1;
+  const y0=lo-pad, y1=hi+pad;
+  const x=i=>L+i*(W-L-R)/(vals.length-1), y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));
+  let s='<svg class="mini" viewBox="0 0 '+W+' '+H+'">';
+  for (let t=0;t<=2;t++){ const v=y0+(y1-y0)*t/2; s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--border)"/><text x="'+(L-5)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fmt(v)+'</text>'; }
+  s+='<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="'+vals.map((v,i)=>x(i)+","+y(v)).join(" ")+'"/>';
+  vals.forEach((v,i)=>{ s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(KS[i]===hl?5.5:3.5)+'" fill="'+(KS[i]===hl?"var(--accent)":"var(--surface)")+'" stroke="var(--accent)" stroke-width="1.5"/><text x="'+x(i)+'" y="'+(H-B+16)+'" text-anchor="middle">K = '+KS[i]+'</text>'; });
+  return s+'</svg>';
+}
+function renderK(){
+  const R=S.runs; $("sec-k").hidden=false;
+  let t='<table><thead><tr><th class="l">群數</th><th>組內平方和</th><th>平均輪廓係數</th><th>最小群人數</th><th>最小群比例</th><th class="l">判讀</th></tr></thead><tbody>';
+  R.runs.forEach(r=>{
+    const note=r===R.sugg?"建議":(r.minP<MINP?"最小群不足 10%":"");
+    t+='<tr'+(r===R.sugg?' class="sugg"':'')+'><td class="l">'+r.k+' 群</td><td>'+r.sse.toFixed(1)+'</td><td>'+r.sil.toFixed(3)+'</td><td>'+Math.min(...r.N)+'</td><td>'+pct(r.minP)+'</td><td class="l">'+note+'</td></tr>';
+  });
+  $("k-table").innerHTML=t+'</tbody></table>';
+  $("k-charts").innerHTML='<div class="chart"><p>手肘圖：組內平方和</p>'+miniChart(R.runs.map(r=>r.sse),v=>Math.round(v),S.k)+'</div>'
+    +'<div class="chart"><p>平均輪廓係數（愈高愈好）</p>'+miniChart(R.runs.map(r=>r.sil),v=>v.toFixed(3),S.k)+'</div>';
+  let m='<div class="notice ok">建議採用 '+R.sugg.k+' 群：平均輪廓係數 '+R.sugg.sil.toFixed(3)+'，最小群占 '+pct(R.sugg.minP)+'。</div>';
+  if (R.noneOk) m='<div class="notice warn">3～5 群的解都有人數不足全體 10% 的小群，以下依輪廓係數建議 '+R.sugg.k+' 群；人數過少的區隔在行銷上不易經營，請審慎解讀。</div>';
+  if (R.sugg.sil<.25) m+='<div class="notice warn">平均輪廓係數低於 .25，各群之間的界線不明顯，區隔結構較弱。</div>';
+  m+='<p class="hint small">輪廓係數衡量每位受訪者與自己所屬群的相近程度，介於 −1 與 1 之間；手肘圖中組內平方和下降幅度明顯趨緩之處，也可作為群數的參考。最後仍應考量各群能否清楚命名、是否具行銷意義。</p>';
+  $("k-msg").innerHTML=m;
+  $("kpick").innerHTML=KS.map(k=>'<label><input type="radio" name="k" value="'+k+'"'+(k===S.k?" checked":"")+'>'+k+' 群'+(k===R.sugg.k?"（建議）":"")+'</label>').join("");
+  $("kpick").querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{ S.k=+i.value; S.userK=S.k!==R.sugg.k; renderK(); renderResult(); renderPrompt(); }));
+}
+function cur(){ return S.runs.runs.find(r=>r.k===S.k); }
+function renderResult(){
+  const R=S.runs, r=cur(), k=r.k, cols=R.cols; $("sec-res").hidden=false;
+  let t='<table><thead><tr><th class="l">構面</th>';
+  for (let c=0;c<k;c++) t+='<th>集群'+(c+1)+'</th>';
+  t+='</tr></thead><tbody>';
+  cols.forEach((col,j)=>{
+    const row=r.C.map(cc=>cc[j]), mx=Math.max(...row);
+    t+='<tr><td class="l">'+esc(label(col))+(S.sel.get(col.ci)?'<br><span class="small" style="color:var(--ink-faint)">'+esc(col.name)+'</span>':'')+'</td>';
+    row.forEach(v=>{ t+='<td class="'+(v>=0?"pos":"neg")+(v===mx?" max":"")+'">'+f2(v)+'</td>'; });
+    t+='</tr>';
+  });
+  t+='<tr class="total"><td class="l">人數（比例）</td>'+r.N.map(c=>'<td>'+c+'（'+pct(c/R.n)+'）</td>').join("")+'</tr></tbody></table>';
+  $("res-table").innerHTML=t;
+  const m=[];
+  r.C.forEach((cc,c)=>{ if (cc.every(v=>v<=.1)) m.push("集群"+(c+1)+"在所有構面上都為負值或接近 0，沒有明顯的正向峰值；報告會依相對最不負的構面命名並加註。"); });
+  const unnamed=cols.filter(c=>!S.sel.get(c.ci));
+  if (unnamed.length) m.push("尚未填寫構面名稱："+unnamed.map(c=>c.name).join("、")+"。請回到步驟 2 填入因素名稱，AI 報告才能以構面名稱為各群命名。");
+  $("res-msg").innerHTML=m.map(x=>'<div class="notice warn">'+esc(x)+'</div>').join("");
+}
+
+/* ---------- AI 指令 ---------- */
+function renderPrompt(){
+  const R=S.runs, r=cur(), k=r.k, cols=R.cols;
+  const A=r.N.map((c,i)=>"集群"+(i+1)+"：n = "+c+"（"+pct(c/R.n)+"）").join("\n")+"\n合計：n = "+R.n+"（100.0%）";
+  const B=["數值為標準化分數（平均數 0、標準差 1）；以 K 平均法分為 "+k+" 群，集群依人數由多到少編號。",
+    ["構面"].concat(r.N.map((_,i)=>"集群"+(i+1))).join("｜")]
+    .concat(cols.map((col,j)=>[label(col)].concat(r.C.map(cc=>f2(cc[j]))).join("｜"))).join("\n");
+  const C=$("topic").value.trim()||"（請填寫）";
+  let tpl=$("tpl").textContent;
+  const parts=tpl.split("【研究者請將資料貼於下方】");
+  let tail=parts[1]||"";
+  tail=tail.replace(/（A）各群人數與人數比例：\s*\n（請貼上）/,"（A）各群人數與人數比例：\n"+A)
+           .replace(/（B）群中心值表（各消費動機／需求因素於各群之平均數）：\s*\n（請貼上）/,"（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n"+B)
+           .replace(/（C）研究主題／產品類別簡述：\s*\n（請填寫）/,"（C）研究主題／產品類別簡述：\n"+C);
+  const text=parts[0]+"【研究者請將資料貼於下方】"+tail;
+  $("prompt").textContent=text.trim();
+  $("prompt-len").textContent=(C==="（請填寫）"?"尚未填寫（C）・":"")+"共 "+text.trim().length.toLocaleString()+" 字";
+  $("sec-prompt").hidden=false;
+}
+
+/* ---------- 下載 ---------- */
+function stamp(){ return S.fileName.replace(/\.(xlsx|csv)$/i,""); }
+function dlData(){
+  const R=S.runs; if (!R) return; const r=cur();
+  const map=new Map(); R.keep.forEach((ri,i)=>map.set(ri,r.lab[i]+1));
+  const ki=S.headers.indexOf("集群");
+  const head=ki>=0?S.headers.slice():S.headers.concat(["集群"]);
+  const aoa=[head];
+  S.rows.forEach((row,ri)=>{
+    const base=S.headers.map((_,ci)=>row[ci]===undefined?"":row[ci]);
+    const v=map.has(ri)?map.get(ri):"";
+    if (ki>=0) base[ki]=v; else base.push(v);
+    aoa.push(base);
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"資料");
+  ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
+  XLSX.writeFile(wb,stamp()+"_集群.xlsx");
+}
+function dlCenter(){
+  const R=S.runs; if (!R) return; const r=cur(), k=r.k;
+  const a1=[["構面","欄名"].concat(r.N.map((_,i)=>"集群"+(i+1)))];
+  R.cols.forEach((col,j)=>a1.push([label(col),col.name].concat(r.C.map(cc=>Math.round(cc[j]*1000)/1000))));
+  a1.push(["人數",""].concat(r.N)); a1.push(["比例 (%)",""].concat(r.N.map(c=>Math.round(c/R.n*1000)/10)));
+  a1.push([]); a1.push(["K 平均法，"+k+" 群；數值為標準化分數；有效樣本 "+R.n+" 筆"]);
+  const a2=[["群數","組內平方和","平均輪廓係數","最小群人數","最小群比例 (%)","建議"]];
+  R.runs.forEach(x=>a2.push([x.k,Math.round(x.sse*10)/10,Math.round(x.sil*1000)/1000,Math.min(...x.N),Math.round(x.minP*1000)/10,x===R.sugg?"是":""]));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),"群中心值");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),"群數比較");
+  XLSX.writeFile(wb,stamp()+"_群中心值.xlsx");
+}
+
+async function copyText(text,okMsg){
+  try{ await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast(okMsg); }catch(err){ toast("複製失敗，請展開指令內容手動選取"); }
+    ta.remove();
+  }
+}
+
+/* ---------- 事件 ---------- */
+$("file").addEventListener("change",e=>readFile(e.target.files[0]));
+const dz=$("dropzone");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if (f) readFile(f); });
+$("sheet").addEventListener("change",e=>loadSheet(e.target.value));
+$("btn-remove").addEventListener("click",()=>{
+  S.wb=null; S.rows=[]; S.headers=[]; S.runs=null; S.sel=new Map(); $("file").value="";
+  $("dz-label").textContent="選擇或拖曳 Excel／CSV 檔案到這裡"; $("sheet-row").hidden=true; $("sec-vars").hidden=true; hideAfter();
+});
+$("topic").addEventListener("input",()=>{ if (S.runs) renderPrompt(); });
+$("dl-data").addEventListener("click",dlData);
+$("dl-center").addEventListener("click",dlCenter);
+$("btn-copy").addEventListener("click",()=>{
+  if (!$("topic").value.trim()){ toast("請先填寫（C）研究主題／產品類別"); $("topic").focus(); return; }
+  copyText($("prompt").textContent,"已複製 AI 報告指令");
+});
+})();
+</script>
+</body>
+</html>
