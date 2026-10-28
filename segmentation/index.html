@@ -744,7 +744,7 @@ function loadSheet(name){
   S.rows=aoa.slice(1);
   S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
   S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[];
-  $("cut").value="0.5";
+  S.userCut=false;
   const cfg=name==="資料"?readCfg(S.wb):null;
   if (cfg&&Array.isArray(cfg.added)){
     const drop=new Set(S.headers.map((h,i)=>cfg.added.includes(h)?i:-1).filter(i=>i>=0));
@@ -773,7 +773,7 @@ function applyCfg(cfg){
   if (Array.isArray(cfg.prof)){ const want=new Set(cfg.prof); S.profSel=new Set(S.profCols.filter(pc=>want.has(pc.name)).map(pc=>pc.ci)); }
   else ex.forEach(c=>S.profSel.add(c));
   S.nf=cfg.nf; S.userNf=!!cfg.userNf;
-  if ([...$("cut").options].some(o=>+o.value===+cfg.cut)) $("cut").value=String(+cfg.cut);
+  if ([...$("cut").options].some(o=>+o.value===+cfg.cut)){ $("cut").value=String(+cfg.cut); S.userCut=true; }
   S.fnames=(cfg.fnames||[]).slice();
   if (cfg.K){ S.K=cfg.K; S.userK=true; }
   if (cfg.alpha) $("alpha").value=cfg.alpha;
@@ -857,12 +857,11 @@ function compute(){
   const sol=Stats.pca(r.R,r.eig,S.nf);
   r.sol=sol;
   /* 門檻值 */
-  const prim=sol.loadings.map(row=>Math.max(...row));
-  const autoCut = r.binary ? {v:.30, why:"題項為 0／1 二元資料，負荷量普遍偏低"} :
-    (prim.filter(x=>x>=.5).length>=prim.length*2/3 ? {v:.50, why:"題項為連續尺度，且主要負荷量普遍在 0.5 以上"} : {v:.30, why:"多數題項的主要負荷量低於 0.5"});
+  const def = r.binary ? {v:.3, why:"題項為 0／1 二元資料，負荷量普遍偏低，門檻值採 0.3"} : {v:.5, why:"題項為李克特量表等連續尺度，門檻值採 0.5"};
+  if (!S.userCut) $("cut").value=String(def.v);
   const sel=+$("cut").value;
-  r.cut = {v:sel, why: sel===.5 ? "社會科學常用的門檻值" : "研究者指定"};
-  $("cut-note").textContent = autoCut.v!==sel ? "依資料型態建議採 "+fcut(autoCut.v)+"（"+autoCut.why+"）" : "";
+  r.cut = sel===def.v ? def : {v:sel, why:"研究者指定（依資料型態預設為 "+fcut(def.v)+"）"};
+  $("cut-note").textContent = sel===def.v ? "依資料型態自動設定："+(r.binary?"0／1 二元資料採 0.3":"李克特量表採 0.5") : "研究者指定；依資料型態預設為 "+fcut(def.v);
   /* 歸屬 */
   const cut=r.cut.v;
   r.items=r.cols.map((c,i)=>{
@@ -1000,17 +999,17 @@ function renderCand(){
 
 /* ---------- AI 指令 ---------- */
 const KMO_REF="KMO 的判讀參考 Kaiser（1974）：.90 以上極佳、.80 以上良好、.70 以上中等、.60 以上普通、.50 以上勉強、低於 .50 不適合進行因素分析。";
-const RULES_COMMON = (src, tableNote)=>[
+const RULES_COMMON = (src, tableNote, cutT)=>[
 "二、寫作規則",
 "- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」；使用「門檻值」「主要負荷量」「交叉負荷量」等用詞，不得使用「截斷值」「交叉負荷」。",
-"- 門檻值一律寫作「0.5」。",
+(cutT?"- 門檻值一律寫作「"+cutT+"」。":"- 門檻值依資料型態設定：李克特量表等連續尺度採 0.5，0／1 二元資料採 0.3；寫作「0.5」或「0.3」，不寫作「.50」或「.30」。"),
 "- 以完整段落撰寫，不使用條列、不加小標題。"+tableNote,
 "- 引用題項時，一律寫作「項目＋題號（簡稱）」，例如「項目9（茶文化體驗）」，不寫英文代碼（不得寫作「項目A9」），也不寫完整題目內容。"+(src==="截圖"?"題項名稱為「英文代碼＋題號＋簡稱」者（例如 A9茶文化體驗），直接取用其題號與簡稱；題項名稱沒有簡稱者，依題意自訂至多 6 個字的簡稱。":"引用名稱一律照抄【分析結果】「題項引用名稱」所列的寫法；標示「需自訂簡稱」者，依題目內容自訂至多 6 個字的簡稱。"),
 "- 本節只撰寫因素分析的結果與因素命名，不得撰寫行銷策略、行銷意涵或產品、價格、溝通、通路等行銷建議；行銷意涵留待市場區隔剖析完成後再撰寫。",
 "- 不得編造"+src+"中沒有的數值或題項。",
 "",
 "三、因素命名規則",
-"- 主導變數是指主要負荷量（正值）達門檻值 0.5、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
+"- 主導變數是指主要負荷量（正值）達門檻值"+(cutT?" "+cutT:"")+"、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
 "- 各因素的命名以負荷量最高的前兩個主導變數為主要依據，其餘主導變數用於檢查名稱是否仍能涵蓋；若前兩個主導變數的方向不同，須找出兩者共同的上位動機命名。",
 "- 因素名稱須直接反映主導變數所代表的消費動機，讓讀者一看名稱就知道這群消費者要的是什麼；中文名稱至多 6 字，例如「日常放鬆動機」「品味象徵動機」。",
 "- 若有題項在某因素上呈現強烈負負荷，不列入主導變數，而是在該因素的說明中另外點出，並解讀其反向意義。",
@@ -1025,8 +1024,8 @@ const SHOT_PROMPT=[
 "",
 "一、寫作內容（共三段，依序撰寫）",
 "第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與 KMO 值（截圖若有個別題項 MSA，一併報告其範圍），並據此判斷資料是否適合進行因素分析。"+KMO_REF,
-"第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值為 0.5。若研究者在對話中說明了已剔除的題項，說明初步分析的結果與剔除理由，剔除理由分為兩種：「具有交叉負荷量（大於 0.5）」，以及「主要負荷量未達門檻值 0.5」；並說明剔除後重新分析的結果。若截圖中仍有主要負荷量未達 0.5 或交叉負荷量大於 0.5 的題項，請在報告之前另行提醒研究者，先剔除後重新分析。最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。",
-"第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於 0.5 者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，李克特量表題將以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題則以卡方檢定比較各區隔的勾選比例差異，以補充描繪各市場區隔的動機特徵。",
+"第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值：李克特量表等連續尺度採 0.5，0／1 二元資料採 0.3。若研究者在對話中說明了已剔除的題項，說明初步分析的結果與剔除理由，剔除理由分為兩種：「具有交叉負荷量（大於門檻值）」，以及「主要負荷量未達門檻值」，並寫出實際的門檻值數字；並說明剔除後重新分析的結果。若截圖中仍有主要負荷量未達門檻值或交叉負荷量大於門檻值的題項，請在報告之前另行提醒研究者，先剔除後重新分析。最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。",
+"第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，李克特量表題將以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題則以卡方檢定比較各區隔的勾選比例差異，以補充描繪各市場區隔的動機特徵。",
 ""].concat(RULES_COMMON("截圖","不需輸出表格。")).join("\n");
 
 function faInfo(){
@@ -1074,7 +1073,7 @@ function renderPrompt(){
   }
   L.push(p3);
   L.push("");
-  RULES_COMMON("【分析結果】","不需輸出表格，表1由分析工具產生。").forEach(x=>L.push(x));
+  RULES_COMMON("【分析結果】","不需輸出表格，表1由分析工具產生。",cutT).forEach(x=>L.push(x));
   const CAND=candidates();
   if (CAND.length){
     L.push("");
@@ -1591,7 +1590,7 @@ $("nf").addEventListener("input",()=>{
   S.nf=v; S.userNf=v!==r.kaiser; renderEigen(); compute();
 });
 $("btn-kaiser").addEventListener("click",()=>{ if (!S.res) return; S.nf=S.res.kaiser; S.userNf=false; renderEigen(); compute(); });
-$("cut").addEventListener("change",compute);
+$("cut").addEventListener("change",()=>{ S.userCut=true; compute(); });
 $("hide-low").addEventListener("change",()=>{ if (S.res) renderLoadings(); });
 $("dl-data").addEventListener("click",dlData);
 $("dl-result").addEventListener("click",dlResult);
