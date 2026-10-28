@@ -172,13 +172,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 4 因素個數 -->
   <section class="panel" id="sec-eigen" aria-labelledby="h4s" hidden>
     <h2 id="h4s"><span class="step">4</span>因素個數</h2>
-    <p class="hint">預設保留特徵值大於 1 的因素（Kaiser 準則）。若陡坡圖顯示其他轉折，或理論上另有依據，可直接修改因素個數。</p>
+    <p class="hint">預設保留特徵值大於 1 的因素（Kaiser 準則）。若陡坡圖顯示其他轉折，或理論上另有依據，可直接修改因素個數。社會科學研究通常以累積解釋變異量達 60% 左右為參考標準（Hair et al.），可與特徵值、陡坡圖一併考量。</p>
     <div class="row">
       <label class="inline">因素個數 <input type="number" id="nf" min="1" step="1"></label>
       <button type="button" class="ghost" id="btn-kaiser">恢復特徵值大於 1</button>
       <span class="small" id="nf-note"></span>
     </div>
     <div id="scree"></div>
+    <div id="cum-msg"></div>
     <div class="table-scroll" id="eigen-table"></div>
   </section>
 
@@ -853,10 +854,20 @@ function renderAdequacy(){
   if (lowMsa.length) m+='<div class="notice warn">MSA 低於 .50 的題項：'+lowMsa.map(c=>esc(c.name)+"（"+f3(a.msa[r.cols.indexOf(c)])+"）").join("、")+'。可考慮刪除後重新分析。</div>';
   $("adq-msg").innerHTML=m;
 }
+function cumInfo(){
+  const r=S.res, p=r.cols.length; let cum=0, need=null, c=0;
+  r.eig.forEach((e,i)=>{ c+=e.value/p; if (i<S.nf) cum=c; if (need===null&&c>=.6-1e-12) need=i+1; });
+  return {cum, need, ok:cum>=.6-1e-12};
+}
 function renderEigen(){
   const r=S.res, p=r.cols.length; $("sec-eigen").hidden=false;
   const nf=$("nf"); nf.max=p-1; nf.value=S.nf;
   $("nf-note").textContent="特徵值大於 1 的因素有 "+r.kaiser+" 個"+(S.nf!==r.kaiser?"；目前為研究者指定的 "+S.nf+" 個":"");
+  const cv=cumInfo();
+  let cm=cv.ok?'<div class="notice ok">前 '+S.nf+' 個因素的累積解釋變異量為 '+pct(cv.cum)+'，達 60% 的參考標準。</div>'
+    :'<div class="notice warn">前 '+S.nf+' 個因素的累積解釋變異量為 '+pct(cv.cum)+'，未達社會科學常用的 60% 參考標準；要達到 60%，需要 '+cv.need+' 個因素。可考慮增加因素個數，但仍須兼顧特徵值、陡坡圖，以及各因素能否清楚命名。</div>';
+  if (!cv.ok&&r.binary) cm+='<div class="notice warn">題項為 0／1 二元資料，題項之間的相關係數普遍偏低，累積解釋變異量通常不易達到 60%，此標準僅供參考。</div>';
+  $("cum-msg").innerHTML=cm;
   /* 陡坡圖 */
   const W=560,H=220,L=44,Rr=14,T=14,B=34;
   const vals=r.eig.map(e=>e.value), maxV=Math.max(...vals,1.2);
@@ -971,7 +982,7 @@ function renderPrompt(){
   L.push("");
   L.push("一、判讀分析結果");
   L.push("1. 【分析結果】列出因素個數、各題項的題目內容、轉軸後負荷量、共同性與獨特性（uniqueness）。請從題目內容判斷研究的產品或消費情境。");
-  L.push("2. 本分析的截斷值為 "+f2(r.cut.v)+"，理由："+r.cut.why+"。請在報告開頭用一句話說明 KMO 與 Bartlett 球形檢定的結果，以及採用的截斷值及理由；若有 MSA 低於 .50 的題項，一併說明其取樣適切性偏低。");
+  L.push("2. 本分析的截斷值為 "+f2(r.cut.v)+"，理由："+r.cut.why+"。請在報告開頭用一句話說明 KMO 與 Bartlett 球形檢定的結果、累積解釋變異量是否達社會科學常用的 60% 參考標準，以及採用的截斷值及理由；若有 MSA 低於 .50 的題項，一併說明其取樣適切性偏低。");
   L.push("");
   RULES_COMMON("【分析結果】").forEach(x=>L.push(x));
   L.push("");
@@ -985,6 +996,8 @@ function renderPrompt(){
   L.push("因素個數："+k+"（"+(k===r.kaiser?"特徵值大於 1":"研究者指定；特徵值大於 1 者為 "+r.kaiser+" 個")+"）");
   let cum=0;
   L.push("轉軸後解釋變異量："+sol.ss.map((v,j)=>{ cum+=v/p; return "因素"+(j+1)+" "+pct(v/p); }).join("、")+"；累積 "+pct(cum));
+  const cv=cumInfo();
+  L.push("累積解釋變異量參考標準 60%："+(cv.ok?"已達到":"未達到；要達到 60% 需要 "+cv.need+" 個因素")+(!cv.ok&&r.binary?"（題項為 0／1 二元資料，累積解釋變異量通常偏低）":""));
   L.push("截斷值："+f2(r.cut.v));
   L.push("");
   L.push("轉軸後負荷量矩陣（題項依主要負荷所在的因素排列）：");
