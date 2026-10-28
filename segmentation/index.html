@@ -146,7 +146,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 1 上傳 -->
   <section class="panel" aria-labelledby="h1s">
     <h2 id="h1s"><span class="step">1</span>上傳資料</h2>
-    <p class="hint">支援 Excel (.xlsx)、CSV（UTF-8）與 jamovi 資料檔 (.omv)。若是問卷資料整理器產出的檔案，工具會讀取「資料」工作表，並以「欄名對照表」的原題目作為題目內容。</p>
+    <p class="hint">支援 Excel (.xlsx)、CSV（UTF-8）與 jamovi 資料檔 (.omv)。若是問卷資料整理器產出的檔案，工具會讀取「資料」工作表，並以「欄名對照表」的原題目作為題目內容；若是本工具下載的資料檔（含「分析設定」工作表），會自動還原上次的分析。</p>
     <label class="dropzone" id="dropzone">
       <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
@@ -279,7 +279,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <button type="button" id="dl-data">下載資料 Excel（含因素分數與集群）</button>
       <button type="button" id="dl-result">下載分析結果 Excel</button>
     </div>
-    <p class="hint small">資料檔在原始資料後方加上各因素分數（迴歸法，平均數 0、標準差 1；已命名者以因素名稱為欄名）與「集群」欄，並保留「欄名對照表」與「題組」工作表；因缺漏而排除的受訪者，這些欄位為空白。分析結果檔包含負荷量、特徵值、適切性檢定、群中心值、群數比較與區隔剖析。</p>
+    <p class="hint small">資料檔在原始資料後方加上各因素分數（迴歸法，平均數 0、標準差 1；已命名者以因素名稱為欄名）與「集群」欄，並保留「欄名對照表」與「題組」工作表，另存「分析設定」工作表；下次上傳這個資料檔，會自動還原題項、被剔除的題項、因素個數、門檻值、因素名稱與集群數，可直接接續集群分析。因缺漏而排除的受訪者，這些欄位為空白。分析結果檔包含負荷量、特徵值、適切性檢定、群中心值、群數比較與區隔剖析。</p>
   </section>
 
   <!-- 11 AI 指令（二） -->
@@ -744,8 +744,39 @@ function loadSheet(name){
   S.rows=aoa.slice(1);
   S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
   S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[];
+  const cfg=name==="資料"?readCfg(S.wb):null;
+  if (cfg&&Array.isArray(cfg.added)){
+    const drop=new Set(S.headers.map((h,i)=>cfg.added.includes(h)?i:-1).filter(i=>i>=0));
+    S.headers=S.headers.filter((h,i)=>!drop.has(i)); S.rows=S.rows.map(r=>r.filter((v,i)=>!drop.has(i)));
+  }
   $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 筆）";
-  detectNumeric(); detectProfile(); renderGroups(); analyze();
+  detectNumeric(); detectProfile();
+  const ok=cfg&&applyCfg(cfg);
+  if (ok) $("dz-label").textContent+="；已依「分析設定」工作表還原上次的分析";
+  else if (cfg) toast("「分析設定」與資料欄位不符，請重新選擇題項");
+  renderGroups(); analyze();
+  if (ok){ toast("已還原上次的分析，可直接接續集群分析"); if (cfg.topic) $("topic").value=cfg.topic; if (S.seg) renderSegPrompt(); }
+}
+/* ---------- 分析設定（接續上次進度） ---------- */
+function readCfg(wb){
+  const ws=wb.Sheets["分析設定"]; if (!ws) return null;
+  const row=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}).find(r=>String(r[0]).trim()==="設定代碼");
+  try{ const c=JSON.parse(row[1]); return c&&c.v===1?c:null; }catch(e){ return null; }
+}
+function applyCfg(cfg){
+  const ci=n=>{ const c=S.numCols.find(c=>c.name===n); return c?c.ci:null; };
+  const items=(cfg.items||[]).map(ci), ex=(cfg.exHist||[]).map(x=>ci(x.name));
+  if (items.length<3||items.includes(null)||ex.includes(null)) return false;
+  S.selected=new Set(items); S.excluded=new Set(ex);
+  S.exHist=cfg.exHist.map((x,i)=>Object.assign({},x,{ci:ex[i]}));
+  if (Array.isArray(cfg.prof)){ const want=new Set(cfg.prof); S.profSel=new Set(S.profCols.filter(pc=>want.has(pc.name)).map(pc=>pc.ci)); }
+  else ex.forEach(c=>S.profSel.add(c));
+  S.nf=cfg.nf; S.userNf=!!cfg.userNf;
+  if ([...$("cut").options].some(o=>+o.value===+cfg.cut)) $("cut").value=String(+cfg.cut);
+  S.fnames=(cfg.fnames||[]).slice();
+  if (cfg.K){ S.K=cfg.K; S.userK=true; }
+  if (cfg.alpha) $("alpha").value=cfg.alpha;
+  return true;
 }
 function num(v){ if (v===""||v===null||v===undefined) return null; const x=typeof v==="number"?v:Number(String(v).trim()); return Number.isFinite(x)?x:null; }
 function detectNumeric(){
@@ -1496,6 +1527,20 @@ function dlData(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"資料");
   ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
+  const cfg={v:1, items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})),
+    nf:k, userNf:S.userNf, cut:r.cut.v, fnames:Array.from({length:k},(_,j)=>(S.fnames[j]||"").trim()), K:c?c.k:null,
+    topic:$("topic").value, alpha:$("alpha").value, prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
+  const st=[["項目","內容"],
+    ["說明","重新上傳此檔案時，市場區隔分析工具會依本工作表自動還原上次的分析；請勿修改本工作表。"],
+    ["分析題項",cfg.items.join("、")],
+    ["被剔除的題項（依剔除順序）",cfg.exHist.map(x=>x.name+"（"+x.reason+"）").join("、")||"無"],
+    ["因素個數",k],["門檻值",fcut(r.cut.v)],
+    ["因素名稱",cfg.fnames.map((n,j)=>"因素"+(j+1)+"＝"+(n||"（未命名）")).join("；")],
+    ["集群數",cfg.K||"尚未分群"],["研究主題",cfg.topic||"（未填寫）"],
+    ["附加欄位",cfg.added.join("、")],
+    ["設定代碼",JSON.stringify(cfg)]];
+  const sw=XLSX.utils.aoa_to_sheet(st); sw["!cols"]=[{wch:26},{wch:80}];
+  XLSX.utils.book_append_sheet(wb,sw,"分析設定");
   XLSX.writeFile(wb,stamp()+"_市場區隔資料.xlsx");
 }
 
