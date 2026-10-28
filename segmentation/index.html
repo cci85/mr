@@ -193,7 +193,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint">萃取方法為主成分分析，轉軸方法為 Varimax（Kaiser 常態化）。題項依主要負荷所在的因素排列，同一因素內依負荷量由高到低。</p>
     <div class="row">
       <label class="inline">門檻值
-        <select id="cut">
+        <select id="cut" autocomplete="off">
           <option value="0.3">0.3</option>
           <option value="0.4">0.4</option>
           <option value="0.5" selected>0.5</option>
@@ -744,6 +744,7 @@ function loadSheet(name){
   S.rows=aoa.slice(1);
   S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
   S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[];
+  $("cut").value="0.5";
   const cfg=name==="資料"?readCfg(S.wb):null;
   if (cfg&&Array.isArray(cfg.added)){
     const drop=new Set(S.headers.map((h,i)=>cfg.added.includes(h)?i:-1).filter(i=>i>=0));
@@ -1572,6 +1573,7 @@ async function copyText(text, okMsg){
 
 /* ---------- 事件 ---------- */
 $("prompt-shot").textContent=SHOT_PROMPT;
+$("cut").value="0.5";
 $("file").addEventListener("change",e=>readFile(e.target.files[0]));
 const dz=$("dropzone");
 ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
