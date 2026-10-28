@@ -1155,7 +1155,7 @@ function faTableHTML(word){
     const n=S.exHist.length, rs=n>1?' rowspan="'+n+'"':'';
     S.exHist.forEach((x,i)=>{
       t+='<tr>';
-      if (i===0) t+=c("被剔除的題項","center",rs);
+      if (i===0) t+=c("剔除題項","center",rs);
       t+=c(esc(x.stem||x.name),"left")+c(exMean(x).toFixed(2),"center");
       if (i===0) t+=c("","center",rs+' colspan="2"');
       t+='</tr>';
@@ -1176,7 +1176,7 @@ function renderFaTable(){
 function faTableText(){
   const r=S.res, sol=r.sol, p=r.cols.length, FI=faInfo(); const L=[FA_CAP,["因素","題項","平均數","負荷量","特徵值（累積百分比）"].join("\t")]; let cum=0;
   FI.F.forEach(f=>{ cum+=sol.ss[f.j]/p; f.items.forEach((it,i)=>L.push([i?"":flabel(f.j),it.c.stem||it.c.name,it.mean.toFixed(2),f3(it.row[f.j]),i?"":sol.ss[f.j].toFixed(3)+"（"+(cum*100).toFixed(3)+"%）"].join("\t"))); });
-  S.exHist.forEach((x,i)=>L.push([i?"":"被剔除的題項",x.stem||x.name,exMean(x).toFixed(2),"",""].join("\t")));
+  S.exHist.forEach((x,i)=>L.push([i?"":"剔除題項",x.stem||x.name,exMean(x).toFixed(2),"",""].join("\t")));
   return L.join("\n");
 }
 async function copyFaTable(){
