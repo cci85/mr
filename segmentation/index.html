@@ -100,6 +100,10 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
 .toast.show{opacity:1}
 .faint{color:var(--ink-faint)}
+.fa1 td.c,.fa1 th{text-align:center;vertical-align:middle;white-space:nowrap}
+.fa1 td,.fa1 th{border:1px solid var(--border-strong)}
+.fa1 td.l{white-space:normal;min-width:260px}
+.fa-cap{margin:8px 0 4px;font-weight:700}
 .fnames{display:grid;gap:8px;margin:8px 0}
 .fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
 .fname label{font-size:14px}
@@ -135,7 +139,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <main>
   <p class="eyebrow">行銷研究方法 · 統計分析</p>
   <h1>市場區隔分析</h1>
-  <p class="lede">上傳問卷資料，依序完成市場區隔的三個步驟：以因素分析把消費動機題項縮減為少數構面，以 K 平均法依因素分數把受訪者分成 3～5 個區隔，再以卡方檢定剖析各區隔的輪廓。過程中會產生兩段 AI 報告指令：先為因素命名，再為市場區隔命名並推導行銷意涵。所有計算都在瀏覽器中完成。</p>
+  <p class="lede">上傳問卷資料，依序完成市場區隔的三個步驟：以因素分析把消費動機題項縮減為少數構面，以 K 平均法依因素分數把受訪者分成 3～5 個區隔，再以卡方檢定剖析各區隔的輪廓。過程中會產生兩段 AI 報告指令：先撰寫因素分析報告並為因素命名，再為市場區隔命名並推導行銷意涵。所有計算都在瀏覽器中完成。</p>
 
   <p class="stage">第一階段　因素分析<small>把消費動機題項縮減為少數構面，並為各構面命名。</small></p>
 
@@ -188,21 +192,20 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h2 id="h5s"><span class="step">5</span>轉軸後負荷量與因素命名</h2>
     <p class="hint">萃取方法為主成分分析，轉軸方法為 Varimax（Kaiser 常態化）。題項依主要負荷所在的因素排列，同一因素內依負荷量由高到低。</p>
     <div class="row">
-      <label class="inline">截斷值
+      <label class="inline">門檻值
         <select id="cut">
-          <option value="auto" selected>自動判定</option>
-          <option value="0.3">.30</option>
-          <option value="0.4">.40</option>
-          <option value="0.5">.50</option>
+          <option value="0.3">0.3</option>
+          <option value="0.4">0.4</option>
+          <option value="0.5" selected>0.5</option>
         </select>
       </label>
-      <label class="inline"><input type="checkbox" id="hide-low">隱藏低於截斷值的負荷量</label>
+      <label class="inline"><input type="checkbox" id="hide-low">隱藏低於門檻值的負荷量</label>
       <span class="small" id="cut-note"></span>
     </div>
     <div class="table-scroll" id="load-table"></div>
     <div class="legend">
       <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>主導變數</span>
-      <span><i style="background:var(--warn)"></i>交叉負荷（另一因素也達截斷值）</span>
+      <span><i style="background:var(--warn)"></i>交叉負荷量（另一因素也達門檻值）</span>
       <span><i style="background:var(--danger)"></i>強烈負負荷</span>
       <span>獨特性大於 .45 以橘色標示</span>
     </div>
@@ -215,8 +218,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 
   <!-- 6 AI 指令 -->
   <section class="panel" id="sec-prompt" aria-labelledby="h6s" hidden>
-    <h2 id="h6s"><span class="step">6</span>AI 報告指令（一）：因素命名與行銷意涵</h2>
-    <p class="hint">指令會隨上方設定即時更新。複製後貼到 AI 對話中，AI 會撰寫各因素的命名、主導變數與行銷意涵；請把 AI 建議的因素名稱填回步驟 5。</p>
+    <h2 id="h6s"><span class="step">6</span>AI 報告指令（一）：因素分析報告</h2>
+    <p class="hint">指令會隨上方設定即時更新。複製後貼到 AI 對話中，AI 會撰寫因素分析報告：資料適宜性、萃取方法與被剔除的題項、各因素的主導變數與命名，以及哪個因素最受認同。行銷意涵留待步驟 11 區隔剖析完成後再撰寫。請把 AI 建議的因素名稱填回步驟 5。</p>
     <div class="row">
       <button type="button" class="primary" id="btn-copy">複製 AI 報告指令（一）</button>
       <span class="small" id="prompt-len"></span>
@@ -225,6 +228,11 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <summary>檢視指令內容</summary>
       <pre class="prompt" id="prompt"></pre>
     </details>
+    <h3>因素分析結果表</h3>
+    <p class="hint">表格由本工具依分析結果產生，格式與數值不經 AI。因素欄採用步驟 5 填入的因素名稱；按「複製表1」後可直接貼到 Word，保留合併儲存格與框線。</p>
+    <div id="fa-msg"></div>
+    <div class="table-scroll" id="fa-table"></div>
+    <button type="button" id="btn-copy-fa">複製表1</button>
   </section>
 
   <p class="stage">第二階段　市場區隔<small>依因素分數以 K 平均法分群，並剖析各區隔的輪廓。</small></p>
@@ -252,13 +260,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 9 區隔剖析 -->
   <section class="panel" id="sec-prof" aria-labelledby="h9s" hidden>
     <h2 id="h9s"><span class="step">9</span>區隔剖析</h2>
-    <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例。連續數值（例如年齡、品牌評價）會在「指標」一節以驗證性因素分析建立指標後，再以變異數分析比較各區隔；但在步驟 5 自因素分析剔除的題目，會列為剖析變數，以單因子變異數分析比較各群平均數。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
+    <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例。連續數值（例如年齡、品牌評價）會在「指標」一節以驗證性因素分析建立指標後，再以變異數分析比較各區隔；但在步驟 5 自因素分析剔除的題目，會列為輪廓變數，以單因子變異數分析比較各群平均數。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
     <div class="row">
       <label class="inline">顯著水準 α <input type="number" id="alpha" value="0.10" min="0.001" max="0.5" step="0.01"></label>
       <label class="inline"><input type="checkbox" id="only-sig">只顯示達顯著的變數</label>
     </div>
     <details open>
-      <summary>選擇剖析變數</summary>
+      <summary>選擇輪廓變數</summary>
       <div class="groups" id="prof-vars" style="margin-top:8px"></div>
     </details>
     <div id="prof-out"></div>
@@ -295,8 +303,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h2 id="h7s"><span class="step">＋</span>已用 jamovi／SPSS 完成因素分析？</h2>
     <p class="hint">若已在其他統計軟體完成主成分分析與 Varimax 轉軸，可改用截圖版指令：</p>
     <ol class="steps">
-      <li>截取轉軸後的因素負荷量矩陣，須包含題項內容與獨特性（uniqueness）。</li>
-      <li>按下方按鈕複製指令，貼到 AI 對話中，並一併上傳截圖。</li>
+      <li>截取轉軸後的因素負荷量矩陣（須包含題項內容）、KMO 與 Bartlett 球形檢定、各因素的解釋變異量，以及各題項的平均數（描述統計）。</li>
+      <li>按下方按鈕複製指令，貼到 AI 對話中，並一併上傳截圖；若已剔除題項，請在對話中說明剔除的題項及理由。</li>
     </ol>
     <button type="button" id="btn-copy-shot">複製截圖版指令</button>
     <details>
@@ -685,6 +693,7 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function f2(x){ let s=Math.abs(x).toFixed(2); if (s[0]==="0") s=s.slice(1); return (x<0&&s!==".00"?"-":"")+s; }
 function f3(x){ let s=Math.abs(x).toFixed(3); if (s[0]==="0") s=s.slice(1); return (x<0&&s!==".000"?"-":"")+s; }
+function fcut(v){ return String(+v); }
 function pct(x){ return (x*100).toFixed(2)+"%"; }
 function pct1(x){ return (x*100).toFixed(1)+"%"; }
 function fp(a){ const d=Math.max(2,((String(+a).split(".")[1])||"").length); return (+a).toFixed(d).replace(/^0/,""); }
@@ -815,13 +824,13 @@ function compute(){
   const r=S.res; if (!r) return;
   const sol=Stats.pca(r.R,r.eig,S.nf);
   r.sol=sol;
-  /* 截斷值 */
+  /* 門檻值 */
   const prim=sol.loadings.map(row=>Math.max(...row));
   const autoCut = r.binary ? {v:.30, why:"題項為 0／1 二元資料，負荷量普遍偏低"} :
-    (prim.filter(x=>x>=.5).length>=prim.length*2/3 ? {v:.50, why:"題項為連續尺度，且主要負荷量普遍在 .50 以上"} : {v:.30, why:"多數題項的主要負荷量低於 .50"});
-  const sel=$("cut").value;
-  r.cut = sel==="auto" ? autoCut : {v:+sel, why:"研究者指定"};
-  $("cut-note").textContent = sel==="auto" ? "自動判定為 "+f2(autoCut.v)+"："+autoCut.why : "自動判定原為 "+f2(autoCut.v);
+    (prim.filter(x=>x>=.5).length>=prim.length*2/3 ? {v:.50, why:"題項為連續尺度，且主要負荷量普遍在 0.5 以上"} : {v:.30, why:"多數題項的主要負荷量低於 0.5"});
+  const sel=+$("cut").value;
+  r.cut = {v:sel, why: sel===.5 ? "社會科學常用的門檻值" : "研究者指定"};
+  $("cut-note").textContent = autoCut.v!==sel ? "依資料型態建議採 "+fcut(autoCut.v)+"（"+autoCut.why+"）" : "";
   /* 歸屬 */
   const cut=r.cut.v;
   r.items=r.cols.map((c,i)=>{
@@ -896,7 +905,7 @@ function renderLoadings(){
   for (let j=0;j<k;j++) t+='<th>因素'+(j+1)+'</th>';
   t+='<th>共同性</th><th>獨特性</th><th>MSA</th></tr></thead><tbody>';
   r.order.forEach(it=>{
-    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?(it.cross.length?' <span class="tag">交叉負荷</span>':''):' <span class="tag">'+(it.neg.length?"負負荷":"未達截斷值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
+    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?(it.cross.length?' <span class="tag">交叉負荷量</span>':''):' <span class="tag">'+(it.neg.length?"負負荷":"主要負荷量未達門檻值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
     it.row.forEach((x,j)=>{
       let cls="", show=true;
       if (it.dom&&j===it.best) cls="dom";
@@ -925,17 +934,17 @@ function candidates(){
   const r=S.res; if (!r||!r.items) return [];
   return r.items.filter(it=>(!it.dom&&!it.neg.length)||it.cross.length).map(it=>{
     const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
-    const reason=it.dom?"交叉負荷":"未達截斷值";
-    return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+f2(it.row[j])).join("、")};
+    const reason=it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值";
+    return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+it.row[j].toFixed(2)).join("、")};
   });
 }
 function renderCand(){
   const C=candidates(); let h="";
   if (C.length||S.exHist.length) h+='<h3>歸屬不明的題目</h3>';
   if (C.length){
-    h+='<p class="hint">下列題目的最高負荷量未達截斷值，或另一個因素的負荷量也達截斷值。請依題意判斷：題意與所歸屬的構面一致者，可以保留；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，可剔除並改作步驟 9 的剖析變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 AI 報告指令（一）的建議，並應在看分群結果之前完成。</p>';
+    h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：題意與所歸屬的構面一致者，可以保留；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 AI 報告指令（一）的建議，並應在看分群結果之前完成。</p>';
     h+='<div class="table-scroll"><table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th class="l">情形</th><th class="l">最高的兩個負荷量</th><th></th></tr></thead><tbody>';
-    C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td><button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作剖析變數</button></td></tr>'; });
+    C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td><button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作輪廓變數</button></td></tr>'; });
     h+='</tbody></table></div>';
   } else if (S.exHist.length) h+='<div class="notice ok">目前沒有歸屬不明的題目。</div>';
   if (S.exHist.length){
@@ -947,7 +956,7 @@ function renderCand(){
   $("cand").querySelectorAll("button[data-ex]").forEach(b=>b.addEventListener("click",()=>{
     const ci=+b.dataset.ex, c=C.find(x=>x.it.c.ci===ci);
     S.selected.delete(ci); S.excluded.add(ci); S.profSel.add(ci);
-    S.exHist.push({ci,name:c.it.c.name,stem:c.it.c.stem||"",reason:c.reason,loadTxt:c.loadTxt});
+    S.exHist.push({ci,name:c.it.c.name,stem:c.it.c.stem||"",reason:c.reason,loadTxt:c.loadTxt,nf:S.nf,mean:c.it.mean});
     renderGroups(); analyze(); toast("已剔除 "+c.it.c.name+"，並重新分析");
   }));
   $("cand").querySelectorAll("button[data-restore]").forEach(b=>b.addEventListener("click",()=>{
@@ -958,80 +967,77 @@ function renderCand(){
 }
 
 /* ---------- AI 指令 ---------- */
-const RULES_COMMON = (src)=>[
-"二、選取主導變數",
-"3. 主導變數是指負荷量（正值）達截斷值、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
-"4. 各因素的主導變數依負荷量由高到低排列。",
-"5. 若有題項在某因素上呈現強烈負負荷，不列入主導變數，而是在該因素的說明中另外點出，並解讀其反向意義（例如勾選此項的人，正是對該因素所代表的需求最低的人）。",
-"6. 若某題項同時在兩個因素上達到截斷值（交叉負荷），歸入負荷較高的因素，並註明其交叉負荷情形。",
-"",
-"三、主導變數的呈現方式",
-"7. 每個主導變數以「至多 4 個中文字的動機標籤＋負荷量」呈現，例如：日常習慣（.79）、規律作息（.78）。標籤須精準概括該題項所代表的消費動機或需求，不得出現題項編號或英文變數名稱。",
-"8. 負荷量以小數點後兩位呈現，省略整數位的 0。",
-"",
-"四、因素命名",
-"9. 各因素的命名以負荷量最高的前兩個主導變數為主要依據，其餘主導變數僅用於檢查名稱是否仍能涵蓋。",
-"10. 若前兩個主導變數的方向不同，須找出兩者共同的上位動機命名，並說明此上位概念如何同時涵蓋兩者。",
-"11. 因素名稱須直接反映主導變數所代表的消費需求，讓讀者一看名稱就知道這群消費者要的是什麼；中文名稱至多 6 字，並附英文名稱。",
-"12. 若某主導變數的獨特性偏高（大於 .45），說明其與因素名稱的契合度可能較弱。",
-"",
-"五、行銷意涵",
-"13. 將每個因素轉化為具體的行銷決策，各項決策都必須能回溯到該因素的主導變數，說明「因為消費者重視什麼，所以採取什麼行銷作為」：",
-"    - 產品：應強化哪些產品配置或功能組合，或推出何種產品組合；",
-"    - 價格：適合溢價反映附加價值，或以親民價格支持高頻購買；",
-"    - 溝通：廣告訊息應直接運用主導變數的語意作為訴求重點；",
-"    - 通路：此需求最常出現的購買情境，以及應優先布局的通路。",
-"",
-"六、寫作規則",
-"- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」。",
+const KMO_REF="KMO 的判讀參考 Kaiser（1974）：.90 以上極佳、.80 以上良好、.70 以上中等、.60 以上普通、.50 以上勉強、低於 .50 不適合進行因素分析。";
+const RULES_COMMON = (src, tableNote)=>[
+"二、寫作規則",
+"- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」；使用「門檻值」「主要負荷量」「交叉負荷量」等用詞，不得使用「截斷值」「交叉負荷」。",
+"- 門檻值一律寫作「0.5」。",
+"- 以完整段落撰寫，不使用條列、不加小標題。"+tableNote,
+"- 引用題項時，以「項目代號（題目內容）」的方式呈現，例如：項目m6（我喜歡嘗試不同品牌的包裝綠茶，發掘各種新口味）。",
+"- 本節只撰寫因素分析的結果與因素命名，不得撰寫行銷策略、行銷意涵或產品、價格、溝通、通路等行銷建議；行銷意涵留待市場區隔剖析完成後再撰寫。",
 "- 不得編造"+src+"中沒有的數值或題項。",
 "",
-"七、輸出格式",
-"每個因素依序撰寫：",
+"三、因素命名規則",
+"- 主導變數是指主要負荷量（正值）達門檻值 0.5、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
+"- 各因素的命名以負荷量最高的前兩個主導變數為主要依據，其餘主導變數用於檢查名稱是否仍能涵蓋；若前兩個主導變數的方向不同，須找出兩者共同的上位動機命名。",
+"- 因素名稱須直接反映主導變數所代表的消費動機，讓讀者一看名稱就知道這群消費者要的是什麼；中文名稱至多 6 字，例如「日常放鬆動機」「品味象徵動機」。",
+"- 若有題項在某因素上呈現強烈負負荷，不列入主導變數，而是在該因素的說明中另外點出，並解讀其反向意義。",
 "",
-"### 因素 N：中文名稱（English Name）",
-"- **主導變數**：動機標籤（負荷量）、動機標籤（負荷量）……（依負荷量由高至低）",
-"- **反向題項**：若有強烈負負荷的題項，列出並說明其反向意義；若無則省略此行",
-"- **行銷意涵**：產品、價格、溝通、通路四個面向，各一句",
-"",
-"接著以一段完整文字說明：前兩個主導變數共同反映的心理動機、命名理由、其餘主導變數如何支持或限制此名稱，以及行銷決策如何由此動機推導而來。",
-"",
-"全部因素完成後，以一段文字綜合說明各因素之間的差異，以及它們作為後續市場區隔基礎的意義；最後以一張表格總結：",
-"| 因素 | 名稱 | 主導變數（標籤與負荷量） | 核心行銷訴求 |"
+"四、輸出格式",
+"第一行為標題「消費動機因素分析」，接著依序輸出上述三段文字。",
+"三段文字之後空一行，另起一行輸出「建議因素名稱：因素1＝……；因素2＝……」，供研究者填回分析工具；此行不屬於報告內容。"
 ];
 
 const SHOT_PROMPT=[
-"請根據附上的因素負荷量矩陣截圖（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「因素命名與行銷意涵」段落。",
+"請根據附上的截圖（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「消費動機因素分析」一節。截圖應包含：轉軸後因素負荷量矩陣（含題項內容）、KMO 與 Bartlett 球形檢定、各因素的解釋變異量，以及各題項的平均數（描述統計）；若缺少某項，請略過與該項有關的內容，不得自行推估。",
 "",
-"一、判讀截圖",
-"1. 辨識因素個數、各題項的負荷量與獨特性（uniqueness），並從題項內容判斷研究的產品或消費情境。",
-"2. 判斷資料型態以決定截斷值：",
-"   - 題項為李克特量表等連續尺度，且負荷量普遍在 .50 以上時，截斷值採 .50；",
-"   - 題項為是非題或可複選題等二元資料，或負荷量普遍偏低（多數低於 .50）時，截斷值採 .30；",
-"   - 若截圖已隱藏低於某數值的負荷量，以該數值為截斷值。",
-"   請在報告開頭用一句話說明採用的截斷值及理由。",
-""].concat(RULES_COMMON("截圖")).join("\n");
+"一、寫作內容（共三段，依序撰寫）",
+"第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與 KMO 值（截圖若有個別題項 MSA，一併報告其範圍），並據此判斷資料是否適合進行因素分析。"+KMO_REF,
+"第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值為 0.5。若研究者在對話中說明了已剔除的題項，說明初步分析的結果與剔除理由，剔除理由分為兩種：「具有交叉負荷量（大於 0.5）」，以及「主要負荷量未達門檻值 0.5」；並說明剔除後重新分析的結果。若截圖中仍有主要負荷量未達 0.5 或交叉負荷量大於 0.5 的題項，請在報告之前另行提醒研究者，先剔除後重新分析。最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。",
+"第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於 0.5 者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入分群，改作市場區隔的輪廓變數，於區隔剖析時比較各區隔的平均數。",
+""].concat(RULES_COMMON("截圖","不需輸出表格。")).join("\n");
+
+function faInfo(){
+  const r=S.res, k=S.nf;
+  const F=Array.from({length:k},(_,j)=>{
+    const items=r.order.filter(it=>it.dom&&it.best===j);
+    const m=items.length?items.reduce((a,it)=>a+it.mean,0)/items.length:null;
+    return {j,items,mean:m};
+  });
+  const rank=F.filter(f=>f.mean!=null).slice().sort((a,b)=>b.mean-a.mean);
+  return {F,rank};
+}
+function exMean(x){
+  const r=S.res; if (!r) return x.mean;
+  const col=S.rows.map(row=>row[x.ci]).filter(v=>v!==""&&v!=null&&isFinite(+v)).map(Number);
+  return col.length?col.reduce((a,b)=>a+b,0)/col.length:x.mean;
+}
 
 function renderPrompt(){
   const r=S.res, sol=r.sol, k=S.nf, a=r.adq, p=r.cols.length;
+  const nAll=p+S.exHist.length, cutT=fcut(r.cut.v);
   const L=[];
-  L.push("請根據下方【分析結果】（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「因素命名與行銷意涵」段落。");
+  L.push("請根據下方【分析結果】（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「消費動機因素分析」一節。");
   L.push("");
-  L.push("一、判讀分析結果");
-  L.push("1. 【分析結果】列出因素個數、各題項的題目內容、轉軸後負荷量、共同性與獨特性（uniqueness）。請從題目內容判斷研究的產品或消費情境。");
-  L.push("2. 本分析的截斷值為 "+f2(r.cut.v)+"，理由："+r.cut.why+"。請在報告開頭用一句話說明 KMO 與 Bartlett 球形檢定的結果、累積解釋變異量是否達社會科學常用的 60% 參考標準，以及採用的截斷值及理由；若有 MSA 低於 .50 的題項，一併說明其取樣適切性偏低。");
+  L.push("一、寫作內容（共三段，依序撰寫）");
+  L.push("第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將 "+nAll+" 個消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）、KMO 整體取樣適切性，以及個別題項 MSA 值的範圍，並據此判斷資料是否適合進行因素分析。"+KMO_REF);
+  let p2="第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數"+(k===r.kaiser?"":"（本分析的因素個數為研究者指定，請說明依據為累積解釋變異量與因素的可詮釋性）")+"，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值為 "+cutT+"。";
+  if (S.exHist.length) p2+="接著說明初步分析萃取出的因素個數，以及被剔除的題項與剔除理由（見【分析結果】的「被剔除的題項」）：交叉負荷量達門檻值者，寫作「具有交叉負荷量（大於 "+cutT+"）」；主要負荷量未達門檻值者，寫作「主要負荷量未達門檻值 "+cutT+"」。然後說明剔除後重新執行因素分析，最終萃取出的因素個數，並以「如表1所示」引用表格。";
+  else p2+="說明所有題項的主要負荷量皆達門檻值 "+cutT+"，且沒有交叉負荷量，因此保留全部題項，並以「如表1所示」引用表格。";
+  p2+="最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。";
+  L.push(p2);
+  let p3="第三段　因素命名與認同程度：依表1的因素負荷量（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依【分析結果】的「各因素平均數」，說明哪個因素最受認同、哪個因素認同程度最低，並寫出平均數。";
+  if (S.exHist.length) p3+="最後說明被剔除的題項（逐題寫出題目內容）不納入後續集群分析的分群變數，改作市場區隔的輪廓變數，於區隔剖析時以單因子變異數分析比較各區隔的平均數，以補充描繪各區隔的動機特徵。";
+  L.push(p3);
   L.push("");
-  RULES_COMMON("【分析結果】").forEach(x=>L.push(x));
+  RULES_COMMON("【分析結果】","不需輸出表格，表1由分析工具產生。").forEach(x=>L.push(x));
   const CAND=candidates();
-  if (CAND.length||S.exHist.length){
+  if (CAND.length){
     L.push("");
-    L.push("八、歸屬不明題目的內容判斷");
-    if (S.exHist.length) L.push("研究者已依題意判斷，將下列題目自因素分析剔除，改作市場區隔的剖析變數；【分析結果】為剔除後重新分析的結果。請在報告開頭用一至兩句話說明剔除的題目及理由："+S.exHist.map(x=>x.name+"（"+x.reason+"：剔除時 "+x.loadTxt+"）").join("、")+"。");
-    if (CAND.length){
-      L.push("下列題目在統計上歸屬不明（最高負荷量未達截斷值，或另一個因素的負荷量也達截斷值）：");
-      CAND.forEach(c=>L.push("- "+c.it.c.name+"（"+(c.it.c.stem||"同題項欄名")+"）："+c.reason+"，"+c.loadTxt));
-      L.push("請逐題判斷其題意是否與所歸屬或最接近的構面一致：若一致，建議保留，並說明它補充了該構面的哪個面向；若題意明顯不同於所有保留構面（例如代表另一種獨立的動機），建議自因素分析剔除，改作市場區隔的剖析變數。請在報告最前面以「歸屬不明題目的內容判斷」為標題，逐題列出建議（保留或剔除）與理由，每題一至兩句；此段只提供建議，是否剔除由研究者決定。");
-    }
+    L.push("五、歸屬不明題目的內容判斷");
+    L.push("下列題目在統計上歸屬不明（主要負荷量未達門檻值 "+cutT+"，或另一個因素的負荷量也達門檻值，即具有交叉負荷量）：");
+    CAND.forEach(c=>L.push("- "+c.it.c.name+"（"+(c.it.c.stem||"同題項欄名")+"）："+c.reason+"，"+c.loadTxt));
+    L.push("請逐題判斷其題意是否與所歸屬或最接近的構面一致：若一致，建議保留，並說明它補充了該構面的哪個面向；若題意明顯不同於所有保留構面（例如代表另一種獨立的動機），建議自因素分析剔除，改作市場區隔的輪廓變數。請在報告最前面以「歸屬不明題目的內容判斷」為標題，逐題列出建議（保留或剔除）與理由，每題一至兩句；此段只提供建議，是否剔除由研究者決定。");
   }
   L.push("");
   L.push("=====================");
@@ -1039,25 +1045,106 @@ function renderPrompt(){
   L.push("=====================");
   L.push("有效樣本數："+r.n+(r.dropped?"（已排除缺漏 "+r.dropped+" 筆）":""));
   L.push("資料型態："+(r.binary?"0／1 二元資料":"連續尺度（如李克特量表）"));
+  L.push("原始消費動機題項數："+nAll+"；保留題項數："+p);
   L.push("KMO = "+(a.kmo!=null?f3(a.kmo):"無法計算")+"；Bartlett 球形檢定 "+(a.bartlett?"χ²("+a.bartlett.df+") = "+a.bartlett.chi.toFixed(2)+"，"+pTxt(a.bartlett.p):"無法計算"));
+  if (a.msa){ const ms=a.msa.filter(x=>x!=null); L.push("個別題項 MSA 範圍："+f3(Math.min(...ms))+" 至 "+f3(Math.max(...ms))); }
   L.push("萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）");
-  L.push("因素個數："+k+"（"+(k===r.kaiser?"特徵值大於 1":"研究者指定；特徵值大於 1 者為 "+r.kaiser+" 個")+"）");
+  L.push("門檻值："+cutT);
+  if (S.exHist.length){
+    L.push("初步分析萃取的因素個數："+S.exHist[0].nf);
+    L.push("被剔除的題項（依剔除順序；剔除後改作輪廓變數）：");
+    S.exHist.forEach(x=>L.push("- "+x.name+"（"+(x.stem||"同題項欄名")+"）："+x.reason+"（剔除時 "+x.loadTxt+"）"));
+  }
+  L.push("最終因素個數："+k+"（"+(k===r.kaiser?"特徵值大於 1":"研究者指定；特徵值大於 1 者為 "+r.kaiser+" 個")+"）");
   let cum=0;
-  L.push("轉軸後解釋變異量："+sol.ss.map((v,j)=>{ cum+=v/p; return "因素"+(j+1)+" "+pct(v/p); }).join("、")+"；累積 "+pct(cum));
+  L.push("轉軸後特徵值與解釋變異量："+sol.ss.map((v,j)=>{ cum+=v/p; return "因素"+(j+1)+" "+f3(v).replace(/^\./,"0.")+"（"+pct(v/p)+"，累積 "+pct(cum)+"）"; }).join("、"));
   const cv=cumInfo();
   L.push("累積解釋變異量參考標準 60%："+(cv.ok?"已達到":"未達到；要達到 60% 需要 "+cv.need+" 個因素")+(!cv.ok&&r.binary?"（題項為 0／1 二元資料，累積解釋變異量通常偏低）":""));
-  L.push("截斷值："+f2(r.cut.v));
-  if (S.exHist.length) L.push("已自因素分析剔除的題目："+S.exHist.map(x=>x.name).join("、"));
+  const FI=faInfo();
+  L.push("");
+  L.push("各因素的主導變數（依負荷量由高到低）：");
+  FI.F.forEach(f=>{ L.push("因素"+(f.j+1)+"（"+f.items.length+" 題）："+(f.items.length?f.items.map(it=>it.c.name+"（"+f2(it.row[f.j])+"）").join("、"):"沒有主導變數")); });
+  L.push("各因素平均數（該因素主導變數平均數的平均，由高到低）："+FI.rank.map(f=>"因素"+(f.j+1)+" "+f.mean.toFixed(2)).join("、"));
+  const negOnly=r.items.filter(it=>!it.dom&&it.neg.length);
+  if (negOnly.length) L.push("強烈負負荷的題項："+negOnly.map(it=>it.c.name+"（因素"+it.neg.map(j=>j+1).join("、因素")+"）").join("、"));
   L.push("");
   L.push("轉軸後負荷量矩陣（題項依主要負荷所在的因素排列）：");
-  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA"]).join("｜"));
+  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","MSA"]).join("｜"));
   r.order.forEach(it=>{
-    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm),f2(it.uniq),it.msa!=null?f2(it.msa):"—"]).join("｜"));
+    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm),it.msa!=null?f2(it.msa):"—"]).join("｜"));
   });
+  if (S.exHist.length){
+    L.push("");
+    L.push("被剔除題項的平均數："+S.exHist.map(x=>x.name+" "+exMean(x).toFixed(2)).join("、"));
+  }
   const text=L.join("\n");
   $("prompt").textContent=text;
   $("prompt-len").textContent="共 "+text.length.toLocaleString()+" 字";
   $("sec-prompt").hidden=false;
+  renderFaTable();
+}
+
+/* ---------- 表1 因素分析結果 ---------- */
+function faTableHTML(word){
+  const r=S.res, sol=r.sol, k=S.nf, p=r.cols.length, FI=faInfo();
+  const B=word?'border:1px solid #000;':'';
+  const base=word?'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 5pt;vertical-align:middle;'+B:'';
+  const c=(txt,align,extra)=>'<td'+(extra||"")+(word?' style="'+base+'text-align:'+align+';"':' class="'+(align==="left"?"l":"c")+'"')+'>'+txt+'</td>';
+  const h=(txt,extra)=>'<th'+(extra||"")+(word?' style="'+base+'text-align:center;font-weight:normal;"':'')+'>'+txt+'</th>';
+  let t='<table'+(word?' style="border-collapse:collapse;'+B+'"':' class="fa1"')+'><thead><tr>'+h("因素")+h("題項")+h("平均數")+h("負荷量")+h("特徵值<br>（累積百分比）")+'</tr></thead><tbody>';
+  let cum=0;
+  FI.F.forEach(f=>{
+    cum+=sol.ss[f.j]/p;
+    if (!f.items.length) return;
+    const n=f.items.length, rs=n>1?' rowspan="'+n+'"':'';
+    f.items.forEach((it,i)=>{
+      t+='<tr>';
+      if (i===0) t+=c(esc(flabel(f.j)),"center",rs);
+      t+=c(esc(it.c.stem||it.c.name),"left")+c(it.mean.toFixed(2),"center")+c(f3(it.row[f.j]),"center");
+      if (i===0) t+=c(sol.ss[f.j].toFixed(3)+"<br>（"+(cum*100).toFixed(3)+"%）","center",rs);
+      t+='</tr>';
+    });
+  });
+  if (S.exHist.length){
+    const n=S.exHist.length, rs=n>1?' rowspan="'+n+'"':'';
+    S.exHist.forEach((x,i)=>{
+      t+='<tr>';
+      if (i===0) t+=c("被剔除的題項","center",rs);
+      t+=c(esc(x.stem||x.name),"left")+c(exMean(x).toFixed(2),"center");
+      if (i===0) t+=c("","center",rs+' colspan="2"');
+      t+='</tr>';
+    });
+  }
+  return t+'</tbody></table>';
+}
+const FA_CAP="表1　消費動機因素分析結果";
+function renderFaTable(){
+  const r=S.res; if (!r) return;
+  const C=candidates(), unnamed=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim());
+  let m="";
+  if (C.length) m+='<div class="notice warn">尚有 '+C.length+' 個歸屬不明的題目（步驟 5），表格只列出主導變數與已剔除的題項；請先決定保留或剔除。</div>';
+  if (unnamed.length) m+='<div class="notice warn">'+unnamed.map(j=>"因素"+(j+1)).join("、")+'尚未命名；請把 AI 建議的因素名稱填回步驟 5，表格會自動更新。</div>';
+  $("fa-msg").innerHTML=m;
+  $("fa-table").innerHTML='<p class="fa-cap">'+FA_CAP+'</p>'+faTableHTML(false);
+}
+function faTableText(){
+  const r=S.res, sol=r.sol, p=r.cols.length, FI=faInfo(); const L=[FA_CAP,["因素","題項","平均數","負荷量","特徵值（累積百分比）"].join("\t")]; let cum=0;
+  FI.F.forEach(f=>{ cum+=sol.ss[f.j]/p; f.items.forEach((it,i)=>L.push([i?"":flabel(f.j),it.c.stem||it.c.name,it.mean.toFixed(2),f3(it.row[f.j]),i?"":sol.ss[f.j].toFixed(3)+"（"+(cum*100).toFixed(3)+"%）"].join("\t"))); });
+  S.exHist.forEach((x,i)=>L.push([i?"":"被剔除的題項",x.stem||x.name,exMean(x).toFixed(2),"",""].join("\t")));
+  return L.join("\n");
+}
+async function copyFaTable(){
+  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+FA_CAP+'</p>'+faTableHTML(true);
+  const text=faTableText();
+  try{
+    await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]);
+    toast("已複製表1，可直接貼到 Word");
+  }catch(e){
+    const box=document.createElement("div"); box.innerHTML=html; box.style.position="fixed"; box.style.left="-9999px"; document.body.appendChild(box);
+    const rg=document.createRange(); rg.selectNodeContents(box); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+    try{ document.execCommand("copy"); toast("已複製表1，可直接貼到 Word"); }catch(err){ toast("複製失敗，請直接選取表格複製"); }
+    sel.removeAllRanges(); box.remove();
+  }
 }
 
 /* ================= 市場區隔（集群分析＋區隔剖析） ================= */
@@ -1078,6 +1165,7 @@ function renderNames(){
   box.innerHTML=h;
   box.querySelectorAll("input[data-f]").forEach(i=>i.addEventListener("input",()=>{
     S.fnames[+i.dataset.f]=i.value;
+    renderFaTable();
     if (S.seg){ renderSegResult(); renderSegPrompt(); }
   }));
 }
@@ -1340,11 +1428,11 @@ function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
   const a1=[["題項","題目內容","平均數"].concat(fh).concat(["共同性","獨特性","MSA","主要負荷因素"])];
-  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"未達截斷值")])));
+  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"主要負荷量未達門檻值")])));
   let cum=0;
   a1.push([]); a1.push(["轉軸後解釋變異量 (%)","",""].concat(sol.ss.map(v=>round(v/p*100,2))));
   a1.push(["累積解釋變異量 (%)","",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
-  a1.push([]); a1.push(["萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）；截斷值 "+f2(r.cut.v)+"（"+r.cut.why+"）"]);
+  a1.push([]); a1.push(["萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）；門檻值 "+fcut(r.cut.v)+"（"+r.cut.why+"）"]);
   if (S.exHist.length) a1.push(["已剔除題目（依剔除順序）："+S.exHist.map(x=>x.name+"（"+x.reason+"："+x.loadTxt+"）").join("、")]);
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),"轉軸後負荷量");
   const a2=[["成分","特徵值","解釋變異量 (%)","累積解釋變異量 (%)","保留"]]; cum=0;
@@ -1452,6 +1540,7 @@ $("btn-copy-seg").addEventListener("click",()=>{
   if (!$("topic").value.trim()){ toast("請先填寫（C）研究主題／產品類別"); $("topic").focus(); return; }
   copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
 });
+$("btn-copy-fa").addEventListener("click",copyFaTable);
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
 })();
