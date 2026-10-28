@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>市場區隔分析</title>
+<meta name="description" content="上傳問卷資料，依序進行因素分析、K 平均法集群分析與區隔剖析，建立市場區隔並產生 AI 報告指令。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9; --border-strong:#c7bea9;
+  --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
+  --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7; --accent-contrast:#ffffff;
+  --warn:#95591b; --warn-soft:#f6ecda; --danger:#9c3b3b; --danger-soft:#f7e6e4;
+  --good:#3c6e3f; --good-soft:#e7f0e2; --pos:#1f6b55; --neg:#a24a3a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+    --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+    --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+    --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+    --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+  --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+  --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+  --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+  --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.7}
+.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}
+.toolbox-back a{color:#28594f;text-decoration:none}
+.toolbox-back a:hover{text-decoration:underline}
+@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}
+main{max-width:1080px;margin:0 auto;padding:32px 16px 64px}
+.eyebrow{margin:0 0 6px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:"Noto Serif TC",serif;font-size:clamp(25px,4vw,32px);margin:0 0 8px}
+.lede{margin:0 0 24px;color:var(--ink-soft);max-width:70ch}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:18px}
+.panel h2{font-family:"Noto Serif TC",serif;font-size:19px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+.step{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-family:"Noto Sans TC",sans-serif;font-size:14px;font-weight:700}
+.hint{color:var(--ink-soft);font-size:14px;margin:0 0 12px}
+.small{font-size:13px}
+h3{font-size:15.5px;margin:18px 0 8px;color:var(--accent-strong)}
+.dropzone{display:flex;align-items:center;justify-content:center;gap:10px;min-height:90px;border:2px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);cursor:pointer;padding:14px;text-align:center;color:var(--ink-soft)}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+input[type=number]{width:72px}
+button{font:inherit;font-size:14px;border-radius:7px;padding:7px 14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:700}
+button.primary:disabled,button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{padding:3px 10px;font-size:13px}
+.groups{display:grid;gap:10px}
+.grp{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.grp-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.grp-head strong{font-size:14.5px}
+.tag{font-size:12px;color:var(--ink-faint);border:1px solid var(--border);border-radius:999px;padding:0 8px;background:var(--surface)}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:2px 14px}
+.items label{display:flex;gap:6px;align-items:flex-start;font-size:13.5px;line-height:1.5;padding:2px 0}
+.items label input{margin-top:3px}
+.items label span.stem{color:var(--ink-faint)}
+.notice{border-radius:8px;padding:9px 13px;font-size:14px;margin:10px 0}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.bad{background:var(--danger-soft);color:var(--danger)}
+.notice.ok{background:var(--good-soft);color:var(--good)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 4px}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:150px}
+.stat b{display:block;font-size:19px;color:var(--accent-strong);font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--ink-soft)}
+.table-scroll{overflow-x:auto;margin:6px 0}
+table{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:100%}
+th,td{padding:5px 9px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{background:var(--surface-2);font-weight:700;color:var(--ink-soft)}
+th.l,td.l{text-align:left;white-space:normal;min-width:120px}
+td.stemcell{color:var(--ink-soft);font-size:12.5px;max-width:340px}
+tr.kept td{background:var(--accent-soft)}
+td.dom{font-weight:700;color:var(--accent-strong);background:var(--accent-soft)}
+td.cross{font-weight:700;color:var(--warn)}
+td.neg{font-weight:700;color:var(--danger)}
+td.low{color:var(--ink-faint)}
+td.flag{color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-soft);margin:4px 0 0}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg.scree{width:100%;max-width:560px;height:auto;display:block}
+svg.scree text{font-size:11px;fill:var(--ink-soft);font-family:inherit}
+pre.prompt{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:420px;overflow:auto}
+details summary{cursor:pointer;font-size:13.5px;color:var(--ink-soft);margin-top:10px}
+ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.faint{color:var(--ink-faint)}
+.fnames{display:grid;gap:8px;margin:8px 0}
+.fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+.fname label{font-size:14px}
+.fname label span{display:block;font-size:12.5px;color:var(--ink-faint)}
+@media (max-width:620px){.fname{grid-template-columns:minmax(0,1fr)}}
+input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 9px;width:100%}
+textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;min-height:64px;resize:vertical}
+.kpick{display:flex;flex-wrap:wrap;gap:8px}
+.kpick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.kpick label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:8px 0}
+.chart{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface-2)}
+.chart p{margin:0 0 2px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+svg.mini{width:100%;max-width:380px;height:auto;display:block;margin:0 auto}
+svg.mini text{font-size:11px;fill:var(--ink-soft);font-family:inherit}
+td.pos{color:var(--pos)}
+td.neg{color:var(--neg)}
+td.max{font-weight:700;background:var(--accent-soft)}
+td.up{color:var(--pos);font-weight:700}
+td.down{color:var(--neg);font-weight:700}
+td.hi{font-weight:700;color:var(--accent-strong)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+tr.sigrow td.l{font-weight:700}
+.testtxt{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:13px;color:var(--ink-faint);margin-left:10px}
+.testtxt.sig{color:var(--accent-strong);font-weight:700}
+.stage{margin:34px 0 14px;padding-top:10px;border-top:2px solid var(--border);font-family:"Noto Serif TC",serif;font-size:21px;color:var(--accent-strong)}
+.stage small{display:block;font-family:"Noto Sans TC",sans-serif;font-size:13.5px;font-weight:400;color:var(--ink-soft)}
+footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
+</style>
+</head>
+<body>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<main>
+  <p class="eyebrow">行銷研究方法 · 統計分析</p>
+  <h1>市場區隔分析</h1>
+  <p class="lede">上傳問卷資料，依序完成市場區隔的三個步驟：以因素分析把消費動機題項縮減為少數構面，以 K 平均法依因素分數把受訪者分成 3～5 個區隔，再以卡方檢定與變異數分析剖析各區隔的輪廓。過程中會產生兩段 AI 報告指令：先為因素命名，再為市場區隔命名並推導行銷意涵。所有計算都在瀏覽器中完成。</p>
+
+  <p class="stage">第一階段　因素分析<small>把消費動機題項縮減為少數構面，並為各構面命名。</small></p>
+
+  <!-- 1 上傳 -->
+  <section class="panel" aria-labelledby="h1s">
+    <h2 id="h1s"><span class="step">1</span>上傳資料</h2>
+    <p class="hint">支援 Excel (.xlsx)、CSV（UTF-8）與 jamovi 資料檔 (.omv)。若是問卷資料整理器產出的檔案，工具會讀取「資料」工作表，並以「欄名對照表」的原題目作為題目內容。</p>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
+    </label>
+    <div class="row" id="sheet-row" hidden>
+      <label class="inline">工作表 <select id="sheet"></select></label>
+      <button type="button" class="ghost" id="btn-remove">移除檔案</button>
+    </div>
+  </section>
+
+  <!-- 2 選題項 -->
+  <section class="panel" id="sec-items" aria-labelledby="h2s" hidden>
+    <h2 id="h2s"><span class="step">2</span>選擇題項</h2>
+    <p class="hint">只列出數值欄位，並依欄名開頭的英文代碼分組，開頭英文相同者為同一組（例如 M1、M2⋯⋯為同一量表，CH_便利商店、CH_生鮮超市為同一題組）。請勾選要一起進行因素分析的題項，通常是同一個量表的全部題項；任一勾選題項缺漏的受訪者，會整筆排除。</p>
+    <div class="groups" id="groups"></div>
+    <div id="item-msg"></div>
+  </section>
+
+  <!-- 3 適切性 -->
+  <section class="panel" id="sec-adequacy" aria-labelledby="h3s" hidden>
+    <h2 id="h3s"><span class="step">3</span>資料適切性</h2>
+    <p class="hint">KMO 大於 .60、Bartlett 球形檢定顯著，表示題項之間有足夠的共同變異，適合進行因素分析。個別題項的 MSA 低於 .50 時，可考慮刪除該題後重新分析。</p>
+    <div class="stats" id="adq-stats"></div>
+    <div id="adq-msg"></div>
+  </section>
+
+  <!-- 4 因素個數 -->
+  <section class="panel" id="sec-eigen" aria-labelledby="h4s" hidden>
+    <h2 id="h4s"><span class="step">4</span>因素個數</h2>
+    <p class="hint">預設保留特徵值大於 1 的因素（Kaiser 準則）。若陡坡圖顯示其他轉折，或理論上另有依據，可直接修改因素個數。</p>
+    <div class="row">
+      <label class="inline">因素個數 <input type="number" id="nf" min="1" step="1"></label>
+      <button type="button" class="ghost" id="btn-kaiser">恢復特徵值大於 1</button>
+      <span class="small" id="nf-note"></span>
+    </div>
+    <div id="scree"></div>
+    <div class="table-scroll" id="eigen-table"></div>
+  </section>
+
+  <!-- 5 負荷量 -->
+  <section class="panel" id="sec-load" aria-labelledby="h5s" hidden>
+    <h2 id="h5s"><span class="step">5</span>轉軸後負荷量與因素命名</h2>
+    <p class="hint">萃取方法為主成分分析，轉軸方法為 Varimax（Kaiser 常態化）。題項依主要負荷所在的因素排列，同一因素內依負荷量由高到低。</p>
+    <div class="row">
+      <label class="inline">截斷值
+        <select id="cut">
+          <option value="auto" selected>自動判定</option>
+          <option value="0.3">.30</option>
+          <option value="0.4">.40</option>
+          <option value="0.5">.50</option>
+        </select>
+      </label>
+      <label class="inline"><input type="checkbox" id="hide-low">隱藏低於截斷值的負荷量</label>
+      <span class="small" id="cut-note"></span>
+    </div>
+    <div class="table-scroll" id="load-table"></div>
+    <div class="legend">
+      <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>主導變數</span>
+      <span><i style="background:var(--warn)"></i>交叉負荷（另一因素也達截斷值）</span>
+      <span><i style="background:var(--danger)"></i>強烈負負荷</span>
+      <span>獨特性大於 .45 以橘色標示</span>
+    </div>
+    <div id="load-msg"></div>
+    <h3>因素命名</h3>
+    <p class="hint">請為每個因素命名，名稱會用於後續的群中心值表與市場區隔報告。可以先複製步驟 6 的指令請 AI 命名，再把 AI 建議的名稱填回這裡；欄位下方列出該因素負荷量最高的主導變數供參考。</p>
+    <div class="fnames" id="fnames"></div>
+  </section>
+
+  <!-- 6 AI 指令 -->
+  <section class="panel" id="sec-prompt" aria-labelledby="h6s" hidden>
+    <h2 id="h6s"><span class="step">6</span>AI 報告指令（一）：因素命名與行銷意涵</h2>
+    <p class="hint">指令會隨上方設定即時更新。複製後貼到 AI 對話中，AI 會撰寫各因素的命名、主導變數與行銷意涵；請把 AI 建議的因素名稱填回步驟 5。</p>
+    <div class="row">
+      <button type="button" class="primary" id="btn-copy">複製 AI 報告指令（一）</button>
+      <span class="small" id="prompt-len"></span>
+    </div>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="prompt"></pre>
+    </details>
+  </section>
+
+  <p class="stage">第二階段　市場區隔<small>依因素分數以 K 平均法分群，並剖析各區隔的輪廓。</small></p>
+
+  <!-- 7 群數 -->
+  <section class="panel" id="sec-k" aria-labelledby="h7k" hidden>
+    <h2 id="h7k"><span class="step">7</span>決定區隔數</h2>
+    <p class="hint">以步驟 5 的因素分數（迴歸法）為分群變數，分別以 3、4、5 群進行 K 平均法；每種群數從 50 組起始中心中取組內平方和最小的解，亂數種子固定，同一份資料每次執行結果相同。建議群數為平均輪廓係數最高、且最小群人數不少於全體 10% 者。</p>
+    <div class="table-scroll" id="k-table"></div>
+    <div class="charts" id="k-charts"></div>
+    <div id="k-msg"></div>
+    <p class="hint small">輪廓係數衡量每位受訪者與自己所屬群的相近程度，介於 −1 與 1 之間；手肘圖中組內平方和下降幅度明顯趨緩之處，也可作為群數的參考。最後仍應考量各群能否清楚命名、是否具行銷意義。</p>
+    <h3>採用的群數</h3>
+    <div class="kpick" id="kpick"></div>
+  </section>
+
+  <!-- 8 區隔結果 -->
+  <section class="panel" id="sec-seg" aria-labelledby="h8s" hidden>
+    <h2 id="h8s"><span class="step">8</span>市場區隔結果</h2>
+    <p class="hint">集群依人數由多到少編號。群中心值為各群在各構面上的平均標準分數，正值代表高於全體平均，負值代表低於全體平均；每列最高值以粗體加底色標示。</p>
+    <div class="table-scroll" id="seg-table"></div>
+    <div id="seg-msg"></div>
+  </section>
+
+  <!-- 9 區隔剖析 -->
+  <section class="panel" id="sec-prof" aria-labelledby="h9s" hidden>
+    <h2 id="h9s"><span class="step">9</span>區隔剖析</h2>
+    <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例，連續數值以單因子變異數分析比較各群平均數。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
+    <div class="row">
+      <label class="inline">顯著水準 α <input type="number" id="alpha" value="0.10" min="0.001" max="0.5" step="0.01"></label>
+      <label class="inline"><input type="checkbox" id="only-sig">只顯示達顯著的變數</label>
+    </div>
+    <details open>
+      <summary>選擇剖析變數</summary>
+      <div class="groups" id="prof-vars" style="margin-top:8px"></div>
+    </details>
+    <div id="prof-out"></div>
+  </section>
+
+  <!-- 10 下載 -->
+  <section class="panel" id="sec-dl" aria-labelledby="h10s" hidden>
+    <h2 id="h10s"><span class="step">10</span>下載結果</h2>
+    <div class="row">
+      <button type="button" id="dl-data">下載資料 Excel（含因素分數與集群）</button>
+      <button type="button" id="dl-result">下載分析結果 Excel</button>
+    </div>
+    <p class="hint small">資料檔在原始資料後方加上各因素分數（迴歸法，平均數 0、標準差 1；已命名者以因素名稱為欄名）與「集群」欄，並保留「欄名對照表」與「題組」工作表；因缺漏而排除的受訪者，這些欄位為空白。分析結果檔包含負荷量、特徵值、適切性檢定、群中心值、群數比較與區隔剖析。</p>
+  </section>
+
+  <!-- 11 AI 指令（二） -->
+  <section class="panel" id="sec-seg-prompt" aria-labelledby="h11s" hidden>
+    <h2 id="h11s"><span class="step">11</span>AI 報告指令（二）：市場區隔命名與行銷意涵</h2>
+    <p class="hint">指令已自動填入（A）各群人數與比例、（B）群中心值表與（D）區隔剖析的顯著結果；請在下方填寫（C），讓行銷意涵能扣合產品情境。</p>
+    <label for="topic"><b>（C）研究主題／產品類別簡述</b></label>
+    <textarea id="topic" placeholder="例：即飲包裝綠茶，研究對象為大學生"></textarea>
+    <div class="row">
+      <button type="button" class="primary" id="btn-copy-seg">複製 AI 報告指令（二）</button>
+      <span class="small" id="seg-prompt-len"></span>
+    </div>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="seg-prompt"></pre>
+    </details>
+  </section>
+
+  <!-- 截圖版 -->
+  <section class="panel" aria-labelledby="h7s">
+    <h2 id="h7s"><span class="step">＋</span>已用 jamovi／SPSS 完成因素分析？</h2>
+    <p class="hint">若已在其他統計軟體完成主成分分析與 Varimax 轉軸，可改用截圖版指令：</p>
+    <ol class="steps">
+      <li>截取轉軸後的因素負荷量矩陣，須包含題項內容與獨特性（uniqueness）。</li>
+      <li>按下方按鈕複製指令，貼到 AI 對話中，並一併上傳截圖。</li>
+    </ol>
+    <button type="button" id="btn-copy-shot">複製截圖版指令</button>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="prompt-shot"></pre>
+    </details>
+  </section>
+
+  <footer>所有計算都在您的瀏覽器中完成，資料不會上傳。本工具不使用 AI 服務；報告由您把指令貼到自己的 AI 對話中產生。</footer>
+</main>
+<pre id="tpl" hidden>市場區隔分析報告生成提示詞（供研究者貼上K平均法分群結果後直接使用）
+================================================================
+
+【角色與任務】
+你是一位熟悉市場區隔分析流程的行銷研究助理。市場區隔分析的標準流程分為三個階段：
+（一）調查階段：以問卷蒐集受訪者在多項消費動機或需求陳述句上的態度；
+（二）分析階段：先以因素分析將原始題項縮減為少數幾個動機／需求構面，再以K平均法
+　　（K-means）依這些構面分數將受訪者分成數個區隔；
+（三）剖析階段：依各區隔在各構面上的群中心值（即組平均數）為其命名，並推導對應的
+　　行銷意涵。
+
+研究者已完成前兩個階段的統計分析，接下來只會貼上兩項結果，不會提供逐題原始資料，
+你也不需要、也不應該要求更細部的逐題資料或任何額外的統計檢驗（例如逐題平均數比對、
+受訪者內標準化等），僅需依下列兩項資訊完成第三階段的命名與行銷意涵推導：
+
+（A）「各群人數與人數比例」：K平均法分群後，各群的樣本數與其占總樣本之百分比。
+
+（B）「群中心值表」：各消費動機／需求構面（因素分析所萃取之因素）在各群上的平均數
+　　（即集群中心值），通常為標準化分數，正值代表高於全體平均，負值代表低於全體平均。
+
+（C）「研究主題／產品類別簡述」：請研究者簡要說明本次資料所屬的產品類別或研究情境
+　　（例如「包裝咖啡飲料」「SUV汽車」「行動支付服務」等），以利後續行銷意涵能扣合
+　　具體產品情境，而非流於空泛描述。
+
+請根據以上三項資訊，依序完成以下輸出。全部內容請以「純文字」呈現，不需要另外製作
+成Word檔；若研究者提供的群中心值表需要重新整理呈現，可用Markdown表格格式輸出。
+
+【輸出一：方法論簡述】
+以一段文字簡要說明本分析之邏輯：先以因素分析將原始消費動機／需求題項縮減為少數幾個
+核心構面，再以K平均法依構面分數將受訪者分為若干區隔，最後依各區隔在各構面上的相對
+高低為其命名，並推導對應之行銷意涵。此段落不需要冗長的統計原理說明，重點在於讓報告
+讀者理解「這張表是怎麼來的」。
+
+【輸出二：群中心值表格重製】
+將研究者提供的群中心值表，以Markdown表格格式重新整理輸出，列為各消費動機／需求構面，
+欄為各區隔，並在最後一列加上各群人數與人數比例。每一列（即每一個構面）數值最高的
+儲存格請以**粗體**標示，代表該構面在哪一群的相對表現最突出。若同一群在多個構面上
+同時是最高值，全部予以標示，不需要只挑一個。
+
+【輸出三：各群命名與描述】
+針對每一個區隔，依下列邏輯完成命名與描述：
+
+一、命名原則：以該群在群中心值表中「相對最高」的那個構面作為命名依據，命名格式為
+　　「該構面名稱＋群」（例如「嫌貴嫌甜群」「挑選嘗試群」）。若該群同時在兩個構面上
+　　數值皆明顯偏高且相近，可合併命名或並列說明，不必勉強只取一個構面。
+
+二、務必誠實處理「沒有明確正向峰值」的情況：命名前請先檢查該群在所有構面上的數值是
+　　否「全部為負值或接近零」。如果是，代表這一群人在所有構面上都低於全體平均，並沒
+　　有真正突出的正向需求，此時雖然仍可依「相對最不負」的那個構面命名（例如若某群在
+　　四個構面上都是負值，其中一個構面是-0.09、其餘為-0.5以下，仍可用該構面命名），
+　　但務必在描述文字中明確註明「此群並無明顯正向峰值，命名係依相對最不負的構面而
+　　定」，不要讓讀者誤以為這一群對該構面有真正強烈的偏好。這一點請務必落實，不可
+　　省略。
+
+三、每一群的描述段落，請包含：群名、樣本數與百分比、支持命名的群中心值數字、以及
+　　用一到兩句話說明這群人可能的消費動機輪廓。描述請以連貫的段落呈現，不要條列式
+　　清單。
+
+【輸出四：行銷意涵推導】
+請以連貫的論述段落，依下列邏輯推導行銷意涵，段落之間需有邏輯銜接：
+
+一、逐群對應：針對每一群，將其命名所依據的構面，轉譯為研究者於（C）所描述之產品
+　　類別下的具體產品設計方向或溝通訴求（例如「嫌貴嫌甜群」對應到「推出平價或低糖
+　　版本產品」，「挑選嘗試群」對應到「強化新口味／限定款上市溝通」）。轉譯時請扣合
+　　（C）的產品情境，避免給出與產品類別無關的空泛建議。
+
+二、以人數比例判斷目標市場：說明若以各群人數比例作為衡量該區隔市場吸引力之依據，
+　　人數最多的一群通常可優先列為目標市場候選；並具體建議廠商可鎖定該群，推出對應
+　　之產品或溝通訴求。同時請提醒：人數僅為衡量區隔吸引力的其中一種簡化指標，實際
+　　目標市場選擇仍可能需要一併考量該群之購買力、成長潛力、競爭者涉入程度等其他
+　　因素，人數多寡不必然等同於商業價值最高。
+
+三、研究限制提醒：說明本次命名與行銷意涵推導，僅依據集群中心值與人數兩項簡化資訊
+　　進行，屬於探索性分析；受訪者在問卷上對某項動機給予較高評價，不代表其在實際購買
+　　行為中必然會因此支付溢價或改變選擇，這些構面所能提供的，是後續研究值得聚焦的
+　　候選方向，實際行銷決策仍建議搭配其他資料（如購買行為、聯合分析等）進一步驗證。
+
+【格式與用語提醒】
+- 全文使用繁體中文學術書面語，語氣嚴謹、避免口語化。
+- 一律使用「變數」，不使用「變項」。
+- 全部內容以純文字輸出即可，不需要另外做成Word檔；表格請用Markdown格式呈現。
+- 若研究者貼上的群數、構面數或欄位名稱與上述格式略有出入，請先合理判斷對應關係後
+  再進行分析，並在說明中簡要註明你的判讀方式。
+- 請勿主動要求研究者提供逐題原始資料或進行任何額外的統計檢驗（如逐題平均數比對、
+  受訪者內標準化等），本提示詞之分析僅依（A）（B）（C）三項資訊完成。
+
+================================================================
+【研究者請將資料貼於下方】
+
+（A）各群人數與人數比例：
+（請貼上）
+
+（B）群中心值表（各消費動機／需求因素於各群之平均數）：
+（請貼上）
+
+（C）研究主題／產品類別簡述：
+（請填寫）</pre>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../omv-reader.js"></script>
+<script>
+/* ===== STATS-BEGIN（純計算函式，可單獨測試） ===== */
+const Stats = (function(){
+  function mean(a){ let s=0; for (const x of a) s+=x; return s/a.length; }
+  function sd(a, m){ let s=0; for (const x of a) s+=(x-m)*(x-m); return Math.sqrt(s/(a.length-1)); }
+  /* cols: p 個欄位，每欄 n 個值 → 相關矩陣 */
+  function corr(cols){
+    const p=cols.length, n=cols[0].length;
+    const z=cols.map(c=>{ const m=mean(c), s=sd(c,m); return c.map(x=>(x-m)/s); });
+    const R=[];
+    for (let i=0;i<p;i++){ R.push(new Array(p).fill(0)); }
+    for (let i=0;i<p;i++){ R[i][i]=1; for (let j=i+1;j<p;j++){ let s=0; for (let k=0;k<n;k++) s+=z[i][k]*z[j][k]; R[i][j]=R[j][i]=s/(n-1); } }
+    return {R, z};
+  }
+  function jacobiEigen(A){
+    const n=A.length, a=A.map(r=>r.slice()), v=[];
+    for (let i=0;i<n;i++){ v.push(new Array(n).fill(0)); v[i][i]=1; }
+    for (let sweep=0;sweep<100;sweep++){
+      let off=0;
+      for (let p=0;p<n;p++) for (let q=p+1;q<n;q++) off+=a[p][q]*a[p][q];
+      if (off<1e-22) break;
+      for (let p=0;p<n;p++) for (let q=p+1;q<n;q++){
+        if (Math.abs(a[p][q])<1e-15) continue;
+        const theta=(a[q][q]-a[p][p])/(2*a[p][q]);
+        const t=(theta>=0?1:-1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+        const c=1/Math.sqrt(t*t+1), s=t*c;
+        for (let k=0;k<n;k++){ const akp=a[k][p], akq=a[k][q]; a[k][p]=c*akp-s*akq; a[k][q]=s*akp+c*akq; }
+        for (let k=0;k<n;k++){ const apk=a[p][k], aqk=a[q][k]; a[p][k]=c*apk-s*aqk; a[q][k]=s*apk+c*aqk; }
+        for (let k=0;k<n;k++){ const vkp=v[k][p], vkq=v[k][q]; v[k][p]=c*vkp-s*vkq; v[k][q]=s*vkp+c*vkq; }
+      }
+    }
+    const pairs=[];
+    for (let i=0;i<n;i++) pairs.push({value:a[i][i], vector:v.map(r=>r[i])});
+    pairs.sort((x,y)=>y.value-x.value);
+    return pairs;
+  }
+  /* Gauss-Jordan 反矩陣；奇異時回傳 null */
+  function inverse(M){
+    const n=M.length, a=M.map((r,i)=>r.concat(Array.from({length:n},(_,j)=>i===j?1:0)));
+    for (let c=0;c<n;c++){
+      let piv=c; for (let r=c+1;r<n;r++) if (Math.abs(a[r][c])>Math.abs(a[piv][c])) piv=r;
+      if (Math.abs(a[piv][c])<1e-12) return null;
+      [a[c],a[piv]]=[a[piv],a[c]];
+      const d=a[c][c]; for (let k=0;k<2*n;k++) a[c][k]/=d;
+      for (let r=0;r<n;r++){ if (r===c) continue; const f=a[r][c]; if (!f) continue; for (let k=0;k<2*n;k++) a[r][k]-=f*a[c][k]; }
+    }
+    return a.map(r=>r.slice(n));
+  }
+  function lnGamma(x){
+    const g=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+    let y=x, tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp); let ser=1.000000000190015;
+    for (let j=0;j<6;j++) ser+=g[j]/++y;
+    return -tmp+Math.log(2.5066282746310005*ser/x);
+  }
+  /* 卡方分配右尾機率 = Q(df/2, x/2) */
+  function chiSqP(x, df){
+    const a=df/2, xx=x/2;
+    if (xx<=0) return 1;
+    const gln=lnGamma(a);
+    if (xx<a+1){
+      let ap=a, sum=1/a, del=sum;
+      for (let n=0;n<1000;n++){ ap++; del*=xx/ap; sum+=del; if (Math.abs(del)<Math.abs(sum)*1e-15) break; }
+      return 1-sum*Math.exp(-xx+a*Math.log(xx)-gln);
+    }
+    let b=xx+1-a, c=1/1e-300, d=1/b, h=d;
+    for (let i=1;i<1000;i++){
+      const an=-i*(i-a); b+=2; d=an*d+b; if (Math.abs(d)<1e-300) d=1e-300; c=b+an/c; if (Math.abs(c)<1e-300) c=1e-300;
+      d=1/d; const del=d*c; h*=del; if (Math.abs(del-1)<1e-15) break;
+    }
+    return Math.exp(-xx+a*Math.log(xx)-gln)*h;
+  }
+  /* KMO、各題項 MSA、Bartlett 球形檢定 */
+  function adequacy(R, n, eig){
+    const p=R.length, out={kmo:null, msa:null, bartlett:null};
+    const inv=inverse(R);
+    if (inv){
+      const P=R.map((_,i)=>R.map((_,j)=> i===j?0:-inv[i][j]/Math.sqrt(inv[i][i]*inv[j][j])));
+      let sr=0, sp=0; const msa=[];
+      for (let i=0;i<p;i++){
+        let r2=0, p2=0;
+        for (let j=0;j<p;j++){ if (i===j) continue; r2+=R[i][j]*R[i][j]; p2+=P[i][j]*P[i][j]; }
+        msa.push(r2/(r2+p2)); sr+=r2; sp+=p2;
+      }
+      out.kmo=sr/(sr+sp); out.msa=msa;
+    }
+    const lnDet=eig.reduce((s,e)=>s+Math.log(Math.max(e.value,1e-300)),0);
+    if (eig.every(e=>e.value>1e-10)){
+      const chi=-(n-1-(2*p+5)/6)*lnDet, df=p*(p-1)/2;
+      out.bartlett={chi, df, p:chiSqP(chi, df)};
+    }
+    return out;
+  }
+  /* Varimax（Kaiser 常態化），L 為 p×k */
+  function varimax(L0){
+    const p=L0.length, k=L0[0].length;
+    if (k<2) return L0.map(r=>r.slice());
+    const h=L0.map(r=>Math.sqrt(r.reduce((s,x)=>s+x*x,0))||1);
+    const L=L0.map((r,i)=>r.map(x=>x/h[i]));
+    for (let it=0;it<1000;it++){
+      let maxPhi=0;
+      for (let a=0;a<k-1;a++) for (let b=a+1;b<k;b++){
+        let A=0,B=0,C=0,D=0;
+        for (let i=0;i<p;i++){
+          const x=L[i][a], y=L[i][b], u=x*x-y*y, v=2*x*y;
+          A+=u; B+=v; C+=u*u-v*v; D+=2*u*v;
+        }
+        const phi=Math.atan2(D-2*A*B/p, C-(A*A-B*B)/p)/4;
+        if (Math.abs(phi)>maxPhi) maxPhi=Math.abs(phi);
+        if (Math.abs(phi)<1e-12) continue;
+        const c=Math.cos(phi), s=Math.sin(phi);
+        for (let i=0;i<p;i++){ const x=L[i][a], y=L[i][b]; L[i][a]=c*x+s*y; L[i][b]=-s*x+c*y; }
+      }
+      if (maxPhi<1e-10) break;
+    }
+    return L.map((r,i)=>r.map(x=>x*h[i]));
+  }
+  /* 主成分萃取 + 轉軸；回傳依轉軸後解釋變異量排序、方向統一為正的負荷量 */
+  function pca(R, eig, nf){
+    const p=R.length;
+    let L=[];
+    for (let i=0;i<p;i++) L.push(eig.slice(0,nf).map(e=>e.vector[i]*Math.sqrt(Math.max(e.value,0))));
+    let rot=nf>1?varimax(L):L.map(r=>r.slice());
+    let cols=[];
+    for (let j=0;j<nf;j++){
+      let col=rot.map(r=>r[j]);
+      if (col.reduce((s,x)=>s+x,0)<0) col=col.map(x=>-x);
+      cols.push({col, ss:col.reduce((s,x)=>s+x*x,0)});
+    }
+    cols.sort((x,y)=>y.ss-x.ss);
+    const loadings=[]; for (let i=0;i<p;i++) loadings.push(cols.map(c=>c.col[i]));
+    const comm=loadings.map(r=>r.reduce((s,x)=>s+x*x,0));
+    return {loadings, comm, uniq:comm.map(c=>1-c), ss:cols.map(c=>c.ss)};
+  }
+  /* 因素分數（迴歸法）：F = Z Λ (Λ'Λ)^-1 */
+  function scores(z, loadings){
+    const p=loadings.length, k=loadings[0].length, n=z[0].length;
+    const LtL=[]; for (let a=0;a<k;a++){ LtL.push([]); for (let b=0;b<k;b++){ let s=0; for (let i=0;i<p;i++) s+=loadings[i][a]*loadings[i][b]; LtL[a].push(s); } }
+    const inv=inverse(LtL);
+    const W=loadings.map(r=>inv.map((_,b)=>r.reduce((s,x,a)=>s+x*inv[a][b],0)));
+    const F=[]; for (let r=0;r<n;r++){ F.push(W[0].map((_,b)=>{ let s=0; for (let i=0;i<p;i++) s+=z[i][r]*W[i][b]; return s; })); }
+    return F;
+  }
+  /* 正規化不完全 Beta 函數 I_x(a,b) */
+  function betacf(x,a,b){
+    const MAXIT=300, EPS=3e-16, FPMIN=1e-300;
+    let qab=a+b, qap=a+1, qam=a-1, c=1, d=1-qab*x/qap;
+    if (Math.abs(d)<FPMIN) d=FPMIN; d=1/d; let h=d;
+    for (let m=1;m<=MAXIT;m++){
+      const m2=2*m;
+      let aa=m*(b-m)*x/((qam+m2)*(a+m2));
+      d=1+aa*d; if (Math.abs(d)<FPMIN) d=FPMIN; c=1+aa/c; if (Math.abs(c)<FPMIN) c=FPMIN; d=1/d; h*=d*c;
+      aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+      d=1+aa*d; if (Math.abs(d)<FPMIN) d=FPMIN; c=1+aa/c; if (Math.abs(c)<FPMIN) c=FPMIN; d=1/d;
+      const del=d*c; h*=del; if (Math.abs(del-1)<EPS) break;
+    }
+    return h;
+  }
+  function ibeta(x,a,b){
+    if (x<=0) return 0; if (x>=1) return 1;
+    const bt=Math.exp(lnGamma(a+b)-lnGamma(a)-lnGamma(b)+a*Math.log(x)+b*Math.log(1-x));
+    return x<(a+1)/(a+b+2) ? bt*betacf(x,a,b)/a : 1-bt*betacf(1-x,b,a)/b;
+  }
+  /* F 分配右尾機率 */
+  function fP(F,d1,d2){ if (!(F>0)) return 1; return ibeta(d2/(d2+d1*F),d2/2,d1/2); }
+  /* 標準常態分配反函數（Acklam） */
+  function probit(p){
+    const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.3577518672690,-30.66479806614716,2.506628277459239],
+          b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],
+          c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+          d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+    const pl=0.02425;
+    if (p<pl){ const q=Math.sqrt(-2*Math.log(p)); return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    if (p>1-pl){ const q=Math.sqrt(-2*Math.log(1-p)); return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+    const q=p-.5, r=q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  }
+  /* 卡方獨立性檢定；T 為列（類別）× 欄（集群）的次數表。回傳調整後殘差 */
+  function chisq(T){
+    const R=T.length, C=T[0].length;
+    const rs=T.map(r=>r.reduce((s,x)=>s+x,0)), cs=Array.from({length:C},(_,j)=>T.reduce((s,r)=>s+r[j],0));
+    const N=rs.reduce((s,x)=>s+x,0);
+    const rk=rs.map(x=>x>0), ck=cs.map(x=>x>0);
+    const r0=rk.filter(Boolean).length, c0=ck.filter(Boolean).length;
+    if (r0<2||c0<2) return null;
+    let chi=0, low=0, cells=0;
+    const adj=T.map((row,i)=>row.map((o,j)=>{
+      if (!rk[i]||!ck[j]) return null;
+      const e=rs[i]*cs[j]/N; cells++; if (e<5) low++;
+      chi+=(o-e)*(o-e)/e;
+      return (o-e)/Math.sqrt(e*(1-rs[i]/N)*(1-cs[j]/N));
+    }));
+    const df=(r0-1)*(c0-1);
+    return {chi, df, p:chiSqP(chi,df), adj, lowExp:low/cells, N};
+  }
+  /* 單因子變異數分析；g 為各組數值陣列 */
+  function anova(g){
+    const gs=g.filter(x=>x.length>0); if (gs.length<2) return null;
+    const all=[].concat(...gs), N=all.length, m=all.reduce((s,x)=>s+x,0)/N;
+    let ssb=0, ssw=0;
+    gs.forEach(x=>{ const mi=x.reduce((s,y)=>s+y,0)/x.length; ssb+=x.length*(mi-m)*(mi-m); x.forEach(y=>ssw+=(y-mi)*(y-mi)); });
+    const df1=gs.length-1, df2=N-gs.length;
+    if (df2<1||ssw<=0) return null;
+    const F=(ssb/df1)/(ssw/df2);
+    return {F, df1, df2, p:fP(F,df1,df2), eta2:ssb/(ssb+ssw)};
+  }
+  return {corr, jacobiEigen, inverse, adequacy, varimax, pca, scores, chiSqP, fP, probit, chisq, anova};
+})();
+/* ===== CLUS ===== */
+const Clus = (function(){
+  function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+  function d2(a,b){ let s=0; for (let j=0;j<a.length;j++){ const d=a[j]-b[j]; s+=d*d; } return s; }
+  /* k-means++ 起始 */
+  function initPP(X,k,rand){
+    const n=X.length, C=[X[Math.floor(rand()*n)].slice()];
+    const D=X.map(x=>d2(x,C[0]));
+    while (C.length<k){
+      const tot=D.reduce((s,x)=>s+x,0);
+      let r=rand()*tot, i=0;
+      if (tot>0){ for (i=0;i<n;i++){ r-=D[i]; if (r<=0) break; } if (i>=n) i=n-1; }
+      else i=Math.floor(rand()*n);
+      C.push(X[i].slice());
+      for (let t=0;t<n;t++){ const d=d2(X[t],C[C.length-1]); if (d<D[t]) D[t]=d; }
+    }
+    return C;
+  }
+  function lloyd(X,C){
+    const n=X.length, k=C.length, p=X[0].length, lab=new Array(n).fill(-1);
+    for (let it=0;it<300;it++){
+      let changed=0;
+      for (let i=0;i<n;i++){ let b=0, bd=Infinity; for (let c=0;c<k;c++){ const d=d2(X[i],C[c]); if (d<bd){ bd=d; b=c; } } if (lab[i]!==b){ lab[i]=b; changed++; } }
+      const S=C.map(()=>new Array(p).fill(0)), N=new Array(k).fill(0);
+      for (let i=0;i<n;i++){ N[lab[i]]++; for (let j=0;j<p;j++) S[lab[i]][j]+=X[i][j]; }
+      for (let c=0;c<k;c++){
+        if (N[c]===0){ /* 空群：移到離所屬中心最遠的點 */
+          let far=0, fd=-1; for (let i=0;i<n;i++){ const d=d2(X[i],C[lab[i]]); if (d>fd){ fd=d; far=i; } }
+          C[c]=X[far].slice(); lab[far]=c; changed++;
+        } else C[c]=S[c].map(x=>x/N[c]);
+      }
+      if (!changed) break;
+    }
+    let sse=0; for (let i=0;i<n;i++) sse+=d2(X[i],C[lab[i]]);
+    return {lab, C, sse};
+  }
+  function kmeans(X,k,starts,seed){
+    const rand=rng(seed);
+    let best=null;
+    for (let s=0;s<starts;s++){ const r=lloyd(X,initPP(X,k,rand)); if (!best||r.sse<best.sse-1e-9) best=r; }
+    /* 依人數由多到少重新編號 */
+    const N=new Array(k).fill(0); best.lab.forEach(l=>N[l]++);
+    const order=N.map((c,i)=>i).sort((a,b)=>N[b]-N[a]||a-b), map=new Array(k); order.forEach((o,i)=>map[o]=i);
+    return {lab:best.lab.map(l=>map[l]), C:order.map(o=>best.C[o]), N:order.map(o=>N[o]), sse:best.sse};
+  }
+  function silhouette(X,lab,k){
+    const n=X.length; let tot=0;
+    const N=new Array(k).fill(0); lab.forEach(l=>N[l]++);
+    for (let i=0;i<n;i++){
+      const S=new Array(k).fill(0);
+      for (let j=0;j<n;j++){ if (i===j) continue; S[lab[j]]+=Math.sqrt(d2(X[i],X[j])); }
+      const own=lab[i];
+      if (N[own]<=1) continue;
+      const a=S[own]/(N[own]-1);
+      let b=Infinity; for (let c=0;c<k;c++){ if (c===own||!N[c]) continue; b=Math.min(b,S[c]/N[c]); }
+      tot+=(b-a)/Math.max(a,b);
+    }
+    return tot/n;
+  }
+  return {kmeans, silhouette, rng};
+})();
+/* ===== STATS-END ===== */
+
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function f2(x){ let s=Math.abs(x).toFixed(2); if (s[0]==="0") s=s.slice(1); return (x<0&&s!==".00"?"-":"")+s; }
+function f3(x){ let s=Math.abs(x).toFixed(3); if (s[0]==="0") s=s.slice(1); return (x<0&&s!==".000"?"-":"")+s; }
+function pct(x){ return (x*100).toFixed(2)+"%"; }
+function pct1(x){ return (x*100).toFixed(1)+"%"; }
+function fp(a){ const d=Math.max(2,((String(+a).split(".")[1])||"").length); return (+a).toFixed(d).replace(/^0/,""); }
+function pTxtShort(p){ return p<.001?"< .001":f3(p); }
+function pTxt(p){ return p<.001?"p < .001":"p = "+f3(p); }
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2000); }
+
+const S={ wb:null, fileName:"", headers:[], rows:[], stems:{}, groupNames:{}, numCols:[], selected:new Set(), res:null, nf:null, userNf:false, fnames:[], seg:null, K:null, userK:false, profCols:[], profSel:new Set(), prof:null };
+
+/* ---------- 讀檔 ---------- */
+function readFile(file){
+  if (!file) return;
+  if (typeof XLSX==="undefined"){ toast("Excel 解析功能載入失敗，請檢查網路連線"); return; }
+  const isCsv=/\.csv$/i.test(file.name);
+  const rd=new FileReader();
+  const isOmv=OMV.isOmv(file);
+  rd.onload=async()=>{
+    try{
+      const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string"}):XLSX.read(new Uint8Array(rd.result),{type:"array"}));
+      if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
+      S.wb=wb; S.fileName=file.name;
+      $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
+      $("sheet-row").hidden=false;
+      const first=wb.SheetNames.includes("資料")?"資料":wb.SheetNames[0];
+      $("sheet").value=first; loadSheet(first);
+      if (wb.omvInfo&&wb.omvInfo.removed){ $("dz-label").textContent+="；已依 jamovi 的篩選條件排除 "+wb.omvInfo.removed+" 筆"; }
+    }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案，請確認檔案是否完整，或在 jamovi 中匯出 CSV 後上傳":"無法解析此檔案，請確認格式"); }
+  };
+  if (isCsv) rd.readAsText(file,"utf-8"); else rd.readAsArrayBuffer(file);
+}
+function readStems(wb){
+  const out={}, ws=wb.Sheets["欄名對照表"]; if (!ws) return out;
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+  const hi=aoa.findIndex(r=>r.some(x=>String(x).trim()==="新欄名")&&r.some(x=>String(x).trim()==="原題目"));
+  if (hi<0) return out;
+  const h=aoa[hi].map(x=>String(x).trim()), ci=h.indexOf("新欄名"), qi=h.indexOf("原題目");
+  aoa.slice(hi+1).forEach(r=>{ const k=String(r[ci]||"").trim(), q=String(r[qi]||"").trim(); if (k&&q) out[k]=q; });
+  return out;
+}
+function readGroups(wb){
+  const out={}, ws=wb.Sheets["題組"]; if (!ws) return out;
+  XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}).slice(1).forEach(r=>{ const c=String(r[0]||"").trim(), n=String(r[1]||"").trim(); if (c&&n) out[c]=n; });
+  return out;
+}
+function loadSheet(name){
+  const aoa=XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
+  S.headers=(aoa[0]||[]).map(h=>String(h).trim());
+  S.rows=aoa.slice(1);
+  S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
+  S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false;
+  $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 筆）";
+  detectNumeric(); detectProfile(); renderGroups(); analyze();
+}
+function num(v){ if (v===""||v===null||v===undefined) return null; const x=typeof v==="number"?v:Number(String(v).trim()); return Number.isFinite(x)?x:null; }
+function detectNumeric(){
+  S.numCols=[];
+  S.headers.forEach((h,ci)=>{
+    if (!h || /^id$/i.test(h)) return;
+    let cnt=0, bad=0; const vals=new Set();
+    for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; const x=num(v); if (x===null){ bad++; break; } cnt++; vals.add(x); }
+    if (bad||cnt<3||vals.size<2) return;
+    const m=h.match(/^([A-Za-z]+)/);
+    S.numCols.push({ci, name:h, prefix:m?m[1]:"", binary:[...vals].every(x=>x===0||x===1), stem:S.stems[h]||""});
+  });
+}
+
+/* ---------- 題項選擇 ---------- */
+function renderGroups(){
+  const box=$("groups"); $("sec-items").hidden=false;
+  if (!S.numCols.length){ box.innerHTML='<div class="notice bad">這個工作表沒有可分析的數值欄位。</div>'; return; }
+  const groups=new Map();
+  S.numCols.forEach(c=>{ const key=c.prefix||"__other"; if (!groups.has(key)) groups.set(key,[]); groups.get(key).push(c); });
+  let html="";
+  for (const [key,cols] of groups){
+    const title=key==="__other"?"其他數值欄位":(S.groupNames[key]?S.groupNames[key]+"（"+key+"）":"代碼 "+key);
+    const kind=cols.every(c=>c.binary)?"0／1 二元":(cols.some(c=>c.binary)?"混合":"連續數值");
+    html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong><span class="tag">'+cols.length+' 欄 · '+kind+'</span>'
+      +'<button type="button" class="ghost" data-all="'+esc(key)+'">全選</button><button type="button" class="ghost" data-none="'+esc(key)+'">全不選</button></div><div class="items">';
+    cols.forEach(c=>{ html+='<label title="'+esc(c.stem)+'"><input type="checkbox" data-ci="'+c.ci+'"'+(S.selected.has(c.ci)?" checked":"")+'><span>'+esc(c.name)+(c.stem&&c.stem!==c.name?'<br><span class="stem">'+esc(c.stem.length>40?c.stem.slice(0,40)+"…":c.stem)+'</span>':'')+'</span></label>'; });
+    html+='</div></div>';
+  }
+  box.innerHTML=html;
+  box.querySelectorAll("button[data-all],button[data-none]").forEach(b=>b.addEventListener("click",()=>{
+    const key=b.dataset.all||b.dataset.none, on=!!b.dataset.all;
+    S.numCols.filter(c=>(c.prefix||"__other")===key).forEach(c=>on?S.selected.add(c.ci):S.selected.delete(c.ci));
+    S.userNf=false; renderGroups(); analyze();
+  }));
+  box.querySelectorAll("input[data-ci]").forEach(i=>i.addEventListener("change",()=>{
+    const ci=+i.dataset.ci; i.checked?S.selected.add(ci):S.selected.delete(ci); S.userNf=false; analyze();
+  }));
+}
+
+/* ---------- 分析 ---------- */
+const SECS=["sec-adequacy","sec-eigen","sec-load","sec-prompt","sec-k","sec-seg","sec-prof","sec-dl","sec-seg-prompt"];
+function hideFrom(id){ SECS.slice(SECS.indexOf(id)).forEach(s=>$(s).hidden=true); if (id==="sec-adequacy") S.seg=null; }
+function analyze(){
+  const msg=$("item-msg");
+  const cols=S.numCols.filter(c=>S.selected.has(c.ci));
+  S.res=null;
+  if (cols.length<3){ msg.innerHTML='<div class="notice warn">請至少勾選 3 個題項（目前 '+cols.length+' 個）。</div>'; hideFrom("sec-adequacy"); return; }
+  const keep=[];
+  S.rows.forEach((r,ri)=>{ if (cols.every(c=>num(r[c.ci])!==null)) keep.push(ri); });
+  const n=keep.length, dropped=S.rows.length-n;
+  const data=cols.map(c=>keep.map(ri=>num(r_(ri,c.ci))));
+  function r_(ri,ci){ return S.rows[ri][ci]; }
+  const zeroVar=cols.filter((c,i)=>new Set(data[i]).size<2);
+  let notes=[];
+  if (dropped) notes.push("排除缺漏受訪者 "+dropped+" 筆");
+  const mixed=cols.some(c=>c.binary)&&cols.some(c=>!c.binary);
+  if (zeroVar.length){ msg.innerHTML='<div class="notice bad">以下題項在有效樣本中沒有變異，無法分析，請取消勾選：'+zeroVar.map(c=>esc(c.name)).join("、")+'</div>'; hideFrom("sec-adequacy"); return; }
+  if (n<cols.length+2){ msg.innerHTML='<div class="notice bad">有效樣本 '+n+' 筆，少於題項數，無法進行因素分析。</div>'; hideFrom("sec-adequacy"); return; }
+  let html='<div class="notice ok">已勾選 '+cols.length+' 個題項，有效樣本 '+n+' 筆'+(notes.length?"（"+notes.join("；")+"）":"")+'。</div>';
+  if (n<cols.length*5) html+='<div class="notice warn">樣本數少於題項數的 5 倍，因素結構可能不穩定。</div>';
+  if (mixed) html+='<div class="notice warn">勾選的題項同時包含 0／1 二元欄位與連續數值欄位，建議分開分析。</div>';
+  msg.innerHTML=html;
+
+  const {R,z}=Stats.corr(data);
+  const eig=Stats.jacobiEigen(R);
+  const adq=Stats.adequacy(R,n,eig);
+  const kaiser=Math.max(1,eig.filter(e=>e.value>1).length);
+  if (!S.userNf || !S.nf || S.nf>=cols.length) { S.nf=kaiser; S.userNf=false; }
+  S.res={cols,keep,n,dropped,R,z,eig,adq,kaiser,binary:cols.every(c=>c.binary),means:data.map(v=>v.reduce((a,b)=>a+b,0)/v.length)};
+  renderAdequacy(); renderEigen(); compute();
+}
+function compute(){
+  const r=S.res; if (!r) return;
+  const sol=Stats.pca(r.R,r.eig,S.nf);
+  r.sol=sol;
+  /* 截斷值 */
+  const prim=sol.loadings.map(row=>Math.max(...row));
+  const autoCut = r.binary ? {v:.30, why:"題項為 0／1 二元資料，負荷量普遍偏低"} :
+    (prim.filter(x=>x>=.5).length>=prim.length*2/3 ? {v:.50, why:"題項為連續尺度，且主要負荷量普遍在 .50 以上"} : {v:.30, why:"多數題項的主要負荷量低於 .50"});
+  const sel=$("cut").value;
+  r.cut = sel==="auto" ? autoCut : {v:+sel, why:"研究者指定"};
+  $("cut-note").textContent = sel==="auto" ? "自動判定為 "+f2(autoCut.v)+"："+autoCut.why : "自動判定原為 "+f2(autoCut.v);
+  /* 歸屬 */
+  const cut=r.cut.v;
+  r.items=r.cols.map((c,i)=>{
+    const row=sol.loadings[i];
+    let best=0; row.forEach((x,j)=>{ if (x>row[best]) best=j; });
+    const dom=row[best]>=cut;
+    const cross=dom?row.map((x,j)=>j!==best&&Math.abs(x)>=cut?j:-1).filter(j=>j>=0):[];
+    const neg=row.map((x,j)=>x<=-cut?j:-1).filter(j=>j>=0);
+    return {c,i,row,best,dom,cross,neg,mean:r.means[i],comm:sol.comm[i],uniq:sol.uniq[i],msa:r.adq.msa?r.adq.msa[i]:null};
+  });
+  r.order=r.items.slice().sort((a,b)=>{
+    if (a.dom!==b.dom) return a.dom?-1:1;
+    if (a.best!==b.best) return a.best-b.best;
+    return b.row[b.best]-a.row[a.best];
+  });
+  renderLoadings(); renderPrompt(); renderNames(); $("sec-dl").hidden=false; runSeg();
+}
+
+/* ---------- 呈現 ---------- */
+function renderAdequacy(){
+  const r=S.res, a=r.adq; $("sec-adequacy").hidden=false;
+  let h="";
+  h+='<div class="stat"><b>'+(a.kmo!=null?f3(a.kmo):"—")+'</b><span>KMO 取樣適切性</span></div>';
+  h+='<div class="stat"><b>'+(a.bartlett?a.bartlett.chi.toFixed(2):"—")+'</b><span>Bartlett χ²'+(a.bartlett?"（df = "+a.bartlett.df+"）":"")+'</span></div>';
+  h+='<div class="stat"><b>'+(a.bartlett?pTxt(a.bartlett.p).replace("p ",""):"—")+'</b><span>顯著性 p</span></div>';
+  $("adq-stats").innerHTML=h;
+  let m="";
+  if (a.kmo==null) m+='<div class="notice bad">相關矩陣為奇異矩陣（題項之間完全線性相依），無法計算 KMO 與 MSA，請檢查是否有重複或加總而成的題項。</div>';
+  else if (a.kmo<.5) m+='<div class="notice bad">KMO 低於 .50，資料不適合進行因素分析。</div>';
+  else if (a.kmo<.6) m+='<div class="notice warn">KMO 介於 .50 至 .60，適切性勉強，解讀時宜保守。</div>';
+  if (a.bartlett && a.bartlett.p>=.05) m+='<div class="notice bad">Bartlett 球形檢定未達顯著，題項之間的相關不足以進行因素分析。</div>';
+  const lowMsa=a.msa?r.cols.filter((c,i)=>a.msa[i]<.5):[];
+  if (lowMsa.length) m+='<div class="notice warn">MSA 低於 .50 的題項：'+lowMsa.map(c=>esc(c.name)+"（"+f3(a.msa[r.cols.indexOf(c)])+"）").join("、")+'。可考慮刪除後重新分析。</div>';
+  $("adq-msg").innerHTML=m;
+}
+function renderEigen(){
+  const r=S.res, p=r.cols.length; $("sec-eigen").hidden=false;
+  const nf=$("nf"); nf.max=p-1; nf.value=S.nf;
+  $("nf-note").textContent="特徵值大於 1 的因素有 "+r.kaiser+" 個"+(S.nf!==r.kaiser?"；目前為研究者指定的 "+S.nf+" 個":"");
+  /* 陡坡圖 */
+  const W=560,H=220,L=44,Rr=14,T=14,B=34;
+  const vals=r.eig.map(e=>e.value), maxV=Math.max(...vals,1.2);
+  const x=i=>L+(p===1?0:i*(W-L-Rr)/(p-1)), y=v=>T+(H-T-B)*(1-v/maxV);
+  let s='<svg class="scree" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="陡坡圖">';
+  const step=maxV>6?2:(maxV>3?1:.5);
+  for (let v=0;v<=maxV+1e-9;v+=step) s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--border)"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+(+v.toFixed(1))+'</text>';
+  s+='<line x1="'+L+'" x2="'+(W-Rr)+'" y1="'+y(1)+'" y2="'+y(1)+'" stroke="var(--warn)" stroke-dasharray="5 4"/>';
+  s+='<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="'+vals.map((v,i)=>x(i)+","+y(v)).join(" ")+'"/>';
+  vals.forEach((v,i)=>{ s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(i<S.nf?4.5:3)+'" fill="'+(i<S.nf?"var(--accent)":"var(--surface)")+'" stroke="var(--accent)" stroke-width="1.5"><title>第 '+(i+1)+' 成分：'+v.toFixed(3)+'</title></circle>';
+    if (p<=25||i%2===0) s+='<text x="'+x(i)+'" y="'+(H-B+16)+'" text-anchor="middle">'+(i+1)+'</text>'; });
+  s+='<text x="'+((L+W-Rr)/2)+'" y="'+(H-4)+'" text-anchor="middle">成分</text></svg>';
+  $("scree").innerHTML=s;
+  let cum=0, t='<table><thead><tr><th class="l">成分</th><th>特徵值</th><th>解釋變異量</th><th>累積解釋變異量</th></tr></thead><tbody>';
+  vals.forEach((v,i)=>{ cum+=v/p; t+='<tr'+(i<S.nf?' class="kept"':'')+'><td class="l">第 '+(i+1)+' 成分</td><td>'+v.toFixed(3)+'</td><td>'+pct(v/p)+'</td><td>'+pct(cum)+'</td></tr>'; });
+  t+='</tbody></table>';
+  $("eigen-table").innerHTML=t;
+}
+function renderLoadings(){
+  const r=S.res, sol=r.sol, k=S.nf, cut=r.cut.v, hide=$("hide-low").checked;
+  $("sec-load").hidden=false;
+  let t='<table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th>平均數</th>';
+  for (let j=0;j<k;j++) t+='<th>因素'+(j+1)+'</th>';
+  t+='<th>共同性</th><th>獨特性</th><th>MSA</th></tr></thead><tbody>';
+  r.order.forEach(it=>{
+    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?"":' <span class="tag">'+(it.neg.length?"負負荷":"未達截斷值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
+    it.row.forEach((x,j)=>{
+      let cls="", show=true;
+      if (it.dom&&j===it.best) cls="dom";
+      else if (it.cross.includes(j)) cls="cross";
+      else if (x<=-cut) cls="neg";
+      else if (Math.abs(x)<cut){ cls="low"; if (hide) show=false; }
+      t+='<td class="'+cls+'">'+(show?f2(x):"")+'</td>';
+    });
+    t+='<td>'+f2(it.comm)+'</td><td class="'+(it.uniq>.45?"flag":"")+'">'+f2(it.uniq)+'</td><td>'+(it.msa!=null?f2(it.msa):"—")+'</td></tr>';
+  });
+  const p=r.cols.length; let cum=0;
+  t+='<tr><td class="l" colspan="3"><b>轉軸後解釋變異量</b></td>'; sol.ss.forEach(v=>{ t+='<td>'+pct(v/p)+'</td>'; }); t+='<td colspan="3"></td></tr>';
+  t+='<tr><td class="l" colspan="3"><b>累積解釋變異量</b></td>'; sol.ss.forEach(v=>{ cum+=v/p; t+='<td>'+pct(cum)+'</td>'; }); t+='<td colspan="3"></td></tr>';
+  t+='</tbody></table>';
+  $("load-table").innerHTML=t;
+  const m=[];
+  for (let j=0;j<k;j++) if (!r.items.some(it=>it.dom&&it.best===j)) m.push("因素"+(j+1)+"沒有任何主導變數，建議減少因素個數。");
+  const single=[]; for (let j=0;j<k;j++){ const c=r.items.filter(it=>it.dom&&it.best===j).length; if (c===1) single.push("因素"+(j+1)); }
+  if (single.length) m.push(single.join("、")+"只有 1 個主導變數，因素結構較不穩定，可考慮調整因素個數。");
+  const negOnly=r.items.filter(it=>!it.dom&&it.neg.length);
+  if (negOnly.length) m.push("只有強烈負負荷的題項："+negOnly.map(it=>it.c.name+"（因素"+it.neg.map(j=>j+1).join("、因素")+"）").join("、")+"。報告中會作為反向題項，另外說明其反向意義。");
+  const none=r.items.filter(it=>!it.dom&&!it.neg.length);
+  if (none.length) m.push("未在任何因素上達截斷值的題項："+none.map(it=>it.c.name).join("、")+"，可考慮刪除後重新分析。");
+  $("load-msg").innerHTML=m.map(x=>'<div class="notice warn">'+esc(x)+'</div>').join("");
+}
+
+/* ---------- AI 指令 ---------- */
+const RULES_COMMON = (src)=>[
+"二、選取主導變數",
+"3. 主導變數是指負荷量（正值）達截斷值、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
+"4. 各因素的主導變數依負荷量由高到低排列。",
+"5. 若有題項在某因素上呈現強烈負負荷，不列入主導變數，而是在該因素的說明中另外點出，並解讀其反向意義（例如勾選此項的人，正是對該因素所代表的需求最低的人）。",
+"6. 若某題項同時在兩個因素上達到截斷值（交叉負荷），歸入負荷較高的因素，並註明其交叉負荷情形。",
+"",
+"三、主導變數的呈現方式",
+"7. 每個主導變數以「至多 4 個中文字的動機標籤＋負荷量」呈現，例如：日常習慣（.79）、規律作息（.78）。標籤須精準概括該題項所代表的消費動機或需求，不得出現題項編號或英文變數名稱。",
+"8. 負荷量以小數點後兩位呈現，省略整數位的 0。",
+"",
+"四、因素命名",
+"9. 各因素的命名以負荷量最高的前兩個主導變數為主要依據，其餘主導變數僅用於檢查名稱是否仍能涵蓋。",
+"10. 若前兩個主導變數的方向不同，須找出兩者共同的上位動機命名，並說明此上位概念如何同時涵蓋兩者。",
+"11. 因素名稱須直接反映主導變數所代表的消費需求，讓讀者一看名稱就知道這群消費者要的是什麼；中文名稱至多 6 字，並附英文名稱。",
+"12. 若某主導變數的獨特性偏高（大於 .45），說明其與因素名稱的契合度可能較弱。",
+"",
+"五、行銷意涵",
+"13. 將每個因素轉化為具體的行銷決策，各項決策都必須能回溯到該因素的主導變數，說明「因為消費者重視什麼，所以採取什麼行銷作為」：",
+"    - 產品：應強化哪些產品配置或功能組合，或推出何種產品組合；",
+"    - 價格：適合溢價反映附加價值，或以親民價格支持高頻購買；",
+"    - 溝通：廣告訊息應直接運用主導變數的語意作為訴求重點；",
+"    - 通路：此需求最常出現的購買情境，以及應優先布局的通路。",
+"",
+"六、寫作規則",
+"- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」。",
+"- 不得編造"+src+"中沒有的數值或題項。",
+"",
+"七、輸出格式",
+"每個因素依序撰寫：",
+"",
+"### 因素 N：中文名稱（English Name）",
+"- **主導變數**：動機標籤（負荷量）、動機標籤（負荷量）……（依負荷量由高至低）",
+"- **反向題項**：若有強烈負負荷的題項，列出並說明其反向意義；若無則省略此行",
+"- **行銷意涵**：產品、價格、溝通、通路四個面向，各一句",
+"",
+"接著以一段完整文字說明：前兩個主導變數共同反映的心理動機、命名理由、其餘主導變數如何支持或限制此名稱，以及行銷決策如何由此動機推導而來。",
+"",
+"全部因素完成後，以一段文字綜合說明各因素之間的差異，以及它們作為後續市場區隔基礎的意義；最後以一張表格總結：",
+"| 因素 | 名稱 | 主導變數（標籤與負荷量） | 核心行銷訴求 |"
+];
+
+const SHOT_PROMPT=[
+"請根據附上的因素負荷量矩陣截圖（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「因素命名與行銷意涵」段落。",
+"",
+"一、判讀截圖",
+"1. 辨識因素個數、各題項的負荷量與獨特性（uniqueness），並從題項內容判斷研究的產品或消費情境。",
+"2. 判斷資料型態以決定截斷值：",
+"   - 題項為李克特量表等連續尺度，且負荷量普遍在 .50 以上時，截斷值採 .50；",
+"   - 題項為是非題或可複選題等二元資料，或負荷量普遍偏低（多數低於 .50）時，截斷值採 .30；",
+"   - 若截圖已隱藏低於某數值的負荷量，以該數值為截斷值。",
+"   請在報告開頭用一句話說明採用的截斷值及理由。",
+""].concat(RULES_COMMON("截圖")).join("\n");
+
+function renderPrompt(){
+  const r=S.res, sol=r.sol, k=S.nf, a=r.adq, p=r.cols.length;
+  const L=[];
+  L.push("請根據下方【分析結果】（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「因素命名與行銷意涵」段落。");
+  L.push("");
+  L.push("一、判讀分析結果");
+  L.push("1. 【分析結果】列出因素個數、各題項的題目內容、轉軸後負荷量、共同性與獨特性（uniqueness）。請從題目內容判斷研究的產品或消費情境。");
+  L.push("2. 本分析的截斷值為 "+f2(r.cut.v)+"，理由："+r.cut.why+"。請在報告開頭用一句話說明 KMO 與 Bartlett 球形檢定的結果，以及採用的截斷值及理由；若有 MSA 低於 .50 的題項，一併說明其取樣適切性偏低。");
+  L.push("");
+  RULES_COMMON("【分析結果】").forEach(x=>L.push(x));
+  L.push("");
+  L.push("=====================");
+  L.push("【分析結果】");
+  L.push("=====================");
+  L.push("有效樣本數："+r.n+(r.dropped?"（已排除缺漏 "+r.dropped+" 筆）":""));
+  L.push("資料型態："+(r.binary?"0／1 二元資料":"連續尺度（如李克特量表）"));
+  L.push("KMO = "+(a.kmo!=null?f3(a.kmo):"無法計算")+"；Bartlett 球形檢定 "+(a.bartlett?"χ²("+a.bartlett.df+") = "+a.bartlett.chi.toFixed(2)+"，"+pTxt(a.bartlett.p):"無法計算"));
+  L.push("萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）");
+  L.push("因素個數："+k+"（"+(k===r.kaiser?"特徵值大於 1":"研究者指定；特徵值大於 1 者為 "+r.kaiser+" 個")+"）");
+  let cum=0;
+  L.push("轉軸後解釋變異量："+sol.ss.map((v,j)=>{ cum+=v/p; return "因素"+(j+1)+" "+pct(v/p); }).join("、")+"；累積 "+pct(cum));
+  L.push("截斷值："+f2(r.cut.v));
+  L.push("");
+  L.push("轉軸後負荷量矩陣（題項依主要負荷所在的因素排列）：");
+  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","獨特性","MSA"]).join("｜"));
+  r.order.forEach(it=>{
+    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm),f2(it.uniq),it.msa!=null?f2(it.msa):"—"]).join("｜"));
+  });
+  const text=L.join("\n");
+  $("prompt").textContent=text;
+  $("prompt-len").textContent="共 "+text.length.toLocaleString()+" 字";
+  $("sec-prompt").hidden=false;
+}
+
+/* ================= 市場區隔（集群分析＋區隔剖析） ================= */
+const KS=[3,4,5], STARTS=50, SEED=20261028, MINP=.10;
+function flabel(j){ const v=(S.fnames[j]||"").trim(); return v||("因素"+(j+1)); }
+function hideSeg(){ ["sec-k","sec-seg","sec-prof","sec-seg-prompt"].forEach(s=>$(s).hidden=true); }
+
+/* ---------- 因素命名 ---------- */
+function renderNames(){
+  const r=S.res, k=S.nf, box=$("fnames");
+  let h="";
+  for (let j=0;j<k;j++){
+    const dom=r.items.filter(it=>it.dom&&it.best===j).sort((a,b)=>b.row[j]-a.row[j]);
+    const hint=dom.length?dom.slice(0,3).map(it=>it.c.name+"（"+f2(it.row[j])+"）").join("、")+(dom.length>3?"⋯⋯":""):"沒有主導變數";
+    h+='<div class="fname"><label for="fn'+j+'"><b>因素'+(j+1)+'</b><span>'+esc(hint)+'</span></label>'
+      +'<input type="text" id="fn'+j+'" data-f="'+j+'" placeholder="因素名稱，例：日常作息習慣" value="'+esc(S.fnames[j]||"")+'"></div>';
+  }
+  box.innerHTML=h;
+  box.querySelectorAll("input[data-f]").forEach(i=>i.addEventListener("input",()=>{
+    S.fnames[+i.dataset.f]=i.value;
+    if (S.seg){ renderSegResult(); renderSegPrompt(); }
+  }));
+}
+
+/* ---------- 集群 ---------- */
+function runSeg(){
+  const r=S.res;
+  const key=r.cols.map(c=>c.ci).join(",")+"|"+S.nf;
+  if (S.seg && S.seg.key===key){ renderK(); renderSegResult(); renderProfile(); renderSegPrompt(); return; }
+  S.seg=null;
+  $("sec-k").hidden=false;
+  if (S.nf<2){
+    $("k-table").innerHTML=""; $("k-charts").innerHTML=""; $("kpick").innerHTML="";
+    $("k-msg").innerHTML='<div class="notice warn">因素個數至少要 2 個，才能依因素分數進行市場區隔。請在步驟 4 調整因素個數。</div>';
+    ["sec-seg","sec-prof","sec-seg-prompt"].forEach(s=>$(s).hidden=true);
+    return;
+  }
+  const F=Stats.scores(r.z,r.sol.loadings), n=F.length, k=S.nf;
+  const Z=[]; for (let j=0;j<k;j++){ const v=F.map(x=>x[j]), m=v.reduce((a,b)=>a+b,0)/n, sd=Math.sqrt(v.reduce((a,b)=>a+(b-m)*(b-m),0)/(n-1))||1; Z.push(v.map(x=>(x-m)/sd)); }
+  const X=F.map((_,i)=>Z.map(c=>c[i]));
+  const runs=KS.filter(K=>K<n).map(K=>{ const c=Clus.kmeans(X,K,STARTS,SEED+K); c.k=K; c.sil=Clus.silhouette(X,c.lab,K); c.minP=Math.min(...c.N)/n; return c; });
+  const ok=runs.filter(c=>c.minP>=MINP), pool=ok.length?ok:runs;
+  const sugg=pool.reduce((a,b)=>b.sil>a.sil+1e-12?b:a);
+  S.seg={key,F,X,n,runs,sugg,noneOk:!ok.length};
+  if (!S.userK||!runs.some(c=>c.k===S.K)){ S.K=sugg.k; S.userK=false; }
+  renderK(); renderSegResult(); renderProfile(); renderSegPrompt();
+}
+function curRun(){ return S.seg.runs.find(c=>c.k===S.K); }
+function miniChart(vals,fmt,hl){
+  const W=300,H=150,L=44,R=26,T=12,B=28;
+  const lo=Math.min(...vals), hi=Math.max(...vals), pad=(hi-lo)*.25||Math.abs(hi)*.1||.1;
+  const y0=lo-pad, y1=hi+pad;
+  const x=i=>L+i*(W-L-R)/(vals.length-1), y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));
+  let s='<svg class="mini" viewBox="0 0 '+W+' '+H+'">';
+  for (let t=0;t<=2;t++){ const v=y0+(y1-y0)*t/2; s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--border)"/><text x="'+(L-5)+'" y="'+(y(v)+4)+'" text-anchor="end">'+fmt(v)+'</text>'; }
+  s+='<polyline fill="none" stroke="var(--accent)" stroke-width="2" points="'+vals.map((v,i)=>x(i)+","+y(v)).join(" ")+'"/>';
+  vals.forEach((v,i)=>{ const on=KS[i]===hl; s+='<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(on?5.5:3.5)+'" fill="'+(on?"var(--accent)":"var(--surface)")+'" stroke="var(--accent)" stroke-width="1.5"/><text x="'+x(i)+'" y="'+(H-B+16)+'" text-anchor="middle">K = '+KS[i]+'</text>'; });
+  return s+'</svg>';
+}
+function renderK(){
+  const G=S.seg; $("sec-k").hidden=false;
+  let t='<table><thead><tr><th class="l">群數</th><th>組內平方和</th><th>平均輪廓係數</th><th>最小群人數</th><th>最小群比例</th><th class="l">判讀</th></tr></thead><tbody>';
+  G.runs.forEach(c=>{
+    const note=c===G.sugg?"建議":(c.minP<MINP?"最小群不足 10%":"");
+    t+='<tr'+(c===G.sugg?' class="kept"':'')+'><td class="l">'+c.k+' 群</td><td>'+c.sse.toFixed(1)+'</td><td>'+c.sil.toFixed(3)+'</td><td>'+Math.min(...c.N)+'</td><td>'+pct1(c.minP)+'</td><td class="l">'+note+'</td></tr>';
+  });
+  $("k-table").innerHTML=t+'</tbody></table>';
+  $("k-charts").innerHTML=G.runs.length>1?('<div class="chart"><p>手肘圖：組內平方和</p>'+miniChart(G.runs.map(c=>c.sse),v=>Math.round(v),S.K)+'</div>'
+    +'<div class="chart"><p>平均輪廓係數（愈高愈好）</p>'+miniChart(G.runs.map(c=>c.sil),v=>v.toFixed(3),S.K)+'</div>'):"";
+  let m='<div class="notice ok">建議採用 '+G.sugg.k+' 群：平均輪廓係數 '+G.sugg.sil.toFixed(3)+'，最小群占 '+pct1(G.sugg.minP)+'。</div>';
+  if (G.noneOk) m='<div class="notice warn">3～5 群的解都有人數不足全體 10% 的小群，以下依輪廓係數建議 '+G.sugg.k+' 群；人數過少的區隔在行銷上不易經營，請審慎解讀。</div>';
+  if (G.sugg.sil<.25) m+='<div class="notice warn">平均輪廓係數低於 .25，各群之間的界線不明顯，區隔結構較弱。</div>';
+  $("k-msg").innerHTML=m;
+  $("kpick").innerHTML=G.runs.map(c=>'<label><input type="radio" name="k" value="'+c.k+'"'+(c.k===S.K?" checked":"")+'>'+c.k+' 群'+(c===G.sugg?"（建議）":"")+'</label>').join("");
+  $("kpick").querySelectorAll("input").forEach(i=>i.addEventListener("change",()=>{ S.K=+i.value; S.userK=S.K!==G.sugg.k; renderK(); renderSegResult(); renderProfile(); renderSegPrompt(); }));
+}
+function renderSegResult(){
+  const G=S.seg, c=curRun(), k=S.nf; $("sec-seg").hidden=false;
+  let t='<table><thead><tr><th class="l">構面</th>'; for (let g=0;g<c.k;g++) t+='<th>集群'+(g+1)+'</th>'; t+='</tr></thead><tbody>';
+  for (let j=0;j<k;j++){
+    const row=c.C.map(cc=>cc[j]), mx=Math.max(...row);
+    t+='<tr><td class="l">'+esc(flabel(j))+((S.fnames[j]||"").trim()?'<br><span class="small faint">因素'+(j+1)+'</span>':'')+'</td>';
+    row.forEach(v=>{ t+='<td class="'+(v>=0?"pos":"neg")+(v===mx?" max":"")+'">'+f2(v)+'</td>'; });
+    t+='</tr>';
+  }
+  t+='<tr class="total"><td class="l">人數（比例）</td>'+c.N.map(x=>'<td>'+x+'（'+pct1(x/G.n)+'）</td>').join("")+'</tr></tbody></table>';
+  $("seg-table").innerHTML=t;
+  const m=[];
+  c.C.forEach((cc,g)=>{ if (cc.every(v=>v<=.1)) m.push("集群"+(g+1)+"在所有構面上都為負值或接近 0，沒有明顯的正向峰值；報告會依相對最不負的構面命名並加註。"); });
+  const un=[]; for (let j=0;j<k;j++) if (!(S.fnames[j]||"").trim()) un.push("因素"+(j+1));
+  if (un.length) m.push("尚未填寫因素名稱："+un.join("、")+"。請在步驟 5 填入因素名稱，市場區隔報告才能以構面名稱為各群命名。");
+  $("seg-msg").innerHTML=m.map(x=>'<div class="notice warn">'+esc(x)+'</div>').join("");
+}
+
+/* ---------- 區隔剖析 ---------- */
+const SKIP_RE=/時間戳記|timestamp|學號|姓名|電話|手機|e-?mail|信箱|地址|^id$/i;
+function detectProfile(){
+  S.profCols=[];
+  S.headers.forEach((h,ci)=>{
+    if (!h||SKIP_RE.test(h)||/^因素\s*\d+/.test(h)||h==="集群") return;
+    const vals=[]; for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; vals.push(v); }
+    if (vals.length<3) return;
+    const nums=vals.map(num);
+    let type=null;
+    if (nums.every(x=>x!==null)){
+      const set=new Set(nums); if (set.size<2) return;
+      type=[...set].every(x=>x===0||x===1)?"bin":"num";
+    } else {
+      const set=new Set(vals.map(v=>String(v).trim())); if (set.size<2||set.size>12) return;
+      type="cat";
+    }
+    const m=h.match(/^([A-Za-z]+)/);
+    S.profCols.push({ci,name:h,type,prefix:m?m[1]:"",stem:S.stems[h]||""});
+  });
+  S.profSel=new Set(S.profCols.map(c=>c.ci));
+}
+function profCandidates(){ const used=new Set(S.res?S.res.cols.map(c=>c.ci):[]); return S.profCols.filter(c=>!used.has(c.ci)); }
+function profLabel(c){
+  if (c.prefix&&S.groupNames[c.prefix]){ const rest=c.name.slice(c.prefix.length).replace(/^[_\-\s]+/,""); return S.groupNames[c.prefix]+"："+(rest||c.name); }
+  return c.name;
+}
+function renderProfPicker(){
+  const box=$("prof-vars"), cands=profCandidates();
+  if (!cands.length){ box.innerHTML='<div class="notice warn">沒有可供剖析的變數。單選題（12 個類別以內）、0／1 複選欄位與數值欄位才會列出；未整理的複選題請先用問卷資料整理器拆成 0／1 欄。</div>'; return; }
+  const kindName={cat:"單選題",bin:"複選 0／1",num:"連續數值"};
+  const groups=new Map();
+  cands.forEach(c=>{ const key=c.type==="cat"?"__cat":(c.prefix||"__"+c.type); if (!groups.has(key)) groups.set(key,[]); groups.get(key).push(c); });
+  let html="";
+  for (const [key,cols] of groups){
+    const title=key==="__cat"?"單選題":(key==="__num"?"其他數值欄位":(key==="__bin"?"其他 0／1 欄位":(S.groupNames[key]?S.groupNames[key]+"（"+key+"）":"代碼 "+key)));
+    const kinds=[...new Set(cols.map(c=>kindName[c.type]))].join("、");
+    html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong><span class="tag">'+cols.length+' 欄 · '+kinds+'</span>'
+      +'<button type="button" class="ghost" data-pall="'+esc(key)+'">全選</button><button type="button" class="ghost" data-pnone="'+esc(key)+'">全不選</button></div><div class="items">';
+    cols.forEach(c=>{ html+='<label title="'+esc(c.stem)+'"><input type="checkbox" data-pci="'+c.ci+'"'+(S.profSel.has(c.ci)?" checked":"")+'><span>'+esc(c.name)+'</span></label>'; });
+    html+='</div></div>';
+  }
+  box.innerHTML=html;
+  const keyOf=c=>c.type==="cat"?"__cat":(c.prefix||"__"+c.type);
+  box.querySelectorAll("button[data-pall],button[data-pnone]").forEach(b=>b.addEventListener("click",()=>{
+    const key=b.dataset.pall||b.dataset.pnone, on=!!b.dataset.pall;
+    cands.filter(c=>keyOf(c)===key).forEach(c=>on?S.profSel.add(c.ci):S.profSel.delete(c.ci));
+    renderProfile(); renderSegPrompt();
+  }));
+  box.querySelectorAll("input[data-pci]").forEach(i=>i.addEventListener("change",()=>{
+    const ci=+i.dataset.pci; i.checked?S.profSel.add(ci):S.profSel.delete(ci); renderProfile(true); renderSegPrompt();
+  }));
+}
+function alpha(){ const a=parseFloat($("alpha").value); return a>0&&a<1?a:.10; }
+function computeProfile(){
+  const r=S.res, c=curRun(), K=c.k, a=alpha(), zc=Stats.probit(1-a/2);
+  const lab=new Map(); r.keep.forEach((ri,i)=>lab.set(ri,c.lab[i]));
+  const out=[];
+  profCandidates().filter(pc=>S.profSel.has(pc.ci)).forEach(pc=>{
+    const obs=[]; r.keep.forEach(ri=>{ const v=S.rows[ri][pc.ci]; if (v===""||v===null||v===undefined) return; obs.push([lab.get(ri),v]); });
+    if (obs.length<3) return;
+    if (pc.type==="num"){
+      const g=Array.from({length:K},()=>[]); obs.forEach(([l,v])=>{ const x=num(v); if (x!==null) g[l].push(x); });
+      const res=Stats.anova(g);
+      const all=[].concat(...g);
+      out.push({pc,type:"num",n:all.length,means:g.map(x=>x.length?x.reduce((s,y)=>s+y,0)/x.length:null),ns:g.map(x=>x.length),overall:all.reduce((s,y)=>s+y,0)/all.length,test:res,sig:res&&res.p<a});
+    } else {
+      let levels;
+      if (pc.type==="bin") levels=["1","0"];
+      else { const cnt=new Map(); obs.forEach(([,v])=>{ const s=String(v).trim(); cnt.set(s,(cnt.get(s)||0)+1); }); levels=[...cnt.keys()].sort((x,y)=>cnt.get(y)-cnt.get(x)); }
+      const T=levels.map(()=>new Array(K).fill(0));
+      obs.forEach(([l,v])=>{ const s=pc.type==="bin"?String(num(v)):String(v).trim(); const li=levels.indexOf(s); if (li>=0) T[li][l]++; });
+      const res=Stats.chisq(T);
+      const colN=new Array(K).fill(0); T.forEach(row=>row.forEach((x,g)=>colN[g]+=x));
+      const N=colN.reduce((s,x)=>s+x,0);
+      const rows=levels.map((lv,li)=>({level:lv, pct:T[li].map((x,g)=>colN[g]?x/colN[g]:null), all:T[li].reduce((s,x)=>s+x,0)/N,
+        mark:T[li].map((x,g)=>(res&&res.p<a&&res.adj[li][g]!=null)?(res.adj[li][g]>=zc?1:(res.adj[li][g]<=-zc?-1:0)):0)}));
+      out.push({pc,type:pc.type,n:N,colN,rows:pc.type==="bin"?rows.slice(0,1):rows,test:res,sig:res&&res.p<a});
+    }
+  });
+  return {list:out,a,zc,K};
+}
+function markTxt(m){ return m>0?"▲":(m<0?"▼":""); }
+function renderProfile(keepPicker){
+  if (!S.seg||!curRun()) return;
+  $("sec-prof").hidden=false;
+  if (!keepPicker) renderProfPicker();
+  const P=computeProfile(); S.prof=P;
+  const onlySig=$("only-sig").checked, K=P.K;
+  const head='<th>'+Array.from({length:K},(_,g)=>"集群"+(g+1)).join('</th><th>')+'</th><th>全體</th>';
+  let html="";
+  const nSig=P.list.filter(x=>x.sig).length;
+  html+='<div class="notice '+(nSig?"ok":"warn")+'">共檢定 '+P.list.length+' 個變數，其中 '+nSig+' 個達顯著水準（p &lt; '+fp(P.a)+'）。</div>';
+  const shown=P.list.filter(x=>!onlySig||x.sig);
+  /* 連續變數 */
+  const nums=shown.filter(x=>x.type==="num");
+  if (nums.length){
+    html+='<h3>連續變數：單因子變異數分析</h3><div class="table-scroll"><table><thead><tr><th class="l">變數</th>'+head+'<th>F</th><th>p</th><th>η²</th></tr></thead><tbody>';
+    nums.forEach(x=>{
+      const t=x.test, mx=Math.max(...x.means.filter(v=>v!=null));
+      html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(profLabel(x.pc))+'</td>'+x.means.map(v=>'<td class="'+(x.sig&&v===mx?"hi":"")+'">'+(v==null?"—":v.toFixed(2))+'</td>').join("")+'<td>'+x.overall.toFixed(2)+'</td>'
+        +(t?'<td>'+t.F.toFixed(2)+'</td><td>'+pTxtShort(t.p)+'</td><td>'+f2(t.eta2)+'</td>':'<td colspan="3">無法計算</td>')+'</tr>';
+    });
+    html+='</tbody></table></div><p class="hint small">顯著時以粗體標示平均數最高的集群；本工具未進行事後比較。</p>';
+  }
+  /* 複選 0／1：依代碼分組 */
+  const bins=shown.filter(x=>x.type==="bin");
+  if (bins.length){
+    const g=new Map(); bins.forEach(x=>{ const k=x.pc.prefix||"__"; if (!g.has(k)) g.set(k,[]); g.get(k).push(x); });
+    for (const [key,list] of g){
+      html+='<h3>'+esc(key!=="__"&&S.groupNames[key]?S.groupNames[key]+"（"+key+"）":(key==="__"?"複選題":"代碼 "+key))+'：勾選率</h3><div class="table-scroll"><table><thead><tr><th class="l">選項</th>'+head+'<th>χ²</th><th>p</th></tr></thead><tbody>';
+      list.forEach(x=>{ const row=x.rows[0], t=x.test;
+        html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(x.pc.name)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+pct1(row.all)+'</td>'
+          +(t?'<td>'+t.chi.toFixed(2)+'</td><td>'+pTxtShort(t.p)+'</td>':'<td colspan="2">無法計算</td>')+'</tr>'; });
+      html+='</tbody></table></div>';
+    }
+  }
+  /* 單選題 */
+  shown.filter(x=>x.type==="cat").forEach(x=>{
+    const t=x.test;
+    html+='<h3>'+esc(profLabel(x.pc))+'<span class="testtxt'+(x.sig?" sig":"")+'">'+(t?'χ²('+t.df+') = '+t.chi.toFixed(2)+'，'+pTxt(t.p):'無法計算')+(t&&t.lowExp>.2?'；期望次數小於 5 的格子占 '+pct1(t.lowExp):'')+'</span></h3>';
+    html+='<div class="table-scroll"><table><thead><tr><th class="l">類別</th>'+head+'</tr></thead><tbody>';
+    x.rows.forEach(row=>{ html+='<tr><td class="l">'+esc(row.level)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+pct1(row.all)+'</td></tr>'; });
+    html+='<tr class="total"><td class="l">有效人數</td>'+x.colN.map(v=>'<td>'+v+'</td>').join("")+'<td>'+x.n+'</td></tr></tbody></table></div>';
+  });
+  if (!shown.length&&P.list.length) html+='<p class="hint">沒有達顯著水準的變數。</p>';
+  html+='<p class="hint small">百分比為各集群內的比例（欄百分比）。達顯著時，▲／▼表示該格調整後殘差高於 '+P.zc.toFixed(3)+' 或低於 −'+P.zc.toFixed(3)+'（對應雙尾 α = '+fp(P.a)+'），即該群的比例顯著高於或低於期望值。</p>';
+  $("prof-out").innerHTML=html;
+}
+function profText(){
+  const P=S.prof; if (!P||!P.list.length) return null;
+  const sig=P.list.filter(x=>x.sig), K=P.K, cl=g=>"集群"+(g+1);
+  const L=["顯著水準 α = "+fp(P.a)+"；共檢定 "+P.list.length+" 個變數，以下列出達顯著者。百分比為各集群內的比例，▲／▼表示該群比例顯著高於／低於期望值（調整後殘差絕對值大於 "+P.zc.toFixed(3)+"）。"];
+  if (!sig.length){ L.push("所檢定的變數皆未達顯著水準。"); return L.join("\n"); }
+  sig.forEach((x,i)=>{
+    const t=x.test;
+    if (x.type==="num"){
+      L.push((i+1)+". "+profLabel(x.pc)+"（變異數分析 F("+t.df1+", "+t.df2+") = "+t.F.toFixed(2)+"，"+pTxt(t.p)+"，η² = "+f2(t.eta2)+"）");
+      L.push("   平均數："+x.means.map((v,g)=>cl(g)+" "+(v==null?"—":v.toFixed(2))).join("、")+"；全體 "+x.overall.toFixed(2));
+    } else if (x.type==="bin"){
+      const row=x.rows[0];
+      L.push((i+1)+". "+profLabel(x.pc)+"（勾選率；χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
+      L.push("   "+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")+"；全體 "+pct1(row.all));
+    } else {
+      L.push((i+1)+". "+profLabel(x.pc)+"（卡方檢定 χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
+      x.rows.forEach(row=>L.push("   "+row.level+"："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")+"；全體 "+pct1(row.all)));
+    }
+  });
+  return L.join("\n");
+}
+
+/* ---------- AI 指令（二） ---------- */
+function renderSegPrompt(){
+  if (!S.seg||!curRun()) return;
+  const G=S.seg, c=curRun(), k=S.nf;
+  const A=c.N.map((x,g)=>"集群"+(g+1)+"：n = "+x+"（"+pct1(x/G.n)+"）").join("\n")+"\n合計：n = "+G.n+"（100.0%）";
+  const B=["數值為標準化因素分數的平均數（平均數 0、標準差 1）；以 K 平均法分為 "+c.k+" 群，集群依人數由多到少編號。",
+    ["構面"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜")]
+    .concat(Array.from({length:k},(_,j)=>[flabel(j)].concat(c.C.map(cc=>f2(cc[j]))).join("｜"))).join("\n");
+  const C=$("topic").value.trim()||"（請填寫）";
+  const D=profText();
+  let t=$("tpl").textContent;
+  t=t.replace("（A）各群人數與人數比例：\n（請貼上）","（A）各群人數與人數比例：\n"+A)
+     .replace("（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n（請貼上）","（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n"+B)
+     .replace("（C）研究主題／產品類別簡述：\n（請填寫）","（C）研究主題／產品類別簡述：\n"+C);
+  if (D){
+    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「區隔剖析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定或\n　　變異數分析結果，僅列出達顯著水準者，用以描繪各區隔的輪廓。")
+       .replace("請根據以上三項資訊","請根據以上四項資訊")
+       .replace("可能的消費動機輪廓。","可能的消費動機輪廓；若（D）中該群有顯著偏高或偏低的\n　　特徵，請一併納入輪廓描述，並註明其統計依據。")
+       .replace("本提示詞之分析僅依（A）（B）（C）三項資訊完成。","本提示詞之分析僅依（A）（B）（C）（D）四項資訊完成。");
+    t=t.trimEnd()+"\n\n（D）區隔剖析結果：\n"+D;
+  }
+  const text=t.trim();
+  $("seg-prompt").textContent=text;
+  $("seg-prompt-len").textContent=(C==="（請填寫）"?"尚未填寫研究主題・":"")+"共 "+text.length.toLocaleString()+" 字";
+  $("sec-seg-prompt").hidden=false;
+}
+
+/* ---------- 下載 ---------- */
+function round(x,d){ const m=Math.pow(10,d); return Math.round(x*m)/m; }
+function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,""); }
+function loadingSheets(wb){
+  const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
+  const fh=Array.from({length:k},(_,j)=>flabel(j));
+  const a1=[["題項","題目內容","平均數"].concat(fh).concat(["共同性","獨特性","MSA","主要負荷因素"])];
+  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"未達截斷值")])));
+  let cum=0;
+  a1.push([]); a1.push(["轉軸後解釋變異量 (%)","",""].concat(sol.ss.map(v=>round(v/p*100,2))));
+  a1.push(["累積解釋變異量 (%)","",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
+  a1.push([]); a1.push(["萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）；截斷值 "+f2(r.cut.v)+"（"+r.cut.why+"）"]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),"轉軸後負荷量");
+  const a2=[["成分","特徵值","解釋變異量 (%)","累積解釋變異量 (%)","保留"]]; cum=0;
+  r.eig.forEach((e,i)=>{ cum+=e.value/p; a2.push(["第 "+(i+1)+" 成分",round(e.value,3),round(e.value/p*100,2),round(cum*100,2),i<k?"是":""]); });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),"特徵值");
+  const a=r.adq;
+  const a3=[["項目","數值"],["有效樣本數",r.n],["排除缺漏樣本數",r.dropped],["KMO",a.kmo!=null?round(a.kmo,3):"無法計算"],
+    ["Bartlett χ²",a.bartlett?round(a.bartlett.chi,2):"無法計算"],["Bartlett df",a.bartlett?a.bartlett.df:""],["Bartlett p",a.bartlett?(a.bartlett.p<.001?"< .001":round(a.bartlett.p,3)):""]];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a3),"適切性檢定");
+}
+function segSheets(wb){
+  if (!S.seg||!curRun()) return;
+  const G=S.seg, c=curRun(), k=S.nf;
+  const a1=[["構面","因素"].concat(c.N.map((_,g)=>"集群"+(g+1)))];
+  for (let j=0;j<k;j++) a1.push([flabel(j),"因素"+(j+1)].concat(c.C.map(cc=>round(cc[j],3))));
+  a1.push(["人數",""].concat(c.N)); a1.push(["比例 (%)",""].concat(c.N.map(x=>round(x/G.n*100,1))));
+  a1.push([]); a1.push(["K 平均法，"+c.k+" 群；分群變數為標準化因素分數；有效樣本 "+G.n+" 筆"]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),"群中心值");
+  const a2=[["群數","組內平方和","平均輪廓係數","最小群人數","最小群比例 (%)","建議","採用"]];
+  G.runs.forEach(x=>a2.push([x.k,round(x.sse,1),round(x.sil,3),Math.min(...x.N),round(x.minP*100,1),x===G.sugg?"是":"",x.k===c.k?"是":""]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),"群數比較");
+  const P=S.prof;
+  if (P&&P.list.length){
+    const K=P.K, cls=Array.from({length:K},(_,g)=>"集群"+(g+1));
+    const a3=[["變數","檢定","類別／選項"].concat(cls).concat(["全體","統計量","df","p","達顯著"])];
+    P.list.forEach(x=>{
+      const t=x.test, sig=x.sig?"是":"";
+      if (x.type==="num"){
+        a3.push([profLabel(x.pc),"變異數分析","平均數"].concat(x.means.map(v=>v==null?"":round(v,3))).concat([round(x.overall,3),t?"F = "+t.F.toFixed(3):"",t?t.df1+", "+t.df2:"",t?round(t.p,4):"",sig]));
+      } else {
+        x.rows.forEach((row,ri)=>a3.push([profLabel(x.pc),"卡方檢定",x.type==="bin"?"勾選率 (%)":row.level+" (%)"].concat(row.pct.map((v,g)=>v==null?"":round(v*100,1)+(row.mark[g]>0?" ▲":row.mark[g]<0?" ▼":""))).concat([round(row.all*100,1)]).concat(ri===0?[t?"χ² = "+t.chi.toFixed(3):"",t?t.df:"",t?round(t.p,4):"",sig]:["","","",""])));
+      }
+    });
+    a3.push([]); a3.push(["顯著水準 α = "+fp(P.a)+"；▲／▼表示調整後殘差絕對值大於 "+P.zc.toFixed(3)+"，該群比例顯著高於／低於期望值"]);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a3),"區隔剖析");
+  }
+}
+function dlResult(){
+  if (!S.res) return;
+  const wb=XLSX.utils.book_new();
+  loadingSheets(wb); segSheets(wb);
+  XLSX.writeFile(wb,stamp()+"_市場區隔分析結果.xlsx");
+}
+function dlData(){
+  const r=S.res; if (!r) return; const k=S.nf;
+  const F=Stats.scores(r.z,r.sol.loadings);
+  const c=S.seg&&curRun();
+  const map=new Map(); r.keep.forEach((ri,idx)=>map.set(ri,idx));
+  const used=new Set(S.headers);
+  const fh=Array.from({length:k},(_,j)=>{ let h=flabel(j); if (used.has(h)) h=h+"_因素分數"; used.add(h); return h; });
+  const ki=S.headers.indexOf("集群");
+  const head=S.headers.concat(fh).concat(c&&ki<0?["集群"]:[]);
+  const aoa=[head];
+  S.rows.forEach((row,ri)=>{
+    const base=S.headers.map((_,ci)=>row[ci]===undefined?"":row[ci]);
+    const idx=map.get(ri);
+    const f=idx!=null?F[idx].map(x=>round(x,4)):Array(k).fill("");
+    if (c){ const g=idx!=null?c.lab[idx]+1:""; if (ki>=0) base[ki]=g; else f.push(g); }
+    aoa.push(base.concat(f));
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"資料");
+  ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
+  XLSX.writeFile(wb,stamp()+"_市場區隔資料.xlsx");
+}
+
+/* ---------- 複製 ---------- */
+async function copyText(text, okMsg){
+  try{ await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch(e){
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast(okMsg); }catch(err){ toast("複製失敗，請展開指令內容手動選取"); }
+    ta.remove();
+  }
+}
+
+/* ---------- 事件 ---------- */
+$("prompt-shot").textContent=SHOT_PROMPT;
+$("file").addEventListener("change",e=>readFile(e.target.files[0]));
+const dz=$("dropzone");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if (f) readFile(f); });
+$("sheet").addEventListener("change",e=>loadSheet(e.target.value));
+$("btn-remove").addEventListener("click",()=>{
+  S.wb=null; S.rows=[]; S.headers=[]; S.res=null; $("file").value="";
+  $("dz-label").textContent="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡"; $("sheet-row").hidden=true; $("sec-items").hidden=true; hideFrom("sec-adequacy");
+});
+$("nf").addEventListener("input",()=>{
+  const r=S.res; if (!r) return;
+  const v=parseInt($("nf").value,10);
+  if (!(v>=1&&v<=r.cols.length-1)) return;
+  S.nf=v; S.userNf=v!==r.kaiser; renderEigen(); compute();
+});
+$("btn-kaiser").addEventListener("click",()=>{ if (!S.res) return; S.nf=S.res.kaiser; S.userNf=false; renderEigen(); compute(); });
+$("cut").addEventListener("change",compute);
+$("hide-low").addEventListener("change",()=>{ if (S.res) renderLoadings(); });
+$("dl-data").addEventListener("click",dlData);
+$("dl-result").addEventListener("click",dlResult);
+$("alpha").addEventListener("input",()=>{ if (S.seg){ renderProfile(true); renderSegPrompt(); } });
+$("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); });
+$("topic").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
+$("btn-copy-seg").addEventListener("click",()=>{
+  if (!$("topic").value.trim()){ toast("請先填寫（C）研究主題／產品類別"); $("topic").focus(); return; }
+  copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
+});
+$("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
+$("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
+})();
+</script>
+</body>
+</html>
