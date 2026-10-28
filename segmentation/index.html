@@ -135,7 +135,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <main>
   <p class="eyebrow">行銷研究方法 · 統計分析</p>
   <h1>市場區隔分析</h1>
-  <p class="lede">上傳問卷資料，依序完成市場區隔的三個步驟：以因素分析把消費動機題項縮減為少數構面，以 K 平均法依因素分數把受訪者分成 3～5 個區隔，再以卡方檢定與變異數分析剖析各區隔的輪廓。過程中會產生兩段 AI 報告指令：先為因素命名，再為市場區隔命名並推導行銷意涵。所有計算都在瀏覽器中完成。</p>
+  <p class="lede">上傳問卷資料，依序完成市場區隔的三個步驟：以因素分析把消費動機題項縮減為少數構面，以 K 平均法依因素分數把受訪者分成 3～5 個區隔，再以卡方檢定剖析各區隔的輪廓。過程中會產生兩段 AI 報告指令：先為因素命名，再為市場區隔命名並推導行銷意涵。所有計算都在瀏覽器中完成。</p>
 
   <p class="stage">第一階段　因素分析<small>把消費動機題項縮減為少數構面，並為各構面命名。</small></p>
 
@@ -250,7 +250,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 9 區隔剖析 -->
   <section class="panel" id="sec-prof" aria-labelledby="h9s" hidden>
     <h2 id="h9s"><span class="step">9</span>區隔剖析</h2>
-    <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例，連續數值以單因子變異數分析比較各群平均數。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
+    <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例。連續數值（例如年齡、品牌評價）會在「指標」一節以驗證性因素分析建立指標後，再以變異數分析比較各區隔。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
     <div class="row">
       <label class="inline">顯著水準 α <input type="number" id="alpha" value="0.10" min="0.001" max="0.5" step="0.01"></label>
       <label class="inline"><input type="checkbox" id="only-sig">只顯示達顯著的變數</label>
@@ -1102,7 +1102,8 @@ function detectProfile(){
     let type=null;
     if (nums.every(x=>x!==null)){
       const set=new Set(nums); if (set.size<2) return;
-      type=[...set].every(x=>x===0||x===1)?"bin":"num";
+      if (![...set].every(x=>x===0||x===1)) return;
+      type="bin";
     } else {
       const set=new Set(vals.map(v=>String(v).trim())); if (set.size<2||set.size>12) return;
       type="cat";
@@ -1119,13 +1120,13 @@ function profLabel(c){
 }
 function renderProfPicker(){
   const box=$("prof-vars"), cands=profCandidates();
-  if (!cands.length){ box.innerHTML='<div class="notice warn">沒有可供剖析的變數。單選題（12 個類別以內）、0／1 複選欄位與數值欄位才會列出；未整理的複選題請先用問卷資料整理器拆成 0／1 欄。</div>'; return; }
-  const kindName={cat:"單選題",bin:"複選 0／1",num:"連續數值"};
+  if (!cands.length){ box.innerHTML='<div class="notice warn">沒有可供剖析的變數。單選題（12 個類別以內）與 0／1 複選欄位才會列出；未整理的複選題請先用問卷資料整理器拆成 0／1 欄。</div>'; return; }
+  const kindName={cat:"單選題",bin:"複選 0／1"};
   const groups=new Map();
   cands.forEach(c=>{ const key=c.type==="cat"?"__cat":(c.prefix||"__"+c.type); if (!groups.has(key)) groups.set(key,[]); groups.get(key).push(c); });
   let html="";
   for (const [key,cols] of groups){
-    const title=key==="__cat"?"單選題":(key==="__num"?"其他數值欄位":(key==="__bin"?"其他 0／1 欄位":(S.groupNames[key]?S.groupNames[key]+"（"+key+"）":"代碼 "+key)));
+    const title=key==="__cat"?"單選題":(key==="__bin"?"其他 0／1 欄位":(S.groupNames[key]?S.groupNames[key]+"（"+key+"）":"代碼 "+key));
     const kinds=[...new Set(cols.map(c=>kindName[c.type]))].join("、");
     html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong><span class="tag">'+cols.length+' 欄 · '+kinds+'</span>'
       +'<button type="button" class="ghost" data-pall="'+esc(key)+'">全選</button><button type="button" class="ghost" data-pnone="'+esc(key)+'">全不選</button></div><div class="items">';
@@ -1151,12 +1152,7 @@ function computeProfile(){
   profCandidates().filter(pc=>S.profSel.has(pc.ci)).forEach(pc=>{
     const obs=[]; r.keep.forEach(ri=>{ const v=S.rows[ri][pc.ci]; if (v===""||v===null||v===undefined) return; obs.push([lab.get(ri),v]); });
     if (obs.length<3) return;
-    if (pc.type==="num"){
-      const g=Array.from({length:K},()=>[]); obs.forEach(([l,v])=>{ const x=num(v); if (x!==null) g[l].push(x); });
-      const res=Stats.anova(g);
-      const all=[].concat(...g);
-      out.push({pc,type:"num",n:all.length,means:g.map(x=>x.length?x.reduce((s,y)=>s+y,0)/x.length:null),ns:g.map(x=>x.length),overall:all.reduce((s,y)=>s+y,0)/all.length,test:res,sig:res&&res.p<a});
-    } else {
+    {
       let levels;
       if (pc.type==="bin") levels=["1","0"];
       else { const cnt=new Map(); obs.forEach(([,v])=>{ const s=String(v).trim(); cnt.set(s,(cnt.get(s)||0)+1); }); levels=[...cnt.keys()].sort((x,y)=>cnt.get(y)-cnt.get(x)); }
@@ -1184,17 +1180,6 @@ function renderProfile(keepPicker){
   const nSig=P.list.filter(x=>x.sig).length;
   html+='<div class="notice '+(nSig?"ok":"warn")+'">共檢定 '+P.list.length+' 個變數，其中 '+nSig+' 個達顯著水準（p &lt; '+fp(P.a)+'）。</div>';
   const shown=P.list.filter(x=>!onlySig||x.sig);
-  /* 連續變數 */
-  const nums=shown.filter(x=>x.type==="num");
-  if (nums.length){
-    html+='<h3>連續變數：單因子變異數分析</h3><div class="table-scroll"><table><thead><tr><th class="l">變數</th>'+head+'<th>F</th><th>p</th><th>η²</th></tr></thead><tbody>';
-    nums.forEach(x=>{
-      const t=x.test, mx=Math.max(...x.means.filter(v=>v!=null));
-      html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(profLabel(x.pc))+'</td>'+x.means.map(v=>'<td class="'+(x.sig&&v===mx?"hi":"")+'">'+(v==null?"—":v.toFixed(2))+'</td>').join("")+'<td>'+x.overall.toFixed(2)+'</td>'
-        +(t?'<td>'+t.F.toFixed(2)+'</td><td>'+pTxtShort(t.p)+'</td><td>'+f2(t.eta2)+'</td>':'<td colspan="3">無法計算</td>')+'</tr>';
-    });
-    html+='</tbody></table></div><p class="hint small">顯著時以粗體標示平均數最高的集群；本工具未進行事後比較。</p>';
-  }
   /* 複選 0／1：依代碼分組 */
   const bins=shown.filter(x=>x.type==="bin");
   if (bins.length){
@@ -1226,10 +1211,7 @@ function profText(){
   if (!sig.length){ L.push("所檢定的變數皆未達顯著水準。"); return L.join("\n"); }
   sig.forEach((x,i)=>{
     const t=x.test;
-    if (x.type==="num"){
-      L.push((i+1)+". "+profLabel(x.pc)+"（變異數分析 F("+t.df1+", "+t.df2+") = "+t.F.toFixed(2)+"，"+pTxt(t.p)+"，η² = "+f2(t.eta2)+"）");
-      L.push("   平均數："+x.means.map((v,g)=>cl(g)+" "+(v==null?"—":v.toFixed(2))).join("、")+"；全體 "+x.overall.toFixed(2));
-    } else if (x.type==="bin"){
+    if (x.type==="bin"){
       const row=x.rows[0];
       L.push((i+1)+". "+profLabel(x.pc)+"（勾選率；χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
       L.push("   "+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")+"；全體 "+pct1(row.all));
@@ -1256,7 +1238,7 @@ function renderSegPrompt(){
      .replace("（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n（請貼上）","（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n"+B)
      .replace("（C）研究主題／產品類別簡述：\n（請填寫）","（C）研究主題／產品類別簡述：\n"+C);
   if (D){
-    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「區隔剖析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定或\n　　變異數分析結果，僅列出達顯著水準者，用以描繪各區隔的輪廓。")
+    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「區隔剖析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定結果，\n　　僅列出達顯著水準者，用以描繪各區隔的輪廓。")
        .replace("請根據以上三項資訊","請根據以上四項資訊")
        .replace("可能的消費動機輪廓。","可能的消費動機輪廓；若（D）中該群有顯著偏高或偏低的\n　　特徵，請一併納入輪廓描述，並註明其統計依據。")
        .replace("本提示詞之分析僅依（A）（B）（C）三項資訊完成。","本提示詞之分析僅依（A）（B）（C）（D）四項資訊完成。");
@@ -1306,9 +1288,7 @@ function segSheets(wb){
     const a3=[["變數","檢定","類別／選項"].concat(cls).concat(["全體","統計量","df","p","達顯著"])];
     P.list.forEach(x=>{
       const t=x.test, sig=x.sig?"是":"";
-      if (x.type==="num"){
-        a3.push([profLabel(x.pc),"變異數分析","平均數"].concat(x.means.map(v=>v==null?"":round(v,3))).concat([round(x.overall,3),t?"F = "+t.F.toFixed(3):"",t?t.df1+", "+t.df2:"",t?round(t.p,4):"",sig]));
-      } else {
+      {
         x.rows.forEach((row,ri)=>a3.push([profLabel(x.pc),"卡方檢定",x.type==="bin"?"勾選率 (%)":row.level+" (%)"].concat(row.pct.map((v,g)=>v==null?"":round(v*100,1)+(row.mark[g]>0?" ▲":row.mark[g]<0?" ▼":""))).concat([round(row.all*100,1)]).concat(ri===0?[t?"χ² = "+t.chi.toFixed(3):"",t?t.df:"",t?round(t.p,4):"",sig]:["","","",""])));
       }
     });
