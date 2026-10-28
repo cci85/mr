@@ -701,7 +701,7 @@ function pTxtShort(p){ return p<.001?"< .001":f3(p); }
 function pTxt(p){ return p<.001?"p < .001":"p = "+f3(p); }
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2000); }
 
-const S={ wb:null, fileName:"", headers:[], rows:[], stems:{}, groupNames:{}, numCols:[], selected:new Set(), res:null, nf:null, userNf:false, fnames:[], seg:null, K:null, userK:false, profCols:[], profSel:new Set(), prof:null, excluded:new Set(), exHist:[] };
+const S={ wb:null, fileName:"", headers:[], rows:[], stems:{}, groupNames:{}, numCols:[], selected:new Set(), res:null, nf:null, userNf:false, fnames:[], seg:null, K:null, userK:false, profCols:[], profSel:new Set(), prof:null, excluded:new Set(), exHist:[], kept:new Set() };
 
 /* ---------- 讀檔 ---------- */
 function readFile(file){
@@ -743,7 +743,7 @@ function loadSheet(name){
   S.headers=(aoa[0]||[]).map(h=>String(h).trim());
   S.rows=aoa.slice(1);
   S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
-  S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[];
+  S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[]; S.kept=new Set();
   S.userCut=false;
   const cfg=name==="資料"?readCfg(S.wb):null;
   if (cfg&&Array.isArray(cfg.added)){
@@ -772,6 +772,7 @@ function applyCfg(cfg){
   S.exHist=cfg.exHist.map((x,i)=>Object.assign({},x,{ci:ex[i]}));
   if (Array.isArray(cfg.prof)){ const want=new Set(cfg.prof); S.profSel=new Set(S.profCols.filter(pc=>want.has(pc.name)).map(pc=>pc.ci)); }
   else ex.forEach(c=>S.profSel.add(c));
+  S.kept=new Set((cfg.kept||[]).map(ci).filter(c=>c!=null));
   S.nf=cfg.nf; S.userNf=!!cfg.userNf;
   if ([...$("cut").options].some(o=>+o.value===+cfg.cut)){ $("cut").value=String(+cfg.cut); S.userCut=true; }
   S.fnames=(cfg.fnames||[]).slice();
@@ -961,23 +962,33 @@ function renderLoadings(){
   $("load-msg").innerHTML=m.map(x=>'<div class="notice warn">'+esc(x)+'</div>').join("");
   renderCand();
 }
+function candInfo(it){
+  const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
+  return {it, reason:it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值", loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+it.row[j].toFixed(2)).join("、")};
+}
+function keptItems(){ const r=S.res; if (!r||!r.items) return []; return r.items.filter(it=>it.dom&&it.cross.length&&S.kept.has(it.c.ci)).map(candInfo); }
 function candidates(){
   const r=S.res; if (!r||!r.items) return [];
-  return r.items.filter(it=>(!it.dom&&!it.neg.length)||it.cross.length).map(it=>{
+  return r.items.filter(it=>((!it.dom&&!it.neg.length)||it.cross.length)&&!(it.dom&&S.kept.has(it.c.ci))).map(it=>{
     const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
     const reason=it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值";
     return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+it.row[j].toFixed(2)).join("、")};
   });
 }
 function renderCand(){
-  const C=candidates(); let h="";
-  if (C.length||S.exHist.length) h+='<h3>歸屬不明的題目</h3>';
+  const C=candidates(), KP=keptItems(); let h="";
+  if (C.length||S.exHist.length||KP.length) h+='<h3>歸屬不明的題目</h3>';
   if (C.length){
-    h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：題意與所歸屬的構面一致者，可以保留；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 AI 報告指令（一）的建議，並應在看分群結果之前完成。</p>';
+    h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：具有交叉負荷量的題目，題意與負荷量較高的構面一致者，可按「保留」，歸入該構面；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，或主要負荷量未達門檻值者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 AI 報告指令（一）的建議，並應在看分群結果之前完成。</p>';
     h+='<div class="table-scroll"><table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th class="l">情形</th><th class="l">最高的兩個負荷量</th><th></th></tr></thead><tbody>';
-    C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td><button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作輪廓變數</button></td></tr>'; });
+    C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td style="white-space:nowrap">'+(c.it.dom?'<button type="button" class="ghost" data-keep="'+c.it.c.ci+'">保留</button> ':'')+'<button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作輪廓變數</button></td></tr>'; });
     h+='</tbody></table></div>';
-  } else if (S.exHist.length) h+='<div class="notice ok">目前沒有歸屬不明的題目。</div>';
+  } else if (S.exHist.length||KP.length) h+='<div class="notice ok">目前沒有歸屬不明的題目。</div>';
+  if (KP.length){
+    h+='<p class="hint small"><b>已保留（具有交叉負荷量，依題意歸入負荷量較高的因素）：</b></p><div class="table-scroll"><table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th class="l">歸入</th><th class="l">最高的兩個負荷量</th><th></th></tr></thead><tbody>';
+    KP.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">因素'+(c.it.best+1)+'</td><td class="l">'+c.loadTxt+'</td><td><button type="button" class="ghost" data-unkeep="'+c.it.c.ci+'">取消保留</button></td></tr>'; });
+    h+='</tbody></table></div>';
+  }
   if (S.exHist.length){
     h+='<p class="hint small"><b>已剔除（依剔除順序）：</b></p><div class="table-scroll"><table><thead><tr><th class="l">順序</th><th class="l">題項</th><th class="l">剔除時的情形</th><th></th></tr></thead><tbody>';
     S.exHist.forEach((x,i)=>{ h+='<tr><td class="l">'+(i+1)+'</td><td class="l">'+esc(x.name)+'</td><td class="l">'+x.reason+'（'+x.loadTxt+'）</td><td><button type="button" class="ghost" data-restore="'+x.ci+'">恢復</button></td></tr>'; });
@@ -986,10 +997,12 @@ function renderCand(){
   $("cand").innerHTML=h;
   $("cand").querySelectorAll("button[data-ex]").forEach(b=>b.addEventListener("click",()=>{
     const ci=+b.dataset.ex, c=C.find(x=>x.it.c.ci===ci);
-    S.selected.delete(ci); S.excluded.add(ci); S.profSel.add(ci);
+    S.selected.delete(ci); S.excluded.add(ci); S.profSel.add(ci); S.kept.delete(ci);
     S.exHist.push({ci,name:c.it.c.name,stem:c.it.c.stem||"",reason:c.reason,loadTxt:c.loadTxt,nf:S.nf,mean:c.it.mean});
     renderGroups(); analyze(); toast("已剔除 "+c.it.c.name+"，並重新分析");
   }));
+  $("cand").querySelectorAll("button[data-keep]").forEach(b=>b.addEventListener("click",()=>{ S.kept.add(+b.dataset.keep); renderCand(); renderPrompt(); }));
+  $("cand").querySelectorAll("button[data-unkeep]").forEach(b=>b.addEventListener("click",()=>{ S.kept.delete(+b.dataset.unkeep); renderCand(); renderPrompt(); }));
   $("cand").querySelectorAll("button[data-restore]").forEach(b=>b.addEventListener("click",()=>{
     const ci=+b.dataset.restore;
     S.excluded.delete(ci); S.exHist=S.exHist.filter(x=>x.ci!==ci); S.selected.add(ci);
@@ -1061,6 +1074,8 @@ function renderPrompt(){
   let p2="第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數"+(k===r.kaiser?"":"（本分析的因素個數為研究者指定，請說明依據為累積解釋變異量與因素的可詮釋性）")+"，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值為 "+cutT+"。";
   if (S.exHist.length) p2+="接著說明初步分析萃取出的因素個數，以及被剔除的題項與剔除理由（見【分析結果】的「被剔除的題項」）：交叉負荷量達門檻值者，寫作「具有交叉負荷量（大於 "+cutT+"）」；主要負荷量未達門檻值者，寫作「主要負荷量未達門檻值 "+cutT+"」。然後說明剔除後重新執行因素分析，最終萃取出的因素個數，並以「如表1所示」引用表格。";
   else p2+="說明所有題項的主要負荷量皆達門檻值 "+cutT+"，且沒有交叉負荷量，因此保留全部題項，並以「如表1所示」引用表格。";
+  const KP=keptItems();
+  if (KP.length) p2+="另說明依題意保留的交叉負荷量題項（見【分析結果】），寫法如「項目10（心情愉快）雖具有交叉負荷量，但題意與因素1一致，故予以保留並歸入因素1」，因素可改用第三段命名後的名稱。";
   p2+="最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。";
   L.push(p2);
   let p3="第三段　因素命名與認同程度：依表1的因素負荷量（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依【分析結果】的「各因素平均數」，說明哪個因素最受認同、哪個因素認同程度最低，並寫出平均數。";
@@ -1080,7 +1095,7 @@ function renderPrompt(){
     L.push("五、歸屬不明題目的內容判斷");
     L.push("下列題目在統計上歸屬不明（主要負荷量未達門檻值 "+cutT+"，或另一個因素的負荷量也達門檻值，即具有交叉負荷量）：");
     CAND.forEach(c=>L.push("- "+c.it.c.name+"（"+(c.it.c.stem||"同題項欄名")+"）："+c.reason+"，"+c.loadTxt));
-    L.push("請逐題判斷其題意是否與所歸屬或最接近的構面一致：若一致，建議保留，並說明它補充了該構面的哪個面向；若題意明顯不同於所有保留構面（例如代表另一種獨立的動機），建議自因素分析剔除，改作市場區隔的輪廓變數。請在報告最前面以「歸屬不明題目的內容判斷」為標題，逐題列出建議（保留或剔除）與理由，每題一至兩句；此段只提供建議，是否剔除由研究者決定。");
+    L.push("請逐題判斷：具有交叉負荷量的題目，若題意與負荷量較高的構面一致，建議保留並歸入該構面，並說明它補充了該構面的哪個面向；若題意明顯不同於所有保留構面（例如代表另一種獨立的動機），建議剔除。主要負荷量未達門檻值的題目無法歸入任何構面，建議自因素分析剔除，並說明其題意與各構面的差異。剔除的題目改作市場區隔的輪廓變數。請在報告最前面以「歸屬不明題目的內容判斷」為標題，逐題列出建議（保留或剔除）與理由，每題一至兩句；此段只提供建議，是否剔除由研究者決定。");
   }
   L.push("");
   L.push("=====================");
@@ -1097,6 +1112,10 @@ function renderPrompt(){
     L.push("初步分析萃取的因素個數："+S.exHist[0].nf);
     L.push("被剔除的題項（依剔除順序；剔除後改作輪廓變數）：");
     S.exHist.forEach(x=>L.push("- "+x.name+"（"+(x.stem||"同題項欄名")+"）："+x.reason+"（剔除時 "+x.loadTxt+"）"));
+  }
+  if (KP.length){
+    L.push("依題意保留的交叉負荷量題項：");
+    KP.forEach(c=>L.push("- "+itemRef(c.it.c.name)+"："+c.loadTxt+"；歸入因素"+(c.it.best+1)));
   }
   L.push("最終因素個數："+k+"（"+(k===r.kaiser?"特徵值大於 1":"研究者指定；特徵值大於 1 者為 "+r.kaiser+" 個")+"）");
   let cum=0;
@@ -1544,7 +1563,7 @@ function dlData(){
   ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
   const cfg={v:1, items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})),
     nf:k, userNf:S.userNf, cut:r.cut.v, fnames:Array.from({length:k},(_,j)=>(S.fnames[j]||"").trim()), K:c?c.k:null,
-    topic:$("topic").value, alpha:$("alpha").value, prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
+    topic:$("topic").value, alpha:$("alpha").value, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
   const st=[["項目","內容"],
     ["說明","重新上傳此檔案時，市場區隔分析工具會依本工作表自動還原上次的分析；請勿修改本工作表。"],
     ["分析題項",cfg.items.join("、")],
