@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>練習資料擴充</title>
+<meta name="description" content="以小樣本問卷為基礎，在瀏覽器中以近鄰合成模擬產生更多份練習用問卷資料。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9; --border-strong:#c7bea9;
+  --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
+  --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7; --accent-contrast:#ffffff;
+  --warn:#95591b; --warn-soft:#f6ecda; --danger:#9c3b3b; --danger-soft:#f7e6e4;
+  --good:#3c6e3f; --good-soft:#e7f0e2; --pos:#1f6b55; --neg:#a24a3a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+    --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+    --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+    --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+    --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+  --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+  --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+  --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+  --good:#94c286; --good-soft:#25361f; --pos:#8fd0b8; --neg:#ec9d8c;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.7}
+.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}
+.toolbox-back a{color:#28594f;text-decoration:none}
+.toolbox-back a:hover{text-decoration:underline}
+@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}
+main{max-width:1080px;margin:0 auto;padding:32px 16px 64px}
+.eyebrow{margin:0 0 6px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:"Noto Serif TC",serif;font-size:clamp(25px,4vw,32px);margin:0 0 8px}
+.lede{margin:0 0 24px;color:var(--ink-soft);max-width:70ch}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;margin-bottom:18px}
+.panel h2{font-family:"Noto Serif TC",serif;font-size:19px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+.step{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);font-family:"Noto Sans TC",sans-serif;font-size:14px;font-weight:700}
+.hint{color:var(--ink-soft);font-size:14px;margin:0 0 12px}
+.small{font-size:13px}
+h3{font-size:15.5px;margin:18px 0 8px;color:var(--accent-strong)}
+.dropzone{display:flex;align-items:center;justify-content:center;gap:10px;min-height:90px;border:2px dashed var(--border-strong);border-radius:10px;background:var(--surface-2);cursor:pointer;padding:14px;text-align:center;color:var(--ink-soft)}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:14px}
+select,input[type=number]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 8px}
+input[type=number]{width:72px}
+button{font:inherit;font-size:14px;border-radius:7px;padding:7px 14px;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);font-weight:700}
+button.primary:disabled,button:disabled{opacity:.45;cursor:not-allowed}
+button.ghost{padding:3px 10px;font-size:13px}
+.groups{display:grid;gap:10px}
+.grp{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--surface-2)}
+.grp-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.grp-head strong{font-size:14.5px}
+.tag{font-size:12px;color:var(--ink-faint);border:1px solid var(--border);border-radius:999px;padding:0 8px;background:var(--surface)}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:2px 14px}
+.items label{display:flex;gap:6px;align-items:flex-start;font-size:13.5px;line-height:1.5;padding:2px 0}
+.items label input{margin-top:3px}
+.items label span.stem{color:var(--ink-faint)}
+.notice{border-radius:8px;padding:9px 13px;font-size:14px;margin:10px 0}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.bad{background:var(--danger-soft);color:var(--danger)}
+.notice.ok{background:var(--good-soft);color:var(--good)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 4px}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:150px}
+.stat b{display:block;font-size:19px;color:var(--accent-strong);font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--ink-soft)}
+.table-scroll{overflow-x:auto;margin:6px 0}
+table{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;min-width:100%}
+th,td{padding:5px 9px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{background:var(--surface-2);font-weight:700;color:var(--ink-soft)}
+th.l,td.l{text-align:left;white-space:normal;min-width:120px}
+td.stemcell{color:var(--ink-soft);font-size:12.5px;max-width:340px}
+tr.kept td{background:var(--accent-soft)}
+td.dom{font-weight:700;color:var(--accent-strong);background:var(--accent-soft)}
+td.cross{font-weight:700;color:var(--warn)}
+td.neg{font-weight:700;color:var(--danger)}
+td.low{color:var(--ink-faint)}
+td.flag{color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-soft);margin:4px 0 0}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg.scree{width:100%;max-width:560px;height:auto;display:block}
+svg.scree text{font-size:11px;fill:var(--ink-soft);font-family:inherit}
+pre.prompt{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:420px;overflow:auto}
+details summary{cursor:pointer;font-size:13.5px;color:var(--ink-soft);margin-top:10px}
+ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.show{opacity:1}
+.faint{color:var(--ink-faint)}
+.fnames{display:grid;gap:8px;margin:8px 0}
+.fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
+.fname label{font-size:14px}
+.fname label span{display:block;font-size:12.5px;color:var(--ink-faint)}
+@media (max-width:620px){.fname{grid-template-columns:minmax(0,1fr)}}
+input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 9px;width:100%}
+textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;min-height:64px;resize:vertical}
+.kpick{display:flex;flex-wrap:wrap;gap:8px}
+.kpick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
+.kpick label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin:8px 0}
+.chart{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface-2)}
+.chart p{margin:0 0 2px;font-size:13px;font-weight:700;color:var(--ink-soft)}
+svg.mini{width:100%;max-width:380px;height:auto;display:block;margin:0 auto}
+svg.mini text{font-size:11px;fill:var(--ink-soft);font-family:inherit}
+td.pos{color:var(--pos)}
+td.neg{color:var(--neg)}
+td.max{font-weight:700;background:var(--accent-soft)}
+td.up{color:var(--pos);font-weight:700}
+td.down{color:var(--neg);font-weight:700}
+td.hi{font-weight:700;color:var(--accent-strong)}
+tr.total td{font-weight:700;background:var(--surface-2)}
+tr.sigrow td.l{font-weight:700}
+.testtxt{font-family:"Noto Sans TC",sans-serif;font-weight:400;font-size:13px;color:var(--ink-faint);margin-left:10px}
+.testtxt.sig{color:var(--accent-strong);font-weight:700}
+.stage{margin:34px 0 14px;padding-top:10px;border-top:2px solid var(--border);font-family:"Noto Serif TC",serif;font-size:21px;color:var(--accent-strong)}
+.stage small{display:block;font-family:"Noto Sans TC",sans-serif;font-size:13.5px;font-weight:400;color:var(--ink-soft)}
+#target{width:96px}#seed{width:120px}td.colname{max-width:420px;white-space:normal}
+footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
+</style>
+</head>
+<body>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<main>
+  <p class="eyebrow">行銷研究方法 · 資料整理</p>
+  <h1>練習資料擴充</h1>
+  <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人，因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。下載的檔案格式與 Google 表單匯出相同，可直接送進問卷資料整理器。</p>
+  <div class="notice warn"><b>模擬資料僅供課堂練習。</b>擴充後的資料不是真實受訪者的回答，不得作為研究結果、報告數據或論文資料；檔案最後一欄「資料來源」會標明每一列是原始或模擬。</div>
+
+  <!-- 1 上傳 -->
+  <section class="panel" aria-labelledby="h1s">
+    <h2 id="h1s"><span class="step">1</span>上傳原始問卷資料</h2>
+    <p class="hint">請上傳 Google 表單回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
+    </label>
+    <div class="row" id="sheet-row" hidden>
+      <label class="inline">工作表 <select id="sheet"></select></label>
+      <button type="button" class="ghost" id="btn-remove">移除檔案</button>
+    </div>
+    <div id="load-msg"></div>
+  </section>
+
+  <!-- 2 欄位 -->
+  <section class="panel" id="sec-cols" aria-labelledby="h2s" hidden>
+    <h2 id="h2s"><span class="step">2</span>確認各欄的處理方式</h2>
+    <p class="hint">工具已依內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄，不產生原本不存在的答案。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（如李克特量表）依分數差距計算，類別欄（單選、開放題）依答案是否相同計算，複選題依選項重疊的程度計算，且整題一起照錄，選項組合不會被拆開；「時間」欄在原始資料的時間範圍內隨機產生；「留白」用於學號、姓名等個人資料，模擬列一律空白。</p>
+    <div class="table-scroll" id="cols-table"></div>
+  </section>
+
+  <!-- 3 設定 -->
+  <section class="panel" id="sec-gen" aria-labelledby="h3s" hidden>
+    <h2 id="h3s"><span class="step">3</span>產生模擬資料</h2>
+    <div class="row">
+      <label class="inline">目標總份數（含原始） <input type="number" id="target" min="2" max="5000" step="10" value="200"></label>
+      <label class="inline">近鄰數 <input type="number" id="knn" min="1" max="20" step="1" value="5"></label>
+      <label class="inline">亂數種子 <input type="number" id="seed" step="1" value="20261028"></label>
+      <button type="button" class="primary" id="btn-gen">產生模擬資料</button>
+    </div>
+    <p class="hint small">近鄰數愈小，模擬資料愈貼近個別受訪者；愈大，混合的範圍愈廣。亂數種子相同時，同一份資料每次產生的結果相同；改變種子可得到另一組模擬資料。</p>
+    <div id="gen-msg"></div>
+  </section>
+
+  <!-- 4 核對 -->
+  <section class="panel" id="sec-check" aria-labelledby="h4s" hidden>
+    <h2 id="h4s"><span class="step">4</span>核對模擬品質</h2>
+    <p class="hint">比較原始資料與模擬資料的分布。模擬資料由作答相近的受訪者混合而成，較少出現極端的作答組合，標準差通常略小於原始資料；題目之間的相關係數則應大致相近。</p>
+    <div class="stats" id="check-stats"></div>
+    <h3>數值欄位</h3>
+    <div class="table-scroll" id="check-num"></div>
+    <h3>類別欄位</h3>
+    <p class="hint small">各欄比較原始與模擬資料中各類別的比例，列出差距最大的類別。複選題以整題的作答組合計算。</p>
+    <div class="table-scroll" id="check-cat"></div>
+    <h3>下載</h3>
+    <div class="row"><button type="button" class="primary" id="btn-dl">下載擴充後的資料 Excel</button></div>
+    <p class="hint small">檔案依序為原始資料與模擬資料，最後一欄「資料來源」標明「原始」或「模擬」；另附「模擬說明」工作表，記錄方法、份數與亂數種子。送進問卷資料整理器時，「資料來源」欄可設為「移除」，或保留作為單選題。</p>
+  </section>
+
+  <footer>所有計算都在您的瀏覽器中完成，資料不會上傳，也不使用 AI 服務。</footer>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../omv-reader.js"></script>
+<script>
+/* ===== SIM-BEGIN（純計算函式，可單獨測試） ===== */
+const Sim=(function(){
+  function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
+  const blank=v=>v===""||v===null||v===undefined;
+  function splitMulti(s){ return String(s).split(/,\s*/).map(x=>x.trim()).filter(Boolean); }
+  /* cols: [{type:"num"|"cat"|"multi"|"time"|"clear", min,max,int}]；rows：原始資料 */
+  function prepare(rows,cols){
+    const n=rows.length;
+    const use=cols.map((c,j)=>c.type==="num"||c.type==="cat"||c.type==="multi"?j:-1).filter(j=>j>=0);
+    const sets=rows.map(r=>cols.map((c,j)=>c.type==="multi"&&!blank(r[j])?new Set(splitMulti(r[j])):null));
+    const pat=rows.map(r=>use.map(j=>blank(r[j])?"0":"1").join(""));
+    function dist(a,b){
+      let d=0, m=0;
+      for (const j of use){
+        const x=rows[a][j], y=rows[b][j], bx=blank(x), by=blank(y);
+        m++;
+        if (bx||by){ d+=bx&&by?0:1; continue; }
+        const c=cols[j];
+        if (c.type==="num") d+=c.max>c.min?Math.abs(x-y)/(c.max-c.min):0;
+        else if (c.type==="multi"){ const A=sets[a][j], B=sets[b][j]; let inter=0; A.forEach(v=>{ if (B.has(v)) inter++; }); const uni=A.size+B.size-inter; d+=uni?1-inter/uni:0; }
+        else d+=String(x).trim()===String(y).trim()?0:1;
+      }
+      return m?d/m:0;
+    }
+    return {n,use,pat,dist};
+  }
+  function neighbors(P,k){
+    const {n,pat,dist}=P, out=new Array(n);
+    for (let i=0;i<n;i++){
+      let cand=[]; for (let j=0;j<n;j++) if (j!==i&&pat[j]===pat[i]) cand.push(j);
+      let fallback=false;
+      if (!cand.length){ fallback=true; for (let j=0;j<n;j++) if (j!==i) cand.push(j); }
+      const ds=cand.map(j=>[j,dist(i,j)]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+      out[i]={nb:ds.slice(0,k).map(x=>x[0]),fallback};
+    }
+    return out;
+  }
+  function generate(rows,cols,m,k,seed){
+    const rand=rng(seed), P=prepare(rows,cols), NB=neighbors(P,k), n=rows.length;
+    const out=[];
+    for (let t=0;t<m;t++){
+      const a=Math.floor(rand()*n), nb=NB[a].nb;
+      const b=nb.length?nb[Math.floor(rand()*nb.length)]:a;
+      const u=.2+.6*rand(), A=rows[a], B=rows[b]; /* 混合比例限制在 0.2～0.8，避免整列複製其中一人 */
+      const row=cols.map((c,j)=>{
+        const x=A[j], y=B[j];
+        if (c.type==="clear") return "";
+        if (c.type==="time"){ if (c.min==null) return blank(x)?"":x; return new Date(c.min+rand()*(c.max-c.min)); }
+        if (c.type==="keep") return blank(x)?"":x;
+        if (blank(x)) return "";
+        if (c.type==="num"){
+          if (blank(y)) return x;
+          return rand()<u?y:x;
+        }
+        if (blank(y)) return x;
+        return rand()<u?y:x;
+      });
+      out.push(row);
+    }
+    return {rows:out, fallback:NB.filter(x=>x.fallback).length};
+  }
+  return {generate, rng, splitMulti};
+})();
+/* ===== SIM-END ===== */
+
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const blank=v=>v===""||v===null||v===undefined;
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
+const TYPE_NAME={num:"數值（擇一照錄）",cat:"類別（擇一照錄）",multi:"複選（整題擇一照錄）",time:"時間（範圍內隨機）",clear:"留白（個人資料）",keep:"照錄第一位"};
+const ID_RE=/學號|姓名|名字|電話|手機|e-?mail|信箱|地址|身分證|line\s*id/i;
+const TIME_RE=/時間戳記|timestamp|填答時間|提交時間/i;
+const S={wb:null,fileName:"",sheet:"",headers:[],rows:[],cols:[],sim:null};
+
+function readFile(file){
+  if (!file) return;
+  if (typeof XLSX==="undefined"){ toast("Excel 解析功能載入失敗，請檢查網路連線"); return; }
+  const isCsv=/\.csv$/i.test(file.name), isOmv=OMV.isOmv(file), rd=new FileReader();
+  rd.onload=async()=>{
+    try{
+      const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string",cellDates:true}):XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:true}));
+      if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
+      S.wb=wb; S.fileName=file.name;
+      $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
+      $("sheet-row").hidden=false; $("sheet").value=wb.SheetNames[0]; loadSheet(wb.SheetNames[0]);
+    }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案":"無法解析此檔案，請確認格式"); }
+  };
+  if (isCsv) rd.readAsText(file,"utf-8"); else rd.readAsArrayBuffer(file);
+}
+function asDate(v){
+  if (v instanceof Date) return isNaN(v)?null:v;
+  if (typeof v==="string"&&/\d{4}[\/-]\d{1,2}[\/-]\d{1,2}/.test(v)){ const d=new Date(v.replace(/上午|下午/,"").trim()); return isNaN(d)?null:d; }
+  return null;
+}
+function loadSheet(name){
+  S.sheet=name; S.sim=null;
+  const aoa=XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
+  S.headers=(aoa[0]||[]).map(h=>String(h).trim());
+  const W=S.headers.length;
+  S.rows=aoa.slice(1).map(r=>{ const o=[]; for (let j=0;j<W;j++){ let v=r[j]; if (typeof v==="string"){ v=v.trim(); } o.push(v===undefined?"":v); } return o; })
+         .filter(r=>r.some(v=>!blank(v)));
+  const srcIdx=S.headers.indexOf("資料來源");
+  let note="";
+  if (srcIdx>=0){ const before=S.rows.length; S.rows=S.rows.filter(r=>String(r[srcIdx])!=="模擬"); S.headers.splice(srcIdx,1); S.rows.forEach(r=>r.splice(srcIdx,1)); note="此檔已含「資料來源」欄，已排除先前產生的 "+(before-S.rows.length)+" 筆模擬資料，只以原始資料重新模擬。"; }
+  $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 份）";
+  S.cols=S.headers.map((h,j)=>detect(h,j));
+  let m="";
+  if (note) m+='<div class="notice warn">'+esc(note)+'</div>';
+  if (S.rows.length<10) m+='<div class="notice bad">原始資料只有 '+S.rows.length+' 份，至少需要 10 份才能模擬。</div>';
+  else if (S.rows.length<30) m+='<div class="notice warn">原始資料只有 '+S.rows.length+' 份，模擬資料會與原始資料高度相似，練習時請留意。</div>';
+  $("load-msg").innerHTML=m;
+  $("target").value=Math.max(200,Math.ceil(S.rows.length/10)*10*2);
+  renderCols();
+  $("sec-gen").hidden=S.rows.length<10; $("sec-check").hidden=true; $("gen-msg").innerHTML="";
+}
+function detect(h,j){
+  const vals=S.rows.map(r=>r[j]).filter(v=>!blank(v));
+  const c={name:h,type:"cat",min:null,max:null,int:true,nonblank:vals.length,levels:0};
+  if (ID_RE.test(h)){ c.type="clear"; return c; }
+  const dates=vals.map(asDate);
+  if (vals.length&&(TIME_RE.test(h)||dates.every(Boolean))){
+    c.type="time"; const t=dates.filter(Boolean).map(d=>d.getTime());
+    if (t.length){ c.min=Math.min(...t); c.max=Math.max(...t); }
+    return c;
+  }
+  const nums=vals.map(v=>typeof v==="number"?v:(String(v).trim()!==""&&isFinite(+v)?+v:null));
+  if (vals.length&&nums.every(x=>x!==null)){
+    c.type="num"; c.min=Math.min(...nums); c.max=Math.max(...nums); c.int=nums.every(x=>Number.isInteger(x));
+    const uniq=new Set(nums);
+    if (c.int&&uniq.size>Math.max(30,vals.length*.8)&&c.max>1e5) c.type="clear"; /* 疑似編號 */
+    c.levels=uniq.size; return c;
+  }
+  const uniq=new Set(vals.map(String)); c.levels=uniq.size;
+  if (vals.some(v=>/,\s/.test(String(v)))){
+    const opts=new Map(); vals.forEach(v=>Sim.splitMulti(v).forEach(o=>opts.set(o,(opts.get(o)||0)+1)));
+    if ([...opts.values()].filter(x=>x>=2).length>=2) c.type="multi";
+  }
+  return c;
+}
+function renderCols(){
+  $("sec-cols").hidden=false;
+  const opts=["num","cat","multi","time","clear"];
+  let t='<table><thead><tr><th class="l">#</th><th class="l">欄位（題目）</th><th>有效作答</th><th class="l">內容摘要</th><th class="l">處理方式</th></tr></thead><tbody>';
+  S.cols.forEach((c,j)=>{
+    const sum=c.type==="num"?(c.min+"～"+c.max+(c.int?"，整數":"")):(c.type==="time"?"日期時間":(c.type==="clear"?"個人資料":c.levels+" 種作答"));
+    t+='<tr><td class="l">'+(j+1)+'</td><td class="l colname">'+esc(c.name.length>60?c.name.slice(0,60)+"…":c.name)+'</td><td>'+c.nonblank+'</td><td class="l">'+esc(sum)+'</td><td class="l"><select data-j="'+j+'">'
+      +opts.filter(o=>o!=="num"||isNumCol(j)).filter(o=>o!=="time"||c.type==="time"||c.min!=null).map(o=>'<option value="'+o+'"'+(o===c.type?" selected":"")+'>'+TYPE_NAME[o]+'</option>').join("")+'</select></td></tr>';
+  });
+  $("cols-table").innerHTML=t+'</tbody></table>';
+  $("cols-table").querySelectorAll("select").forEach(s=>s.addEventListener("change",()=>{ S.cols[+s.dataset.j].type=s.value; S.sim=null; $("sec-check").hidden=true; }));
+}
+function isNumCol(j){ return S.rows.every(r=>blank(r[j])||typeof r[j]==="number"||isFinite(+r[j])); }
+
+function generate(){
+  const target=parseInt($("target").value,10), k=parseInt($("knn").value,10)||5, seed=parseInt($("seed").value,10)||0;
+  const n=S.rows.length;
+  if (!(target>n)){ $("gen-msg").innerHTML='<div class="notice warn">目標總份數須大於原始份數（'+n+' 份）。</div>'; return; }
+  if (target>5000){ $("gen-msg").innerHTML='<div class="notice warn">目標總份數上限為 5,000 份。</div>'; return; }
+  const cols=S.cols.map(c=>Object.assign({},c));
+  const rows=S.rows.map(r=>r.map((v,j)=>cols[j].type==="num"&&!blank(v)?+v:v));
+  const t0=performance.now();
+  const res=Sim.generate(rows,cols,target-n,Math.max(1,Math.min(k,n-1)),seed);
+  S.sim={rows:res.rows,orig:rows,cols,seed,k,target,fallback:res.fallback};
+  let m='<div class="notice ok">已產生 '+res.rows.length+' 份模擬資料，連同原始 '+n+' 份，共 '+target+' 份（'+Math.round(performance.now()-t0)+' 毫秒）。</div>';
+  if (res.fallback) m+='<div class="notice warn">有 '+res.fallback+' 位原始受訪者的空白題目組合是獨一無二的，以這些人為基礎的模擬資料，改由全體中最相近者配對，空白位置沿用該受訪者。</div>';
+  $("gen-msg").innerHTML=m;
+  renderCheck();
+}
+
+/* ---------- 品質核對 ---------- */
+function mean(a){ return a.reduce((s,x)=>s+x,0)/a.length; }
+function sd(a){ const m=mean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1)); }
+function corr(x,y){ const mx=mean(x),my=mean(y); let a=0,b=0,c=0; for (let i=0;i<x.length;i++){ const dx=x[i]-mx, dy=y[i]-my; a+=dx*dy; b+=dx*dx; c+=dy*dy; } return b&&c?a/Math.sqrt(b*c):null; }
+function pairCorrs(rows,idx){
+  const out=[];
+  for (let p=0;p<idx.length;p++) for (let q=p+1;q<idx.length;q++){
+    const x=[],y=[]; rows.forEach(r=>{ const a=r[idx[p]], b=r[idx[q]]; if (!blank(a)&&!blank(b)){ x.push(+a); y.push(+b); } });
+    out.push(x.length>=5?corr(x,y):null);
+  }
+  return out;
+}
+function renderCheck(){
+  const G=S.sim, cols=G.cols; $("sec-check").hidden=false;
+  const numIdx=cols.map((c,j)=>c.type==="num"?j:-1).filter(j=>j>=0);
+  let t='<table><thead><tr><th class="l">欄位</th><th>原始平均數</th><th>模擬平均數</th><th>原始標準差</th><th>模擬標準差</th></tr></thead><tbody>';
+  numIdx.forEach(j=>{
+    const a=G.orig.map(r=>r[j]).filter(v=>!blank(v)).map(Number), b=G.rows.map(r=>r[j]).filter(v=>!blank(v)).map(Number);
+    if (a.length<2||b.length<2) return;
+    t+='<tr><td class="l colname">'+esc(cols[j].name.length>40?cols[j].name.slice(0,40)+"…":cols[j].name)+'</td><td>'+mean(a).toFixed(2)+'</td><td>'+mean(b).toFixed(2)+'</td><td>'+sd(a).toFixed(2)+'</td><td>'+sd(b).toFixed(2)+'</td></tr>';
+  });
+  $("check-num").innerHTML=numIdx.length?t+'</tbody></table>':'<p class="hint">沒有數值欄位。</p>';
+  /* 相關係數 */
+  let stats="";
+  if (numIdx.length>=2&&numIdx.length<=80){
+    const ra=pairCorrs(G.orig,numIdx), rb=pairCorrs(G.rows,numIdx);
+    const pairs=ra.map((x,i)=>[x,rb[i]]).filter(([x,y])=>x!=null&&y!=null);
+    if (pairs.length){
+      const mad=mean(pairs.map(([x,y])=>Math.abs(x-y))), r1=mean(pairs.map(p=>p[0])), r2=mean(pairs.map(p=>p[1])), rr=corr(pairs.map(p=>p[0]),pairs.map(p=>p[1]));
+      stats+='<div class="stat"><b>'+r1.toFixed(3)+' → '+r2.toFixed(3)+'</b><span>數值欄位兩兩相關係數的平均（原始 → 模擬）</span></div>';
+      stats+='<div class="stat"><b>'+mad.toFixed(3)+'</b><span>兩兩相關係數差距的平均（'+pairs.length+' 組）</span></div>';
+      if (rr!=null) stats+='<div class="stat"><b>'+rr.toFixed(3)+'</b><span>原始與模擬相關係數之間的相關</span></div>';
+    }
+  }
+  $("check-stats").innerHTML=stats;
+  /* 類別 */
+  const catIdx=cols.map((c,j)=>c.type==="cat"||c.type==="multi"?j:-1).filter(j=>j>=0).filter(j=>cols[j].levels<=30);
+  let ct='<table><thead><tr><th class="l">欄位</th><th>類別數</th><th class="l">差距最大的類別</th><th>原始比例</th><th>模擬比例</th></tr></thead><tbody>';
+  let anyCat=false;
+  catIdx.forEach(j=>{
+    const cnt=rows=>{ const m=new Map(); let N=0; rows.forEach(r=>{ const v=r[j]; if (blank(v)) return; const s=String(v); m.set(s,(m.get(s)||0)+1); N++; }); return {m,N}; };
+    const A=cnt(G.orig), B=cnt(G.rows); if (!A.N||!B.N) return;
+    let worst=null, wd=-1;
+    new Set([...A.m.keys(),...B.m.keys()]).forEach(k=>{ const pa=(A.m.get(k)||0)/A.N, pb=(B.m.get(k)||0)/B.N; if (Math.abs(pa-pb)>wd){ wd=Math.abs(pa-pb); worst=[k,pa,pb]; } });
+    anyCat=true;
+    ct+='<tr><td class="l colname">'+esc(cols[j].name.length>40?cols[j].name.slice(0,40)+"…":cols[j].name)+'</td><td>'+A.m.size+'</td><td class="l">'+esc(worst[0].length>30?worst[0].slice(0,30)+"…":worst[0])+'</td><td>'+(worst[1]*100).toFixed(1)+'%</td><td>'+(worst[2]*100).toFixed(1)+'%</td></tr>';
+  });
+  $("check-cat").innerHTML=anyCat?ct+'</tbody></table>':'<p class="hint">沒有 30 種作答以內的類別欄位。</p>';
+}
+
+/* ---------- 下載 ---------- */
+function download(){
+  const G=S.sim; if (!G) return;
+  const head=S.headers.concat(["資料來源"]);
+  const aoa=[head].concat(S.rows.map(r=>r.concat(["原始"]))).concat(G.rows.map(r=>r.concat(["模擬"])));
+  const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true,dateNF:"yyyy/m/d h:mm:ss"});
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,S.sheet.slice(0,31)||"資料");
+  const typeCount={}; G.cols.forEach(c=>typeCount[c.type]=(typeCount[c.type]||0)+1);
+  const info=[["項目","內容"],
+    ["用途","課堂練習用模擬資料，不得作為研究結果、報告數據或論文資料"],
+    ["原始檔案",S.fileName+"（工作表："+S.sheet+"）"],
+    ["原始份數",S.rows.length],["模擬份數",G.rows.length],["總份數",S.rows.length+G.rows.length],
+    ["模擬方法","近鄰合成：隨機選取一位原始受訪者，再從空白題目相同、作答最相近的 "+G.k+" 位中選取一位；每一題依 0.2～0.8 之間的隨機比例從兩人中擇一照錄（數值欄不內插，以免墊高題目之間的相關），空白位置沿用第一位受訪者"],
+    ["距離計算","Gower 距離：數值欄以全距標準化後的差距，單選與開放題以是否相同，複選題以 Jaccard 距離"],
+    ["亂數種子",G.seed],
+    ["產生日期",new Date().toLocaleString("zh-TW")],
+    [],["欄位","處理方式"]].concat(G.cols.map(c=>[c.name,TYPE_NAME[c.type]]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),"模擬說明");
+  XLSX.writeFile(wb,S.fileName.replace(/\.(xlsx|csv|omv)$/i,"")+"_練習擴充"+(S.rows.length+G.rows.length)+"份.xlsx");
+}
+
+/* ---------- 事件 ---------- */
+$("file").addEventListener("change",e=>readFile(e.target.files[0]));
+const dz=$("dropzone");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if (f) readFile(f); });
+$("sheet").addEventListener("change",e=>loadSheet(e.target.value));
+$("btn-remove").addEventListener("click",()=>{ S.wb=null; S.rows=[]; S.sim=null; $("file").value=""; $("dz-label").textContent="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡"; $("sheet-row").hidden=true; ["sec-cols","sec-gen","sec-check"].forEach(s=>$(s).hidden=true); $("load-msg").innerHTML=""; });
+$("btn-gen").addEventListener("click",generate);
+$("btn-dl").addEventListener("click",download);
+})();
+</script>
+</body>
+</html>
