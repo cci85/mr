@@ -256,10 +256,10 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint small">輪廓係數衡量每位受訪者與自己所屬群的相近程度，介於 −1 與 1 之間；手肘圖中組內平方和下降幅度明顯趨緩之處，也可作為群數的參考。最後仍應考量各群能否清楚命名、是否具行銷意義。</p>
     <h3>採用的群數</h3>
     <div class="kpick" id="kpick"></div>
-    <h3>AI 報告指令（群數）：比較 3、4、5 群</h3>
+    <h3>AI 報告指令（群數決定）：比較 3、4、5 群</h3>
     <p class="hint">指令已自動填入 3、4、5 群的各群人數與群中心值。複製後貼到 AI 對話中，AI 會依群數決定的三項準則與條紋現象，比較各群數的優缺點並建議群數；請依建議在上方選擇採用的群數，再進行步驟 11 的正式命名。建議先把因素名稱填回步驟 5，AI 才能以構面名稱判讀。</p>
     <div class="row">
-      <button type="button" class="primary" id="btn-copy-k">複製 AI 報告指令（群數）</button>
+      <button type="button" class="primary" id="btn-copy-k">複製 AI 報告指令（群數決定）</button>
       <span class="small" id="k-prompt-len"></span>
     </div>
     <details>
@@ -1494,7 +1494,7 @@ function profText(){
   return L.join("\n");
 }
 
-/* ---------- AI 指令（群數） ---------- */
+/* ---------- AI 指令（群數決定） ---------- */
 /* 命名依據：先看相對最大正值，其次才看相對最大負值 */
 function clusterFeat(row, fl){
   const idx=row.map((v,j)=>j), pos=idx.filter(j=>row[j]>=.5).sort((a,b)=>row[b]-row[a]);
@@ -1724,7 +1724,7 @@ $("btn-copy-seg").addEventListener("click",()=>{
   copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
 });
 $("btn-copy-fa").addEventListener("click",copyFaTable);
-$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製 AI 報告指令（群數）"));
+$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製 AI 報告指令（群數決定）"));
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
 })();
