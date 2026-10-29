@@ -1495,17 +1495,17 @@ function profText(){
 }
 
 /* ---------- AI 指令（群數決定） ---------- */
-/* 命名依據：先看相對最大正值，其次才看相對最大負值 */
-function clusterFeat(row, fl){
-  const idx=row.map((v,j)=>j), pos=idx.filter(j=>row[j]>=.5).sort((a,b)=>row[b]-row[a]);
-  const neg=idx.filter(j=>row[j]<0).sort((a,b)=>row[a]-row[b]);
-  const t=j=>fl[j]+"（"+f2(row[j])+"）";
-  if (pos.length){
-    const sec=pos.length>1?{j:pos[1],kind:"第二個正向峰值"}:(neg.length?{j:neg[0],kind:"最大負值"}:null);
-    return {type:"正向", main:t(pos[0]), sec:sec?t(sec.j)+"，"+sec.kind:"無"};
-  }
-  const sec=neg.length>1?t(neg[1])+"，第二大負值":"無";
-  return {type:"沒有正向峰值", main:neg.length?t(neg[0])+"，最大負值":"無", sec};
+/* 命名依據：每個因素歸入群中心值最大（最大正值）的群；沒有分到因素的群，以該群的最大負值命名 */
+function clusterFeats(C, fl){
+  const K=C.length, k=fl.length, own=Array.from({length:K},()=>[]);
+  for (let j=0;j<k;j++){ let g=0; for (let h=1;h<K;h++) if (C[h][j]>C[g][j]) g=h; own[g].push(j); }
+  return C.map((row,g)=>{
+    const t=j=>fl[j]+"（"+f2(row[j])+"）";
+    if (own[g].length) return {type:"正向", basis:own[g].sort((a,b)=>row[b]-row[a]).map(t).join("、")};
+    let m=0; row.forEach((v,j)=>{ if (v<row[m]) m=j; });
+    const other=row.map((v,j)=>j).filter(j=>row[j]>=.5).sort((a,b)=>row[b]-row[a]);
+    return {type:"沒有分到構面", basis:t(m)+"，最大負值"+(other.length?"（另有正值："+other.map(t).join("、")+"，但該構面已歸入群中心值更高的群）":"")};
+  });
 }
 function renderKPrompt(){
   const G=S.seg; if (!G||!$("k-prompt")) return;
@@ -1524,14 +1524,14 @@ function renderKPrompt(){
   L.push("");
   L.push("三、暫定命名規則（每種群數各自進行）");
   L.push("【分群結果】已依下列規則為每一群列出「命名依據」，請直接採用，不得自行改選其他構面：");
-  L.push("1. 先看相對最大正值：群中心值達 .50 以上的構面為正向峰值，以最大的正向峰值為命名主軸。");
-  L.push("2. 次要特徵：若還有第二個達 .50 以上的正向峰值，以它為次要特徵；沒有時，才以該群的最大負值為次要特徵。");
-  L.push("3. 沒有任何構面達 .50 的群，為沒有正向峰值的群：以最大負值為命名主軸，從反面命名（例如「低○○型」「輕○○型」），以第二大負值為次要特徵，並檢查是否屬於條紋現象。");
-  L.push("4. 名稱須同時反映命名主軸與次要特徵；把同一群數的各群名稱並列，檢查每個名稱是否對應獨特的構面組合，若有兩個名稱說不出差別，代表該群數可能過多。");
+  L.push("1. 以最大正值為優先：每個構面都歸入群中心值最大的那一群，所有構面皆分入特定群別。");
+  L.push("2. 分到構面的群，以所分到的構面命名；分到兩個以上構面時，名稱須涵蓋這些構面。");
+  L.push("3. 沒有分到任何構面的群，以該群群中心值最小的構面（最大負值）從反面命名，例如「低○○型」「輕○○型」，並檢查是否屬於條紋現象。若命名依據註明「另有正值」，代表該群在該構面上也明顯高於平均，只是低於另一群；請在該群數的優缺點中檢視這是否造成兩群難以區分，命名仍依最大負值。");
+  L.push("4. 不需要每群都以兩個構面命名。把同一群數的各群名稱並列，檢查每個名稱是否對應獨特的構面組合；若有兩個名稱說不出差別，代表該群數可能過多。");
   L.push("");
   L.push("四、輸出格式");
   L.push("依 3 群、4 群、5 群的順序，各以一個小節撰寫：");
-  L.push("- 暫定名稱：列出各群的暫定名稱，並照抄【分群結果】的命名依據與數值（例如「命名主軸：口感風味動機（.83）；次要特徵：自我展現動機（-.49），最大負值」），名稱至多 8 個字，須反映消費動機。");
+  L.push("- 暫定名稱：列出各群的暫定名稱，並照抄【分群結果】的命名依據與數值（例如「命名依據：自我展現動機（.69）、健康養生動機（.64）」），名稱至多 8 個字，須反映消費動機。");
   L.push("- 優點與缺點：依判斷準則 1 至 4 逐項說明，須引用【分群結果】中的人數與群中心值。");
   L.push("三個小節之後，以「建議群數」為標題，用一段完整文字說明建議採用幾群及理由，並說明放棄其他群數的原因。若三種群數都無法讓各群名稱反映動機上的差異，或普遍出現條紋現象，請明確指出，並建議研究者重新檢視集群變數（例如改用或增減其他動機變數），而不是勉強選定群數。");
   L.push("");
@@ -1551,7 +1551,7 @@ function renderKPrompt(){
     L.push(["構面"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜"));
     for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map(cc=>f2(cc[j]))).join("｜"));
     L.push("命名依據：");
-    c.C.forEach((cc,g)=>{ const f=clusterFeat(cc,fl); L.push("- 集群"+(g+1)+"（"+f.type+"）：命名主軸 "+f.main+"；次要特徵 "+f.sec); });
+    clusterFeats(c.C,fl).forEach((f,g)=>L.push("- 集群"+(g+1)+"（"+f.type+"）："+f.basis));
   });
   const text=L.join("\n");
   $("k-prompt").textContent=text;
