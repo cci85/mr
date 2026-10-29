@@ -1388,7 +1388,9 @@ function computeProfile(){
     if (pc.type==="num"){
       const g=Array.from({length:K},()=>[]); obs.forEach(([l,v])=>{ const x=num(v); if (x!==null) g[l].push(x); });
       const res=Stats.anova(g), all=[].concat(...g);
-      out.push({pc,type:"num",n:all.length,means:g.map(x=>x.length?x.reduce((s,y)=>s+y,0)/x.length:null),overall:all.reduce((s,y)=>s+y,0)/all.length,test:res,sig:!!(res&&res.p<a)});
+      const means=g.map(x=>x.length?x.reduce((s,y)=>s+y,0)/x.length:null), overall=all.reduce((s,y)=>s+y,0)/all.length;
+      const sd=Math.sqrt(all.reduce((s,y)=>s+(y-overall)*(y-overall),0)/Math.max(1,all.length-1))||1;
+      out.push({pc,type:"num",n:all.length,means,overall,sd,zmeans:means.map(m=>m==null?null:(m-overall)/sd),test:res,sig:!!(res&&res.p<a)});
       return;
     }
     {
@@ -1424,11 +1426,11 @@ function renderProfile(keepPicker){
   if (nums.length){
     html+='<h3>自因素分析剔除的題目：單因子變異數分析</h3><div class="table-scroll"><table><thead><tr><th class="l">題項</th>'+head+'<th>F</th><th>p</th><th>η²</th></tr></thead><tbody>';
     nums.forEach(x=>{
-      const t=x.test, mx=Math.max(...x.means.filter(v=>v!=null));
-      html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(x.pc.name)+(x.pc.stem?'<br><span class="small faint">'+esc(x.pc.stem)+'</span>':'')+'</td>'+x.means.map(v=>'<td class="'+(x.sig&&v===mx?"hi":"")+'">'+(v==null?"—":v.toFixed(2))+'</td>').join("")+'<td>'+x.overall.toFixed(2)+'</td>'
+      const t=x.test, mx=Math.max(...x.zmeans.filter(v=>v!=null));
+      html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(x.pc.name)+(x.pc.stem?'<br><span class="small faint">'+esc(x.pc.stem)+'</span>':'')+'</td>'+x.zmeans.map((v,g)=>'<td class="'+(x.sig&&v===mx?"hi":"")+'">'+(v==null?"—":f2(v)+'<br><span class="small faint">'+x.means[g].toFixed(2)+'</span>')+'</td>').join("")+'<td>0<br><span class="small faint">'+x.overall.toFixed(2)+'</span></td>'
         +(t?'<td>'+t.F.toFixed(2)+'</td><td>'+pTxtShort(t.p)+'</td><td>'+f2(t.eta2)+'</td>':'<td colspan="3">無法計算</td>')+'</tr>';
     });
-    html+='</tbody></table></div><p class="hint small">這些題目未參與因素分析與分群，可作為各區隔的跨構面動機；顯著時以粗體標示平均數最高的集群，本工具未進行事後比較。</p>';
+    html+='</tbody></table></div><p class="hint small">這些題目未參與因素分析與分群，可作為各區隔的跨構面動機。上方數字為標準化平均數（以參與分群的有效樣本標準化，平均數 0、標準差 1），可與群中心值直接比較；下方灰字為原始平均數。標準化不影響 F、p 與 η²。顯著時以粗體標示平均數最高的集群，本工具未進行事後比較。</p>';
   }
   /* 複選 0／1：依代碼分組 */
   const bins=shown.filter(x=>x.type==="bin");
@@ -1463,7 +1465,8 @@ function profText(){
     const t=x.test;
     if (x.type==="num"){
       L.push((i+1)+". "+x.pc.name+(x.pc.stem?"「"+x.pc.stem+"」":"")+"（自因素分析剔除的動機題，未參與分群；變異數分析 F("+t.df1+", "+t.df2+") = "+t.F.toFixed(2)+"，"+pTxt(t.p)+"，η² = "+f2(t.eta2)+"）");
-      L.push("   平均數："+x.means.map((v,g)=>cl(g)+" "+(v==null?"—":v.toFixed(2))).join("、")+"；全體 "+x.overall.toFixed(2));
+      L.push("   標準化平均數（平均數 0、標準差 1，可與群中心值直接比較）："+x.zmeans.map((v,g)=>cl(g)+" "+(v==null?"—":f2(v))).join("、"));
+      L.push("   原始平均數："+x.means.map((v,g)=>cl(g)+" "+(v==null?"—":v.toFixed(2))).join("、")+"；全體 "+x.overall.toFixed(2));
     } else if (x.type==="bin"){
       const row=x.rows[0];
       L.push((i+1)+". "+profLabel(x.pc)+"（勾選率；χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
@@ -1492,7 +1495,7 @@ function renderSegPrompt(){
      .replace("（C）研究主題／產品類別簡述：\n（請填寫）","（C）研究主題／產品類別簡述：\n"+C);
   if (D){
     const hasNum=S.prof&&S.prof.list.some(x=>x.type==="num");
-    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「區隔剖析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定結果"+(hasNum?"，\n　　以及自因素分析剔除之跨構面動機題的變異數分析結果":"")+"，\n　　僅列出達顯著水準者，用以描繪各區隔的輪廓。")
+    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「區隔剖析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定結果"+(hasNum?"，\n　　以及自因素分析剔除之跨構面動機題的變異數分析結果（以標準化平均數呈現，\n　　可與（B）群中心值直接比較）":"")+"，\n　　僅列出達顯著水準者，用以描繪各區隔的輪廓。")
        .replace("請根據以上三項資訊","請根據以上四項資訊")
        .replace("可能的消費動機輪廓。","可能的消費動機輪廓；若（D）中該群有顯著偏高或偏低的\n　　特徵，請一併納入輪廓描述，並註明其統計依據。")
        .replace("本提示詞之分析僅依（A）（B）（C）三項資訊完成。","本提示詞之分析僅依（A）（B）（C）（D）四項資訊完成。");
@@ -1544,7 +1547,8 @@ function segSheets(wb){
     P.list.forEach(x=>{
       const t=x.test, sig=x.sig?"是":"";
       if (x.type==="num"){
-        a3.push([x.pc.name,"變異數分析","平均數"].concat(x.means.map(v=>v==null?"":round(v,3))).concat([round(x.overall,3),t?"F = "+t.F.toFixed(3):"",t?t.df1+", "+t.df2:"",t?round(t.p,4):"",sig]));
+        a3.push([x.pc.name,"變異數分析","標準化平均數"].concat(x.zmeans.map(v=>v==null?"":round(v,3))).concat([0,t?"F = "+t.F.toFixed(3):"",t?t.df1+", "+t.df2:"",t?round(t.p,4):"",sig]));
+        a3.push(["","","原始平均數"].concat(x.means.map(v=>v==null?"":round(v,3))).concat([round(x.overall,3),"","","",""]));
       } else {
         x.rows.forEach((row,ri)=>a3.push([profLabel(x.pc),"卡方檢定",x.type==="bin"?"勾選率 (%)":row.level+" (%)"].concat(row.pct.map((v,g)=>v==null?"":round(v*100,1)+(row.mark[g]>0?" ▲":row.mark[g]<0?" ▼":""))).concat([round(row.all*100,1)]).concat(ri===0?[t?"χ² = "+t.chi.toFixed(3):"",t?t.df:"",t?round(t.p,4):"",sig]:["","","",""])));
       }
