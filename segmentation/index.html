@@ -256,6 +256,16 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint small">輪廓係數衡量每位受訪者與自己所屬群的相近程度，介於 −1 與 1 之間；手肘圖中組內平方和下降幅度明顯趨緩之處，也可作為群數的參考。最後仍應考量各群能否清楚命名、是否具行銷意義。</p>
     <h3>採用的群數</h3>
     <div class="kpick" id="kpick"></div>
+    <h3>AI 報告指令（群數）：比較 3、4、5 群</h3>
+    <p class="hint">指令已自動填入 3、4、5 群的各群人數與群中心值。複製後貼到 AI 對話中，AI 會依群數決定的三項準則與條紋現象，比較各群數的優缺點並建議群數；請依建議在上方選擇採用的群數，再進行步驟 11 的正式命名。建議先把因素名稱填回步驟 5，AI 才能以構面名稱判讀。</p>
+    <div class="row">
+      <button type="button" class="primary" id="btn-copy-k">複製 AI 報告指令（群數）</button>
+      <span class="small" id="k-prompt-len"></span>
+    </div>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="k-prompt"></pre>
+    </details>
   </section>
 
   <!-- 8 區隔結果 -->
@@ -1484,8 +1494,59 @@ function profText(){
   return L.join("\n");
 }
 
+/* ---------- AI 指令（群數） ---------- */
+function renderKPrompt(){
+  const G=S.seg; if (!G||!$("k-prompt")) return;
+  const k=S.nf, fl=Array.from({length:k},(_,j)=>flabel(j));
+  const L=[];
+  L.push("請根據下方【分群結果】，比較以 K 平均法將受訪者分為 3 群、4 群與 5 群的優缺點，最後建議採用的群數並說明理由。");
+  L.push("");
+  L.push("一、背景");
+  L.push("本研究以因素分析萃取的 "+k+" 個消費動機構面（"+fl.join("、")+"）之標準化因素分數為集群變數，進行 K 平均法分群。群中心值為各群在各構面上的平均標準分數：0 代表全體平均，正值代表高於全體平均，負值代表低於全體平均。");
+  L.push("");
+  L.push("二、判斷準則（群數決定沒有絕對規則，須綜合理論、群體規模與實務需求判斷；Malhotra, 2010）");
+  L.push("1. 群數不宜過多或過少：群數太多則顯得複雜而難以溝通，群數太少則無法顯現消費者的異質性；市場區隔實務上常在 3、4、5 群之間擇一。");
+  L.push("2. 各群人數應大致相當，每群最好至少 20 人，以支持後續的單因子變異數分析與卡方檢定；少於 5 人的群體應視為潛在離群值，可考慮剔除後重新執行集群分析。");
+  L.push("3. 各群在集群變數上的群中心值應高低不一，形成各具意義、可命名的輪廓；各群名稱必須反映消費動機上的差異。");
+  L.push("4. 條紋現象（striping）：若某一群在所有構面上都偏高或都偏低，可能反映填答風格偏誤、冗餘變數，或資料缺乏清楚的群體結構，須審慎檢視（Allenby, Fennell, & Yang, 2002）。");
+  L.push("");
+  L.push("三、暫定命名步驟（每種群數各自進行）");
+  L.push("1. 逐群找出群中心值最高與最低的構面。");
+  L.push("2. 判斷輪廓類型：最高值約 .50 以上者為正向峰值明顯的群；所有構面皆接近 0 或為負者為沒有正向峰值的群。");
+  L.push("3. 決定命名主軸：正向峰值明顯的群，以最高的構面命名；沒有正向峰值的群，以最低的構面從反面命名（例如「低○○型」「輕○○型」），並檢查是否屬於條紋現象。");
+  L.push("4. 若兩群的命名主軸相同，加入第二個最明顯的特徵（正向或負向皆可）加以區分。");
+  L.push("5. 把同一群數的各群名稱並列，檢查每個名稱是否對應群中心值表上獨特的構面組合；若有兩個名稱說不出差別，代表該群數可能過多。");
+  L.push("");
+  L.push("四、輸出格式");
+  L.push("依 3 群、4 群、5 群的順序，各以一個小節撰寫：");
+  L.push("- 暫定名稱：列出各群的暫定名稱及其依據（例如「感官 ＋、品味 －－」），名稱至多 8 個字，須反映消費動機。");
+  L.push("- 優點與缺點：依判斷準則 1 至 4 逐項說明，須引用【分群結果】中的人數與群中心值。");
+  L.push("三個小節之後，以「建議群數」為標題，用一段完整文字說明建議採用幾群及理由，並說明放棄其他群數的原因。若三種群數都無法讓各群名稱反映動機上的差異，或普遍出現條紋現象，請明確指出，並建議研究者重新檢視集群變數（例如改用或增減其他動機變數），而不是勉強選定群數。");
+  L.push("");
+  L.push("五、寫作規則");
+  L.push("- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」。");
+  L.push("- 本指令只判斷群數，不撰寫行銷策略或行銷意涵；暫定名稱僅供比較，正式命名留待選定群數後再進行。");
+  L.push("- 不得編造【分群結果】中沒有的數值。");
+  L.push("");
+  L.push("=====================");
+  L.push("【分群結果】");
+  L.push("=====================");
+  L.push("有效樣本數："+G.n+"；集群變數："+fl.join("、")+"（標準化因素分數）；各群依人數由多到少編號。");
+  G.runs.forEach(c=>{
+    L.push("");
+    L.push("〔"+c.k+" 群〕");
+    L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+" "+x+" 人（"+pct1(x/G.n)+"）").join("、"));
+    L.push(["構面"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜"));
+    for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map(cc=>f2(cc[j]))).join("｜"));
+  });
+  const text=L.join("\n");
+  $("k-prompt").textContent=text;
+  $("k-prompt-len").textContent=(fl.some((n,j)=>n==="因素"+(j+1))?"因素尚未全部命名・":"")+"共 "+text.length.toLocaleString()+" 字";
+}
+
 /* ---------- AI 指令（二） ---------- */
 function renderSegPrompt(){
+  renderKPrompt();
   if (!S.seg||!curRun()) return;
   const G=S.seg, c=curRun(), k=S.nf;
   const A=c.N.map((x,g)=>"集群"+(g+1)+"：n = "+x+"（"+pct1(x/G.n)+"）").join("\n")+"\n合計：n = "+G.n+"（100.0%）";
@@ -1649,6 +1710,7 @@ $("btn-copy-seg").addEventListener("click",()=>{
   copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
 });
 $("btn-copy-fa").addEventListener("click",copyFaTable);
+$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製 AI 報告指令（群數）"));
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
 })();
