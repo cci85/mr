@@ -1481,7 +1481,7 @@ function caTableHTML(word){
     const row=c.C.map(cc=>cc[j]);
     t+='<tr>'+cell(esc(flabel(j)),"td")+row.map((v,g)=>mk[g][j]?(word?cell("<b><u>"+f3(v)+"</u></b>","td"):'<td class="c"><b><u>'+f3(v)+'</u></b></td>'):cell(f3(v),"td")).join("")+'</tr>';
   }
-  const EX=exClusterStats();
+  const EX=exClusterStats().filter(e=>e.sig);
   if (EX.length){
     t+='<tr>'+(word?'<td colspan="'+(c.k+1)+'" style="'+base+'text-align:left;">剔除題項</td>':'<td colspan="'+(c.k+1)+'" class="l"><b>剔除題項</b></td>')+'</tr>';
     EX.forEach(e=>{
@@ -1497,18 +1497,18 @@ function caTableHTML(word){
 }
 function caNote(EX){
   const hasBin=EX.some(e=>e.bin), hasNum=EX.some(e=>!e.bin);
-  return "註：剔除題項未參與分群，"+(hasNum?"數值為標準化平均數（平均數 0、標準差 1）":"")+(hasNum&&hasBin?"；":"")+(hasBin?"0／1 題為勾選比例":"")+"。* p &lt; "+fp(alpha())+"（"+(hasNum?"單因子變異數分析":"")+(hasNum&&hasBin?"／":"")+(hasBin?"卡方檢定":"")+"），顯著者以粗體標示最高值。";
+  return "註：剔除題項未參與分群，僅列出各群差異達顯著者；"+(hasNum?"數值為標準化平均數（平均數 0、標準差 1）":"")+(hasNum&&hasBin?"；":"")+(hasBin?"0／1 題為勾選比例":"")+"。* p &lt; "+fp(alpha())+"（"+(hasNum?"單因子變異數分析":"")+(hasNum&&hasBin?"／":"")+(hasBin?"卡方檢定":"")+"），顯著者以粗體標示最高值。";
 }
 function caTableText(){
   const G=S.seg, c=curRun(), k=S.nf; const L=[CA_CAP,["消費動機"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("\t")];
   for (let j=0;j<k;j++) L.push([flabel(j)].concat(c.C.map(cc=>f3(cc[j]))).join("\t"));
-  const EX=exClusterStats();
+  const EX=exClusterStats().filter(e=>e.sig);
   if (EX.length){ L.push("剔除題項"); EX.forEach(e=>L.push([itemRef(e.x.name)+(e.sig?"*":"")].concat(e.vals.map(v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v)))).join("\t"))); }
   L.push(["人數"].concat(c.N.map(String)).join("\t")); L.push(["人數比例"].concat(c.N.map(x=>Math.round(x/G.n*100)+"%")).join("\t"));
   return L.join("\n");
 }
 async function copyCaTable(){
-  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+CA_CAP+'</p>'+caTableHTML(true), EXn=exClusterStats(), text=caTableText()+(EXn.length?"\n"+caNote(EXn).replace("&lt;","<"):"");
+  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+CA_CAP+'</p>'+caTableHTML(true), EXn=exClusterStats().filter(e=>e.sig), text=caTableText()+(EXn.length?"\n"+caNote(EXn).replace("&lt;","<"):"");
   try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]); toast("已複製表1，可直接貼到 Word"); }
   catch(e){
     const box=document.createElement("div"); box.innerHTML=html; box.style.position="fixed"; box.style.left="-9999px"; document.body.appendChild(box);
