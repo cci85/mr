@@ -285,7 +285,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <pre class="prompt" id="ca-prompt"></pre>
     </details>
     <h3>市場區隔結果表</h3>
-    <p class="hint">表格由本工具依分群結果產生，格式與數值不經 AI；每列最高的群中心值以粗體底線標示。欄名採用下方的區隔名稱；按「複製表1」後可直接貼到 Word。</p>
+    <p class="hint">表格由本工具依分群結果產生，格式與數值不經 AI；命名依據的群中心值以粗體底線標示：每列最高值，以及沒有分到因素的群的最大負值。欄名採用下方的區隔名稱；按「複製表1」後可直接貼到 Word。</p>
     <div id="sn-msg"></div>
     <div class="fnames" id="snames"></div>
     <div class="table-scroll" id="ca-table"></div>
@@ -1367,7 +1367,7 @@ function renderCaPrompt(){
   L.push("請根據下方【分群結果】，撰寫正式研究報告中「市場區隔分析」的「建立市場區隔」一節。此為市場區隔的暫時性報告：只依群中心值與各群人數命名並提出可能的行銷策略，尚未納入區隔剖析（輪廓變數）的結果。");
   L.push("");
   L.push("一、寫作內容（共三段，依序撰寫）");
-  L.push("第一段　建立市場區隔：說明在建立市場區隔之前，本研究先透過因素分析將 "+nAll+" 個消費動機題項縮減為 "+k+" 個動機因素，作為區隔變數；其次以集群分析的 K 平均法，以這 "+k+" 個消費動機因素為集群變數，將受訪者集成 "+c.k+" 個群別，各群的群中心值（即組平均數）與人數如表1所示；表中將每一列最高的群中心值以粗體底線標示，顯示為不同群別的特色。");
+  L.push("第一段　建立市場區隔：說明在建立市場區隔之前，本研究先透過因素分析將 "+nAll+" 個消費動機題項縮減為 "+k+" 個動機因素，作為區隔變數；其次以集群分析的 K 平均法，以這 "+k+" 個消費動機因素為集群變數，將受訪者集成 "+c.k+" 個群別，各群的群中心值（即組平均數）與人數如表1所示；"+(clusterFeats(c.C,fl).some(f=>f.type!=="正向")?"表中以粗體底線標示各群的命名依據：每一列最高的群中心值顯示為不同群別的特色；在各因素上皆未高於其他群的群別，則標示其最低的群中心值，作為從反面命名的依據。":"表中將每一列最高的群中心值以粗體底線標示，顯示為不同群別的特色。"));
   L.push("第二段　各群命名與人數比較：依【分群結果】的命名依據逐群命名。分到因素的群，寫法如「第1群在○○、○○上的平均數高於其他群，可命名為「○○群」」；沒有分到因素的群，寫法如「第3群在各因素上皆未高於其他群，其在○○上的平均數最低，可從反面命名為「○○群」」。接著比較各群人數，指出人數最多、次之與最少的群別。");
   L.push("第三段　可能的行銷策略（暫時性答案）：逐群寫一句可能的行銷作為，須回溯到該群命名所依據的動機因素，說明「因為這群消費者重視（或不重視）什麼，所以可以提供什麼產品設計或溝通訴求」。最後寫出：若以各群人數比例衡量區隔吸引力，廠商可考慮鎖定人數最多的區隔為目標市場，並提出對應的產品方向。");
   L.push("三段之後，以一句話說明：以上命名與行銷策略僅依群中心值與人數提出，屬暫時性結果，各區隔的完整輪廓與目標市場選擇，有待區隔剖析完成後再確認與修正。");
@@ -1435,9 +1435,10 @@ function caTableHTML(word){
   const base=word?'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 6pt;vertical-align:middle;'+B:'';
   const cell=(txt,tag,extra)=>'<'+tag+(word?' style="'+base+'text-align:center;font-weight:normal;'+(extra||"")+'"':(extra?' class="'+extra+'"':' class="c"'))+'>'+txt+'</'+tag+'>';
   let t='<table'+(word?' style="border-collapse:collapse;'+B+'"':' class="fa1"')+'><thead><tr>'+cell("消費動機","th")+c.N.map((_,g)=>cell((g+1)+". "+esc(slabel(g)),"th")).join("")+'</tr></thead><tbody>';
+  const mk=namingCells(c.C);
   for (let j=0;j<k;j++){
-    const row=c.C.map(cc=>cc[j]), mx=Math.max(...row);
-    t+='<tr>'+cell(esc(flabel(j)),"td")+row.map(v=>v===mx?(word?cell("<b><u>"+f3(v)+"</u></b>","td"):'<td class="c"><b><u>'+f3(v)+'</u></b></td>'):cell(f3(v),"td")).join("")+'</tr>';
+    const row=c.C.map(cc=>cc[j]);
+    t+='<tr>'+cell(esc(flabel(j)),"td")+row.map((v,g)=>mk[g][j]?(word?cell("<b><u>"+f3(v)+"</u></b>","td"):'<td class="c"><b><u>'+f3(v)+'</u></b></td>'):cell(f3(v),"td")).join("")+'</tr>';
   }
   t+='<tr>'+cell("人數","td")+c.N.map(x=>cell(String(x),"td")).join("")+'</tr>';
   t+='<tr>'+cell("人數比例","td")+c.N.map(x=>cell(Math.round(x/G.n*100)+"%","td")).join("")+'</tr>';
@@ -1618,6 +1619,12 @@ function profText(){
 
 /* ---------- AI 指令（群數決定） ---------- */
 /* 命名依據：每個因素歸入群中心值最大（最大正值）的群；沒有分到因素的群，以該群的最大負值命名 */
+function namingCells(C){ /* 回傳 mark[g][j]：命名依據所在的格 */
+  const K=C.length, k=C[0].length, mark=C.map(()=>new Array(k).fill(false)), has=new Array(K).fill(false);
+  for (let j=0;j<k;j++){ let g=0; for (let h=1;h<K;h++) if (C[h][j]>C[g][j]) g=h; mark[g][j]=true; has[g]=true; }
+  C.forEach((row,g)=>{ if (!has[g]){ let m=0; row.forEach((v,j)=>{ if (v<row[m]) m=j; }); mark[g][m]=true; } });
+  return mark;
+}
 function clusterFeats(C, fl){
   const K=C.length, k=fl.length, own=Array.from({length:K},()=>[]);
   for (let j=0;j<k;j++){ let g=0; for (let h=1;h<K;h++) if (C[h][j]>C[g][j]) g=h; own[g].push(j); }
