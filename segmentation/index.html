@@ -105,6 +105,8 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .fa1 td.l{white-space:normal;min-width:260px}
 .namepaste textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0 4px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--warn);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}
 .namepaste textarea:focus{outline:2px solid var(--warn);outline-offset:1px}
+.savebox{margin-top:18px;padding:12px 14px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface-2)}
+.savebox h3{margin-top:0}
 .fa-cap{margin:8px 0 4px;font-weight:700}
 .fnames{display:grid;gap:8px;margin:8px 0}
 .fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
@@ -235,6 +237,11 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <div id="fa-msg"></div>
     <div class="table-scroll" id="fa-table"></div>
     <button type="button" id="btn-copy-fa">複製表1</button>
+    <div class="savebox">
+      <h3>暫存因素分析結果</h3>
+      <p class="hint">若要下次上課再繼續，請先下載資料檔並保存。資料檔會記錄選用的題項、剔除與保留的題項、因素個數、門檻值與因素名稱；下次在步驟 1 上傳這個檔案，就會還原到目前的進度，直接接續集群分析。</p>
+      <button type="button" id="dl-data-fa">下載資料檔（下次上課接續用）</button>
+    </div>
   </section>
 
   <p class="stage">第二階段　市場區隔<small>依因素分數以 K 平均法分群，並剖析各區隔的輪廓。</small></p>
@@ -1634,6 +1641,7 @@ $("btn-kaiser").addEventListener("click",()=>{ if (!S.res) return; S.nf=S.res.ka
 $("cut").addEventListener("change",()=>{ S.userCut=true; compute(); });
 $("hide-low").addEventListener("change",()=>{ if (S.res) renderLoadings(); });
 $("dl-data").addEventListener("click",dlData);
+$("dl-data-fa").addEventListener("click",dlData);
 $("dl-result").addEventListener("click",dlResult);
 $("alpha").addEventListener("input",()=>{ if (S.seg){ renderProfile(true); renderSegPrompt(); } });
 $("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); });
