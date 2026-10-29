@@ -966,15 +966,20 @@ function renderLoadings(){
 }
 function candInfo(it){
   const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
-  return {it, reason:it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值", loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+it.row[j].toFixed(2)).join("、")};
+  return {it, reason:it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值", loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+(Math.abs(it.row[j])<.005?0:it.row[j]).toFixed(2)).join("、")};
 }
 function keptItems(){ const r=S.res; if (!r||!r.items) return []; return r.items.filter(it=>it.dom&&it.cross.length&&S.kept.has(it.c.ci)).map(candInfo); }
 function candidates(){
   const r=S.res; if (!r||!r.items) return [];
-  return r.items.filter(it=>((!it.dom&&!it.neg.length)||it.cross.length)&&!(it.dom&&S.kept.has(it.c.ci))).map(it=>{
+  const r2=x=>Math.round(x*100)/100, top=it=>it.row.slice().sort((a,b)=>b-a);
+  return r.items.filter(it=>((!it.dom&&!it.neg.length)||it.cross.length)&&!(it.dom&&S.kept.has(it.c.ci))).sort((a,b)=>{
+    const ta=top(a), tb=top(b), pa=r2(ta[0]), pb=r2(tb[0]);
+    if (pa!==pb) return pa-pb;                       /* 主要負荷量低者優先 */
+    return r2(ta[0]-(ta[1]||0))-r2(tb[0]-(tb[1]||0)); /* 相同時，與次高負荷量差距小者優先 */
+  }).map(it=>{
     const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
     const reason=it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值";
-    return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+it.row[j].toFixed(2)).join("、")};
+    return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+(Math.abs(it.row[j])<.005?0:it.row[j]).toFixed(2)).join("、")};
   });
 }
 function renderCand(){
