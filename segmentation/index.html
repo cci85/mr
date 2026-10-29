@@ -1718,7 +1718,7 @@ function renderSegPrompt(){
 
 /* ---------- 下載 ---------- */
 function round(x,d){ const m=Math.pow(10,d); return Math.round(x*m)/m; }
-function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,""); }
+function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_(因素分數資料|市場區隔資料|市場區隔分析結果)$/,""); }
 function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
@@ -1772,7 +1772,7 @@ function dlResult(){
   loadingSheets(wb); segSheets(wb);
   XLSX.writeFile(wb,stamp()+"_市場區隔分析結果.xlsx");
 }
-function dlData(){
+function dlData(suffix){
   const r=S.res; if (!r) return; const k=S.nf;
   const F=Stats.scores(r.z,r.sol.loadings);
   const c=S.seg&&curRun();
@@ -1806,7 +1806,7 @@ function dlData(){
     ["設定代碼",JSON.stringify(cfg)]];
   const sw=XLSX.utils.aoa_to_sheet(st); sw["!cols"]=[{wch:26},{wch:80}];
   XLSX.utils.book_append_sheet(wb,sw,"分析設定");
-  XLSX.writeFile(wb,stamp()+"_市場區隔資料.xlsx");
+  XLSX.writeFile(wb,stamp()+"_"+(typeof suffix==="string"?suffix:"市場區隔資料")+".xlsx");
 }
 
 /* ---------- 複製 ---------- */
@@ -1843,7 +1843,7 @@ $("btn-kaiser").addEventListener("click",()=>{ if (!S.res) return; S.nf=S.res.ka
 $("cut").addEventListener("change",()=>{ S.userCut=true; compute(); });
 $("hide-low").addEventListener("change",()=>{ if (S.res) renderLoadings(); });
 $("dl-data").addEventListener("click",dlData);
-$("dl-data-fa").addEventListener("click",dlData);
+$("dl-data-fa").addEventListener("click",()=>dlData("因素分數資料"));
 $("dl-result").addEventListener("click",dlResult);
 $("alpha").addEventListener("input",()=>{ if (S.seg){ renderProfile(true); renderSegPrompt(); } });
 $("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); });
