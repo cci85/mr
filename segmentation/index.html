@@ -1078,7 +1078,7 @@ const SHOT_PROMPT=[
 "一、寫作內容（共三段，依序撰寫）",
 "第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與整體 KMO 值，並據此判斷資料是否適合進行因素分析。"+KMO_REF,
 "第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值：李克特量表等連續尺度採 0.5，0／1 二元資料採 0.3。若研究者在對話中說明了已剔除的題項，說明初步分析的結果與剔除理由，剔除理由分為兩種：「具有交叉負荷量（大於門檻值）」，以及「主要負荷量未達門檻值」，並寫出實際的門檻值數字；並說明剔除後重新分析的結果。若截圖中仍有主要負荷量未達門檻值或交叉負荷量大於門檻值的題項，請在報告之前另行提醒研究者，先剔除後重新分析。最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。",
-"第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，李克特量表題將以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題則以卡方檢定比較各區隔的勾選比例差異，以補充描繪各市場區隔的動機特徵。",
+"第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，李克特量表題將以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題則以卡方檢定比較各區隔的條件百分比（以區隔為條件）差異，以補充描繪各市場區隔的動機特徵。",
 ""].concat(RULES_COMMON("截圖","不需輸出表格。")).join("\n");
 
 function faInfo(){
@@ -1122,8 +1122,8 @@ function renderPrompt(){
   if (S.exHist.length){
     const isBin=x=>{ const pc=S.profCols.find(c=>c.ci===x.ci); return pc&&pc.type==="bin"; };
     const nb=S.exHist.filter(isBin).length, nn=S.exHist.length-nb;
-    const how=nb&&nn?"李克特量表題以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題以卡方檢定比較各區隔的勾選比例差異"
-      :(nb?"以卡方檢定比較各區隔在這些變數上的勾選比例差異":"以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異");
+    const how=nb&&nn?"李克特量表題以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題以卡方檢定比較各區隔的條件百分比（以區隔為條件）差異"
+      :(nb?"以卡方檢定比較各區隔在這些變數上的條件百分比（以區隔為條件）差異":"以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異");
     p3+="最後說明被剔除的題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，將"+how+"，以補充描繪各市場區隔的動機特徵。";
   }
   L.push(p3);
@@ -1407,8 +1407,8 @@ function renderCaPrompt(){
   L.push("");
   const EX=exClusterStats();
   if (EX.length){
-    L.push("剔除題項（未參與分群；"+(EX.some(e=>!e.bin)?"數值為標準化平均數":"")+(EX.some(e=>e.bin)?"，0／1 題為勾選比例":"")+"；顯著水準 α = "+fp(alpha())+"）：");
-    EX.forEach(e=>L.push("- "+itemRef(e.x.name)+"「"+String(e.x.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"")+"」："+e.vals.map((v,g)=>"集群"+(g+1)+" "+(v==null?"—":(e.bin?Math.round(v*100)+"%":f2(v)))).join("、")+"；"+(e.p==null?"無法檢定":(e.sig?"達顯著":"未達顯著")+"（"+pTxt(e.p)+"）")));
+    L.push("剔除題項（未參與分群；"+[EX.some(e=>!e.bin)?"數值為標準化平均數":"",EX.some(e=>e.bin)?"0／1 題為條件百分比（以區隔為條件，即各區隔內勾選的百分比）":""].filter(Boolean).join("，")+"；顯著水準 α = "+fp(alpha())+"）：");
+    EX.forEach(e=>{ const st=String(e.x.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,""); L.push("- "+itemRef(e.x.name)+(st&&st!==e.x.name?"「"+st+"」":"")+"："+e.vals.map((v,g)=>"集群"+(g+1)+" "+(v==null?"—":(e.bin?Math.round(v*100)+"%":f2(v)))).join("、")+"；"+(e.p==null?"無法檢定":(e.sig?"達顯著":"未達顯著")+"（"+pTxt(e.p)+"）")); });
     const extra=c.C.map((_,g)=>EX.filter(e=>e.sig&&e.high[g]).map(e=>itemRef(e.x.name)+"（"+(e.bin?Math.round(e.vals[g]*100)+"%":f2(e.vals[g]))+"）"));
     if (extra.some(a=>a.length)){ L.push("各群可補充的額外動機（剔除題項中達顯著且該群明顯偏高者）："); extra.forEach((a,g)=>{ if (a.length) L.push("- 集群"+(g+1)+"："+a.join("、")); }); }
     else L.push("各群可補充的額外動機：無（剔除題項皆未達顯著，或各群皆未明顯偏高）。");
@@ -1428,6 +1428,7 @@ function renderCaPrompt(){
   $("ca-prompt").textContent=text;
   $("ca-prompt-len").textContent=(fl.some((n,j)=>n==="因素"+(j+1))?"因素尚未全部命名・":"")+"共 "+text.length.toLocaleString()+" 字";
 }
+function tableRef(name){ return /^[A-Za-z]+\d+/.test(String(name))?itemRef(name):String(name); }
 function exClusterStats(){
   const r=S.res, c=curRun(); if (!r||!c||!S.exHist.length) return [];
   const K=c.k, a=alpha(), lab=new Map(); r.keep.forEach((ri,i)=>lab.set(ri,c.lab[i]));
@@ -1486,7 +1487,7 @@ function caTableHTML(word){
     t+='<tr>'+(word?'<td colspan="'+(c.k+1)+'" style="'+base+'text-align:left;">剔除題項</td>':'<td colspan="'+(c.k+1)+'" class="l"><b>剔除題項</b></td>')+'</tr>';
     EX.forEach(e=>{
       const mx=Math.max(...e.vals.filter(v=>v!=null)), fmt=v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v));
-      t+='<tr>'+cell(esc(itemRef(e.x.name))+(e.sig?"*":""),"td")+e.vals.map(v=>e.sig&&v===mx?(word?cell("<b>"+fmt(v)+"</b>","td"):'<td class="c"><b>'+fmt(v)+'</b></td>'):cell(fmt(v),"td")).join("")+'</tr>';
+      t+='<tr>'+cell(esc(tableRef(e.x.name))+(e.sig?"*":""),"td")+e.vals.map(v=>e.sig&&v===mx?(word?cell("<b>"+fmt(v)+"</b>","td"):'<td class="c"><b>'+fmt(v)+'</b></td>'):cell(fmt(v),"td")).join("")+'</tr>';
     });
   }
   t+='<tr>'+cell("人數","td")+c.N.map(x=>cell(String(x),"td")).join("")+'</tr>';
@@ -1497,13 +1498,13 @@ function caTableHTML(word){
 }
 function caNote(EX){
   const hasBin=EX.some(e=>e.bin), hasNum=EX.some(e=>!e.bin);
-  return "註：剔除題項未參與分群，僅列出各群差異達顯著者；"+(hasNum?"數值為標準化平均數（平均數 0、標準差 1）":"")+(hasNum&&hasBin?"；":"")+(hasBin?"0／1 題為勾選比例":"")+"。* p &lt; "+fp(alpha())+"（"+(hasNum?"單因子變異數分析":"")+(hasNum&&hasBin?"／":"")+(hasBin?"卡方檢定":"")+"），顯著者以粗體標示最高值。";
+  return "註：剔除題項未參與分群，僅列出各群差異達顯著者；"+(hasNum?"數值為標準化平均數（平均數 0、標準差 1）":"")+(hasNum&&hasBin?"；":"")+(hasBin?"0／1 題為條件百分比（以區隔為條件）":"")+"。* p &lt; "+fp(alpha())+"（"+(hasNum?"單因子變異數分析":"")+(hasNum&&hasBin?"／":"")+(hasBin?"卡方檢定":"")+"），顯著者以粗體標示最高值。";
 }
 function caTableText(){
   const G=S.seg, c=curRun(), k=S.nf; const L=[CA_CAP,["消費動機"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("\t")];
   for (let j=0;j<k;j++) L.push([flabel(j)].concat(c.C.map(cc=>f3(cc[j]))).join("\t"));
   const EX=exClusterStats().filter(e=>e.sig);
-  if (EX.length){ L.push("剔除題項"); EX.forEach(e=>L.push([itemRef(e.x.name)+(e.sig?"*":"")].concat(e.vals.map(v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v)))).join("\t"))); }
+  if (EX.length){ L.push("剔除題項"); EX.forEach(e=>L.push([tableRef(e.x.name)+(e.sig?"*":"")].concat(e.vals.map(v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v)))).join("\t"))); }
   L.push(["人數"].concat(c.N.map(String)).join("\t")); L.push(["人數比例"].concat(c.N.map(x=>Math.round(x/G.n*100)+"%")).join("\t"));
   return L.join("\n");
 }
