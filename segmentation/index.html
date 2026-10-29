@@ -290,6 +290,11 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <div class="fnames" id="snames"></div>
     <div class="table-scroll" id="ca-table"></div>
     <button type="button" id="btn-copy-ca-table">複製表1</button>
+    <div class="savebox">
+      <h3>暫存集群分析結果</h3>
+      <p class="hint">若要下次上課再繼續，請先下載資料檔並保存。資料檔含各因素分數與集群欄，並記錄因素分析的設定、因素名稱、採用的群數、區隔名稱與步驟 9 的輪廓變數勾選；下次在步驟 1 上傳這個檔案，就會還原到目前的進度，直接接續區隔剖析。</p>
+      <button type="button" id="dl-data-ca">下載資料檔（下次上課接續用）</button>
+    </div>
   </section>
 
   <!-- 9 區隔剖析 -->
@@ -1776,7 +1781,7 @@ function renderSegPrompt(){
 
 /* ---------- 下載 ---------- */
 function round(x,d){ const m=Math.pow(10,d); return Math.round(x*m)/m; }
-function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_(因素分數資料|市場區隔資料|市場區隔分析結果)$/,""); }
+function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_(因素分數資料|集群資料|市場區隔資料|市場區隔分析結果)$/,""); }
 function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
@@ -1902,6 +1907,7 @@ $("cut").addEventListener("change",()=>{ S.userCut=true; compute(); });
 $("hide-low").addEventListener("change",()=>{ if (S.res) renderLoadings(); });
 $("dl-data").addEventListener("click",dlData);
 $("dl-data-fa").addEventListener("click",()=>dlData("因素分數資料"));
+$("dl-data-ca").addEventListener("click",()=>dlData("集群資料"));
 $("dl-result").addEventListener("click",dlResult);
 $("alpha").addEventListener("input",()=>{ if (S.seg){ renderProfile(true); renderSegPrompt(); } });
 $("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); });
