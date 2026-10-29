@@ -1366,11 +1366,13 @@ function renderCaPrompt(){
   const L=[];
   L.push("請根據下方【分群結果】，撰寫正式研究報告中「市場區隔分析」的「建立市場區隔」一節。此為市場區隔的暫時性報告：只依群中心值與各群人數命名並提出可能的行銷策略，尚未納入區隔剖析（輪廓變數）的結果。");
   L.push("");
-  L.push("一、寫作內容（共三段，依序撰寫）");
+  L.push("一、寫作內容（依序撰寫）");
   L.push("第一段　建立市場區隔：說明在建立市場區隔之前，本研究先透過因素分析將 "+nAll+" 個消費動機題項縮減為 "+k+" 個動機因素，作為區隔變數；其次以集群分析的 K 平均法，以這 "+k+" 個消費動機因素為集群變數，將受訪者集成 "+c.k+" 個群別，各群的群中心值（即組平均數）與人數如表1所示；"+(clusterFeats(c.C,fl).some(f=>f.type!=="正向")?"表中以粗體底線標示各群的命名依據：每一列最高的群中心值顯示為不同群別的特色；在各因素上皆未高於其他群的群別，則標示其最低的群中心值，作為從反面命名的依據。":"表中將每一列最高的群中心值以粗體底線標示，顯示為不同群別的特色。"));
   L.push("第二段　各群命名與人數比較：依【分群結果】的命名依據逐群命名。分到因素的群，寫法如「第1群在○○、○○上的平均數高於其他群，可命名為「○○群」」；沒有分到因素的群，寫法如「第3群在各因素上皆未高於其他群，其在○○上的平均數最低，可從反面命名為「○○群」」。接著比較各群人數，指出人數最多、次之與最少的群別。");
-  L.push("第三段　可能的行銷策略（暫時性答案）：逐群寫一句可能的行銷作為，須回溯到該群命名所依據的動機因素，說明「因為這群消費者重視（或不重視）什麼，所以可以提供什麼產品設計或溝通訴求」。最後寫出：若以各群人數比例衡量區隔吸引力，廠商可考慮鎖定人數最多的區隔為目標市場，並提出對應的產品方向。");
-  L.push("三段之後，以一句話說明：以上命名與行銷策略僅依群中心值與人數提出，屬暫時性結果，各區隔的完整輪廓與目標市場選擇，有待區隔剖析完成後再確認與修正。");
+  L.push("第三段起　可能的行銷策略（暫時性答案）：每一群各寫一段完整文字。先說明該群命名所依據之因素的主要題項（見【分群結果】的「各群策略須納入的主要題項」，每個因素取負荷量最高的前 2 題，須逐題納入，以「項目＋題號（簡稱）」引用）反映了這群消費者什麼樣的消費動機；再依此動機推導對應的欲望（wants），以「建議」的語氣提出三個面向的行銷策略：產品策略（產品配置、功能、規格或包裝）、品牌形象（品牌應塑造的個性與聯想），以及溝通重點或訴求（廣告訊息與訴求主軸）。每一項建議都必須能回溯到主要題項的內容。以最大負值從反面命名的群，主要題項代表這群消費者「不重視」的動機，請據此說明不宜採用的訴求，並建議改以其他已分析因素中相對較高者作為切入點；不得推論問卷以外的動機。");
+  L.push("各群段落之後，另寫一段暫定目標市場：若以各群人數比例衡量區隔吸引力，廠商可考慮鎖定人數最多的區隔為目標市場，並依該群的主要題項提出對應的產品方向。價格與通路策略需要購買通路、購買頻率等輪廓變數支持，本報告暫不提出。");
+  L.push("額外動機：【分群結果】若列出「各群可補充的額外動機」，代表自因素分析剔除、未參與分群的題項中，該群顯著偏高者；請在該群的行銷策略段落中，以「此外，這群消費者在項目○（○○）上也明顯高於平均」的方式補充，並可延伸為產品或溝通建議。額外動機不影響命名，未列出的剔除題項不得引用。");
+  L.push("最後以一句話說明：以上命名與行銷策略僅依群中心值、人數與因素的主要題項提出，屬暫時性結果，各區隔的完整輪廓與目標市場選擇，有待區隔剖析完成後再確認與修正。");
   L.push("");
   L.push("二、命名規則");
   L.push("- 命名依據已由分析工具依下列規則算出，請直接採用，不得自行改選其他因素：每個因素歸入群中心值最大的那一群；分到因素的群，以所分到的因素命名（分到兩個以上時，名稱須涵蓋這些因素）；沒有分到因素的群，以該群群中心值最小的因素（最大負值）從反面命名。");
@@ -1381,11 +1383,12 @@ function renderCaPrompt(){
   L.push("三、寫作規則");
   L.push("- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」。");
   L.push("- 以完整段落撰寫，不使用條列；不需輸出表格，表1由分析工具產生。");
+  L.push("- 行銷策略一律以「建議」表述，不得使用「所以可以」「必須」等過於肯定的語氣。");
   L.push("- 群中心值以小數點後三位、省略整數位的 0 呈現（例如 .658、-1.223）。");
   L.push("- 不得編造【分群結果】中沒有的數值或變數，不得推論各群的人口統計或購買行為。");
   L.push("");
   L.push("四、輸出格式");
-  L.push("第一行為標題「市場區隔分析」，第二行為小標題「1. 建立市場區隔」，接著依序輸出上述三段文字與暫時性說明。");
+  L.push("第一行為標題「市場區隔分析」，第二行為小標題「1. 建立市場區隔」，接著依序輸出第一段、第二段、各群行銷策略段落、暫定目標市場段落與暫時性說明。");
   L.push("最後空一行，另起一行輸出「建議區隔名稱：集群1＝……群；集群2＝……群（填回市場區隔工具頁）」，句末的「（填回市場區隔工具頁）」須照抄；此行供研究者把名稱填回分析工具，不屬於報告內容。");
   L.push("");
   L.push("=====================");
@@ -1393,7 +1396,7 @@ function renderCaPrompt(){
   L.push("=====================");
   L.push("有效樣本數："+G.n+"；原始消費動機題項數："+nAll+"；集群變數："+fl.join("、")+"（標準化因素分數）；K 平均法分為 "+c.k+" 群，集群依人數由多到少編號。");
   L.push("");
-  L.push("各因素的主導變數：");
+  L.push("各因素的主導變數（依負荷量由高到低）：");
   const FI=faInfo(); FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)).join("、"):"無")));
   L.push("");
   L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+" "+x+" 人（"+Math.round(x/G.n*100)+"%）").join("、"));
@@ -1401,9 +1404,47 @@ function renderCaPrompt(){
   for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map(cc=>f3(cc[j]))).join("｜"));
   L.push("命名依據：");
   clusterFeats(c.C,fl).forEach((f,g)=>L.push("- 集群"+(g+1)+"（"+(f.type==="正向"?"分到因素":"沒有分到因素")+"）："+f.basis));
+  L.push("");
+  const EX=exClusterStats();
+  if (EX.length){
+    L.push("剔除題項（未參與分群；"+(EX.some(e=>!e.bin)?"數值為標準化平均數":"")+(EX.some(e=>e.bin)?"，0／1 題為勾選比例":"")+"；顯著水準 α = "+fp(alpha())+"）：");
+    EX.forEach(e=>L.push("- "+itemRef(e.x.name)+"「"+String(e.x.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"")+"」："+e.vals.map((v,g)=>"集群"+(g+1)+" "+(v==null?"—":(e.bin?Math.round(v*100)+"%":f2(v)))).join("、")+"；"+(e.p==null?"無法檢定":(e.sig?"達顯著":"未達顯著")+"（"+pTxt(e.p)+"）")));
+    const extra=c.C.map((_,g)=>EX.filter(e=>e.sig&&e.high[g]).map(e=>itemRef(e.x.name)+"（"+(e.bin?Math.round(e.vals[g]*100)+"%":f2(e.vals[g]))+"）"));
+    if (extra.some(a=>a.length)){ L.push("各群可補充的額外動機（剔除題項中達顯著且該群明顯偏高者）："); extra.forEach((a,g)=>{ if (a.length) L.push("- 集群"+(g+1)+"："+a.join("、")); }); }
+    else L.push("各群可補充的額外動機：無（剔除題項皆未達顯著，或各群皆未明顯偏高）。");
+    L.push("");
+  }
+  L.push("各群策略須納入的主要題項（每個命名因素取負荷量最高的前 2 題）：");
+  const mk=namingCells(c.C), stemOf=it=>String(it.c.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"");
+  c.C.forEach((cc,g)=>{
+    const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
+    L.push("- 集群"+(g+1)+"：");
+    fs.sort((a,b)=>cc[b]-cc[a]).forEach(j=>{
+      const top=FI.F[j].items.slice(0,2);
+      L.push("  "+fl[j]+"（群中心值 "+f2(cc[j])+(cc[j]<0?"，從反面命名：代表這群消費者不重視此動機":"")+"）："+(top.length?top.map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」（負荷量 "+f2(it.row[j])+"）").join("；"):"無主導變數"));
+    });
+  });
   const text=L.join("\n");
   $("ca-prompt").textContent=text;
   $("ca-prompt-len").textContent=(fl.some((n,j)=>n==="因素"+(j+1))?"因素尚未全部命名・":"")+"共 "+text.length.toLocaleString()+" 字";
+}
+function exClusterStats(){
+  const r=S.res, c=curRun(); if (!r||!c||!S.exHist.length) return [];
+  const K=c.k, a=alpha(), lab=new Map(); r.keep.forEach((ri,i)=>lab.set(ri,c.lab[i]));
+  return S.exHist.map(x=>{
+    const g=Array.from({length:K},()=>[]);
+    r.keep.forEach(ri=>{ const v=num(S.rows[ri][x.ci]); if (v!==null) g[lab.get(ri)].push(v); });
+    const all=[].concat(...g); if (all.length<3) return null;
+    const bin=all.every(v=>v===0||v===1);
+    if (bin){
+      const T=[g.map(v=>v.filter(y=>y===1).length), g.map(v=>v.filter(y=>y===0).length)], res=Stats.chisq(T);
+      const pct=g.map(v=>v.length?v.filter(y=>y===1).length/v.length:null), all1=all.filter(y=>y===1).length/all.length;
+      return {x, bin:true, vals:pct, overall:all1, p:res?res.p:null, sig:!!(res&&res.p<a), high:pct.map(v=>v!=null&&v-all1>=.10)};
+    }
+    const m=all.reduce((s,y)=>s+y,0)/all.length, sd=Math.sqrt(all.reduce((s,y)=>s+(y-m)*(y-m),0)/Math.max(1,all.length-1))||1;
+    const z=g.map(v=>v.length?(v.reduce((s,y)=>s+y,0)/v.length-m)/sd:null), res=Stats.anova(g);
+    return {x, bin:false, vals:z, p:res?res.p:null, sig:!!(res&&res.p<a), high:z.map(v=>v!=null&&v>=.30)};
+  }).filter(Boolean);
 }
 function renderSegNames(){
   const c=curRun(); if (!c) return; const nm=segNames();
@@ -1440,18 +1481,34 @@ function caTableHTML(word){
     const row=c.C.map(cc=>cc[j]);
     t+='<tr>'+cell(esc(flabel(j)),"td")+row.map((v,g)=>mk[g][j]?(word?cell("<b><u>"+f3(v)+"</u></b>","td"):'<td class="c"><b><u>'+f3(v)+'</u></b></td>'):cell(f3(v),"td")).join("")+'</tr>';
   }
+  const EX=exClusterStats();
+  if (EX.length){
+    t+='<tr>'+(word?'<td colspan="'+(c.k+1)+'" style="'+base+'text-align:left;">剔除題項</td>':'<td colspan="'+(c.k+1)+'" class="l"><b>剔除題項</b></td>')+'</tr>';
+    EX.forEach(e=>{
+      const mx=Math.max(...e.vals.filter(v=>v!=null)), fmt=v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v));
+      t+='<tr>'+cell(esc(itemRef(e.x.name))+(e.sig?"*":""),"td")+e.vals.map(v=>e.sig&&v===mx?(word?cell("<b>"+fmt(v)+"</b>","td"):'<td class="c"><b>'+fmt(v)+'</b></td>'):cell(fmt(v),"td")).join("")+'</tr>';
+    });
+  }
   t+='<tr>'+cell("人數","td")+c.N.map(x=>cell(String(x),"td")).join("")+'</tr>';
   t+='<tr>'+cell("人數比例","td")+c.N.map(x=>cell(Math.round(x/G.n*100)+"%","td")).join("")+'</tr>';
-  return t+'</tbody></table>';
+  t+='</tbody></table>';
+  if (EX.length) t+='<p'+(word?' style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:10pt;"':' class="hint small"')+'>'+caNote(EX)+'</p>';
+  return t;
+}
+function caNote(EX){
+  const hasBin=EX.some(e=>e.bin), hasNum=EX.some(e=>!e.bin);
+  return "註：剔除題項未參與分群，"+(hasNum?"數值為標準化平均數（平均數 0、標準差 1）":"")+(hasNum&&hasBin?"；":"")+(hasBin?"0／1 題為勾選比例":"")+"。* p &lt; "+fp(alpha())+"（"+(hasNum?"單因子變異數分析":"")+(hasNum&&hasBin?"／":"")+(hasBin?"卡方檢定":"")+"），顯著者以粗體標示最高值。";
 }
 function caTableText(){
   const G=S.seg, c=curRun(), k=S.nf; const L=[CA_CAP,["消費動機"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("\t")];
   for (let j=0;j<k;j++) L.push([flabel(j)].concat(c.C.map(cc=>f3(cc[j]))).join("\t"));
+  const EX=exClusterStats();
+  if (EX.length){ L.push("剔除題項"); EX.forEach(e=>L.push([itemRef(e.x.name)+(e.sig?"*":"")].concat(e.vals.map(v=>v==null?"—":(e.bin?Math.round(v*100)+"%":f3(v)))).join("\t"))); }
   L.push(["人數"].concat(c.N.map(String)).join("\t")); L.push(["人數比例"].concat(c.N.map(x=>Math.round(x/G.n*100)+"%")).join("\t"));
   return L.join("\n");
 }
 async function copyCaTable(){
-  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+CA_CAP+'</p>'+caTableHTML(true), text=caTableText();
+  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+CA_CAP+'</p>'+caTableHTML(true), EXn=exClusterStats(), text=caTableText()+(EXn.length?"\n"+caNote(EXn).replace("&lt;","<"):"");
   try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]); toast("已複製表1，可直接貼到 Word"); }
   catch(e){
     const box=document.createElement("div"); box.innerHTML=html; box.style.position="fixed"; box.style.left="-9999px"; document.body.appendChild(box);
@@ -1689,7 +1746,7 @@ function renderKPrompt(){
 
 /* ---------- AI 指令（二） ---------- */
 function renderSegPrompt(){
-  renderKPrompt();
+  renderKPrompt(); if (S.seg&&curRun()){ renderCaPrompt(); renderCaTable(); }
   if (!S.seg||!curRun()) return;
   const G=S.seg, c=curRun(), k=S.nf;
   const A=c.N.map((x,g)=>"集群"+(g+1)+"：n = "+x+"（"+pct1(x/G.n)+"）").join("\n")+"\n合計：n = "+G.n+"（100.0%）";
