@@ -787,6 +787,10 @@ function loadSheet(name){
   S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[]; S.kept=new Set(); S.segNames={};
   S.userCut=false;
   const cfg=name==="資料"?readCfg(S.wb):null;
+  if (cfg&&cfg.K&&!(cfg.segNames&&cfg.segNames[cfg.K]&&cfg.segNames[cfg.K].some(x=>(x||"").trim()))){
+    const gi=S.headers.indexOf("集群"), ni=S.headers.indexOf("區隔名稱");
+    if (gi>=0&&ni>=0){ const arr=[]; S.rows.forEach(r=>{ const g=num(r[gi]), n=String(r[ni]||"").trim(); if (g>=1&&n&&!/^集群\d+$/.test(n)) arr[g-1]=n; }); if (arr.length){ cfg.segNames=cfg.segNames||{}; cfg.segNames[cfg.K]=Array.from({length:cfg.K},(_,g)=>arr[g]||""); } }
+  }
   if (cfg&&Array.isArray(cfg.added)){
     const drop=new Set(S.headers.map((h,i)=>cfg.added.includes(h)?i:-1).filter(i=>i>=0));
     S.headers=S.headers.filter((h,i)=>!drop.has(i)); S.rows=S.rows.map(r=>r.filter((v,i)=>!drop.has(i)));
@@ -1487,7 +1491,7 @@ const SKIP_RE=/時間戳記|timestamp|學號|姓名|電話|手機|e-?mail|信箱
 function detectProfile(){
   S.profCols=[];
   S.headers.forEach((h,ci)=>{
-    if (!h||SKIP_RE.test(h)||/^因素\s*\d+/.test(h)||h==="集群") return;
+    if (!h||SKIP_RE.test(h)||/^因素\s*\d+/.test(h)||h==="集群"||h==="區隔名稱") return;
     const vals=[]; for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; vals.push(v); }
     if (vals.length<3) return;
     const nums=vals.map(num);
@@ -1800,14 +1804,16 @@ function dlData(suffix){
   const map=new Map(); r.keep.forEach((ri,idx)=>map.set(ri,idx));
   const used=new Set(S.headers);
   const fh=Array.from({length:k},(_,j)=>{ let h=flabel(j); if (used.has(h)) h=h+"_因素分數"; used.add(h); return h; });
-  const ki=S.headers.indexOf("集群");
-  const head=S.headers.concat(fh).concat(c&&ki<0?["集群"]:[]);
+  const ki=S.headers.indexOf("集群"), ni=S.headers.indexOf("區隔名稱");
+  const nm=c?(S.segNames&&S.segNames[c.k])||[]:[], hasNm=c&&nm.some(x=>(x||"").trim());
+  const head=S.headers.concat(fh).concat(c&&ki<0?["集群"]:[]).concat(hasNm&&ni<0?["區隔名稱"]:[]);
   const aoa=[head];
   S.rows.forEach((row,ri)=>{
     const base=S.headers.map((_,ci)=>row[ci]===undefined?"":row[ci]);
     const idx=map.get(ri);
     const f=idx!=null?F[idx].map(x=>round(x,4)):Array(k).fill("");
-    if (c){ const g=idx!=null?c.lab[idx]+1:""; if (ki>=0) base[ki]=g; else f.push(g); }
+    if (c){ const g=idx!=null?c.lab[idx]+1:""; if (ki>=0) base[ki]=g; else f.push(g);
+      if (hasNm){ const n=idx!=null?((nm[c.lab[idx]]||"").trim()||"集群"+(c.lab[idx]+1)):""; if (ni>=0) base[ni]=n; else f.push(n); } }
     aoa.push(base.concat(f));
   });
   const wb=XLSX.utils.book_new();
@@ -1815,14 +1821,15 @@ function dlData(suffix){
   ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
   const cfg={v:1, items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})),
     nf:k, userNf:S.userNf, cut:r.cut.v, fnames:Array.from({length:k},(_,j)=>(S.fnames[j]||"").trim()), K:c?c.k:null,
-    topic:$("topic").value, alpha:$("alpha").value, segNames:S.segNames||{}, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
+    topic:$("topic").value, alpha:$("alpha").value, segNames:S.segNames||{}, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[]).concat(hasNm&&ni<0?["區隔名稱"]:[])};
   const st=[["項目","內容"],
     ["說明","重新上傳此檔案時，市場區隔分析工具會依本工作表自動還原上次的分析；請勿修改本工作表。"],
     ["分析題項",cfg.items.join("、")],
     ["被剔除的題項（依剔除順序）",cfg.exHist.map(x=>x.name+"（"+x.reason+"）").join("、")||"無"],
     ["因素個數",k],["門檻值",fcut(r.cut.v)],
     ["因素名稱",cfg.fnames.map((n,j)=>"因素"+(j+1)+"＝"+(n||"（未命名）")).join("；")],
-    ["集群數",cfg.K||"尚未分群"],["研究主題",cfg.topic||"（未填寫）"],
+    ["集群數",cfg.K||"尚未分群"],
+    ["區隔名稱",c?Array.from({length:c.k},(_,g)=>"集群"+(g+1)+"＝"+((nm[g]||"").trim()||"（未命名）")).join("；"):"尚未分群"],["研究主題",cfg.topic||"（未填寫）"],
     ["附加欄位",cfg.added.join("、")],
     ["設定代碼",JSON.stringify(cfg)]];
   const sw=XLSX.utils.aoa_to_sheet(st); sw["!cols"]=[{wch:26},{wch:80}];
