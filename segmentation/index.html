@@ -103,6 +103,8 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .fa1 td.c,.fa1 th{text-align:center;vertical-align:middle;white-space:nowrap}
 .fa1 td,.fa1 th{border:1px solid var(--border-strong)}
 .fa1 td.l{white-space:normal;min-width:260px}
+.namepaste textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0 4px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--warn);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}
+.namepaste textarea:focus{outline:2px solid var(--warn);outline-offset:1px}
 .fa-cap{margin:8px 0 4px;font-weight:700}
 .fnames{display:grid;gap:8px;margin:8px 0}
 .fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
@@ -1188,9 +1190,20 @@ function renderFaTable(){
   const C=candidates(), unnamed=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim());
   let m="";
   if (C.length) m+='<div class="notice warn">尚有 '+C.length+' 個歸屬不明的題目（步驟 5），表格只列出主導變數與已剔除的題項；請先決定保留或剔除。</div>';
-  if (unnamed.length) m+='<div class="notice warn">'+unnamed.map(j=>"因素"+(j+1)).join("、")+'尚未命名；請把 AI 建議的因素名稱填回步驟 5，表格會自動更新。</div>';
+  if (unnamed.length) m+='<div class="notice warn namepaste"><b>'+unnamed.map(j=>"因素"+(j+1)).join("、")+'尚未命名。</b>請把 AI 回覆最後一行「建議因素名稱：……（填回因素分析工具頁）」整行貼在下方，因素名稱會自動填入步驟 5，表格同步更新。'
+    +'<textarea id="name-paste" rows="2" placeholder="例：建議因素名稱：因素1＝日常規律動機；因素2＝展現品味動機；因素3＝感官愉悅動機（填回因素分析工具頁）"></textarea><span class="small" id="name-paste-msg"></span></div>';
   $("fa-msg").innerHTML=m;
+  const np=$("name-paste"); if (np) np.addEventListener("input",()=>applyNamePaste(np.value));
   $("fa-table").innerHTML='<p class="fa-cap">'+FA_CAP+'</p>'+faTableHTML(false);
+}
+function applyNamePaste(txt){
+  const re=/因素\s*(\d+)\s*[＝=：:]\s*([^；;，,、（(\n\r]+)/g; let m, got=[];
+  while ((m=re.exec(txt))){ const j=+m[1]-1, v=m[2].trim().replace(/[。」』]+$/,""); if (j>=0&&j<S.nf&&v){ S.fnames[j]=v; got.push(j); } }
+  if (!got.length){ $("name-paste-msg").textContent="找不到「因素1＝名稱」的格式，請確認貼上的是 AI 回覆的最後一行"; return; }
+  renderNames(); renderFaTable();
+  if (S.seg){ renderSegResult(); renderSegPrompt(); }
+  const left=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim());
+  toast("已填入 "+got.length+" 個因素名稱"+(left.length?"；"+left.map(j=>"因素"+(j+1)).join("、")+"仍未命名":""));
 }
 function faTableText(){
   const r=S.res, sol=r.sol, p=r.cols.length, FI=faInfo(); const L=[FA_CAP,["因素","題項","平均數","負荷量","特徵值（累積百分比）"].join("\t")]; let cum=0;
