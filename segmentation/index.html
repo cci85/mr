@@ -172,7 +172,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 3 適切性 -->
   <section class="panel" id="sec-adequacy" aria-labelledby="h3s" hidden>
     <h2 id="h3s"><span class="step">3</span>資料適切性</h2>
-    <p class="hint">KMO 大於 .60、Bartlett 球形檢定顯著，表示題項之間有足夠的共同變異，適合進行因素分析。個別題項的 MSA 低於 .50 時，可考慮刪除該題後重新分析。</p>
+    <p class="hint">KMO 大於 .60、Bartlett 球形檢定顯著，表示題項之間有足夠的共同變異，適合進行因素分析。</p>
     <div class="stats" id="adq-stats"></div>
     <div id="adq-msg"></div>
   </section>
@@ -899,12 +899,10 @@ function renderAdequacy(){
   h+='<div class="stat"><b>'+(a.bartlett?pTxt(a.bartlett.p).replace("p ",""):"—")+'</b><span>顯著性 p</span></div>';
   $("adq-stats").innerHTML=h;
   let m="";
-  if (a.kmo==null) m+='<div class="notice bad">相關矩陣為奇異矩陣（題項之間完全線性相依），無法計算 KMO 與 MSA，請檢查是否有重複或加總而成的題項。</div>';
+  if (a.kmo==null) m+='<div class="notice bad">相關矩陣為奇異矩陣（題項之間完全線性相依），無法計算 KMO，請檢查是否有重複或加總而成的題項。</div>';
   else if (a.kmo<.5) m+='<div class="notice bad">KMO 低於 .50，資料不適合進行因素分析。</div>';
   else if (a.kmo<.6) m+='<div class="notice warn">KMO 介於 .50 至 .60，適切性勉強，解讀時宜保守。</div>';
   if (a.bartlett && a.bartlett.p>=.05) m+='<div class="notice bad">Bartlett 球形檢定未達顯著，題項之間的相關不足以進行因素分析。</div>';
-  const lowMsa=a.msa?r.cols.filter((c,i)=>a.msa[i]<.5):[];
-  if (lowMsa.length) m+='<div class="notice warn">MSA 低於 .50 的題項：'+lowMsa.map(c=>esc(c.name)+"（"+f3(a.msa[r.cols.indexOf(c)])+"）").join("、")+'。可考慮刪除後重新分析。</div>';
   $("adq-msg").innerHTML=m;
 }
 function cumInfo(){
@@ -944,7 +942,7 @@ function renderLoadings(){
   $("sec-load").hidden=false;
   let t='<table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th>平均數</th>';
   for (let j=0;j<k;j++) t+='<th>因素'+(j+1)+'</th>';
-  t+='<th>共同性</th><th>獨特性</th><th>MSA</th></tr></thead><tbody>';
+  t+='<th>共同性</th><th>獨特性</th></tr></thead><tbody>';
   r.order.forEach(it=>{
     t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?(it.cross.length?' <span class="tag">交叉負荷量</span>':''):' <span class="tag">'+(it.neg.length?"負負荷":"主要負荷量未達門檻值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
     it.row.forEach((x,j)=>{
@@ -955,11 +953,11 @@ function renderLoadings(){
       else if (Math.abs(x)<cut){ cls="low"; if (hide) show=false; }
       t+='<td class="'+cls+'">'+(show?f2(x):"")+'</td>';
     });
-    t+='<td>'+f2(it.comm)+'</td><td class="'+(it.uniq>.45?"flag":"")+'">'+f2(it.uniq)+'</td><td>'+(it.msa!=null?f2(it.msa):"—")+'</td></tr>';
+    t+='<td>'+f2(it.comm)+'</td><td class="'+(it.uniq>.45?"flag":"")+'">'+f2(it.uniq)+'</td></tr>';
   });
   const p=r.cols.length; let cum=0;
-  t+='<tr><td class="l" colspan="3"><b>轉軸後解釋變異量</b></td>'; sol.ss.forEach(v=>{ t+='<td>'+pct(v/p)+'</td>'; }); t+='<td colspan="3"></td></tr>';
-  t+='<tr><td class="l" colspan="3"><b>累積解釋變異量</b></td>'; sol.ss.forEach(v=>{ cum+=v/p; t+='<td>'+pct(cum)+'</td>'; }); t+='<td colspan="3"></td></tr>';
+  t+='<tr><td class="l" colspan="3"><b>轉軸後解釋變異量</b></td>'; sol.ss.forEach(v=>{ t+='<td>'+pct(v/p)+'</td>'; }); t+='<td colspan="2"></td></tr>';
+  t+='<tr><td class="l" colspan="3"><b>累積解釋變異量</b></td>'; sol.ss.forEach(v=>{ cum+=v/p; t+='<td>'+pct(cum)+'</td>'; }); t+='<td colspan="2"></td></tr>';
   t+='</tbody></table>';
   $("load-table").innerHTML=t;
   const m=[];
@@ -1033,6 +1031,7 @@ const RULES_COMMON = (src, tableNote, cutT)=>[
 "- 以完整段落撰寫，不使用條列、不加小標題。"+tableNote,
 "- 引用題項時，一律寫作「項目＋題號（簡稱）」，例如「項目9（茶文化體驗）」，不寫英文代碼（不得寫作「項目A9」），也不寫完整題目內容。"+(src==="截圖"?"題項名稱為「英文代碼＋題號＋簡稱」者（例如 A9茶文化體驗），直接取用其題號與簡稱；題項名稱沒有簡稱者，依題意自訂至多 6 個字的簡稱。":"引用名稱一律照抄【分析結果】「題項引用名稱」所列的寫法；標示「需自訂簡稱」者，依題目內容自訂至多 6 個字的簡稱。"),
 "- 本節只撰寫因素分析的結果與因素命名，不得撰寫行銷策略、行銷意涵或產品、價格、溝通、通路等行銷建議；行銷意涵留待市場區隔剖析完成後再撰寫。",
+"- 資料適宜性只報告 Bartlett 球形檢定與整體 KMO 值，不得提及個別題項的 MSA 值。",
 "- 不得編造"+src+"中沒有的數值或題項。",
 "",
 "三、因素命名規則",
@@ -1050,7 +1049,7 @@ const SHOT_PROMPT=[
 "請根據附上的截圖（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「消費動機因素分析」一節。截圖應包含：轉軸後因素負荷量矩陣（含題項內容）、KMO 與 Bartlett 球形檢定、各因素的解釋變異量，以及各題項的平均數（描述統計）；若缺少某項，請略過與該項有關的內容，不得自行推估。",
 "",
 "一、寫作內容（共三段，依序撰寫）",
-"第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與 KMO 值（截圖若有個別題項 MSA，一併報告其範圍），並據此判斷資料是否適合進行因素分析。"+KMO_REF,
+"第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與整體 KMO 值，並據此判斷資料是否適合進行因素分析。"+KMO_REF,
 "第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值：李克特量表等連續尺度採 0.5，0／1 二元資料採 0.3。若研究者在對話中說明了已剔除的題項，說明初步分析的結果與剔除理由，剔除理由分為兩種：「具有交叉負荷量（大於門檻值）」，以及「主要負荷量未達門檻值」，並寫出實際的門檻值數字；並說明剔除後重新分析的結果。若截圖中仍有主要負荷量未達門檻值或交叉負荷量大於門檻值的題項，請在報告之前另行提醒研究者，先剔除後重新分析。最後報告累積解釋變異量，以及是否達社會科學常用的 60% 參考標準。",
 "第三段　因素命名與認同程度：依負荷量矩陣（負荷量低於門檻值者已隱藏）逐一詮釋各因素，寫法如「因素1由五個題項組成，內容均指向……，故命名為「……」」，只需寫出主導變數所反映的內容與命名理由。接著依各因素主導變數平均數的平均，說明哪個因素最受認同、哪個因素認同程度最低（截圖若無平均數則略過）。若有被剔除的題項，說明這些題項不納入後續集群分析的分群變數，而是改作市場區隔的輪廓變數；未來於區隔剖析時，李克特量表題將以單因子變異數分析（ANOVA）比較各區隔在這些變數上的平均數差異，0／1 題則以卡方檢定比較各區隔的勾選比例差異，以補充描繪各市場區隔的動機特徵。",
 ""].concat(RULES_COMMON("截圖","不需輸出表格。")).join("\n");
@@ -1084,7 +1083,7 @@ function renderPrompt(){
   L.push("請根據下方【分析結果】（主成分分析、Varimax 轉軸後結果），撰寫正式研究報告中的「消費動機因素分析」一節。");
   L.push("");
   L.push("一、寫作內容（共三段，依序撰寫）");
-  L.push("第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將 "+nAll+" 個消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）、KMO 整體取樣適切性，以及個別題項 MSA 值的範圍，並據此判斷資料是否適合進行因素分析。"+KMO_REF);
+  L.push("第一段　研究目的與資料適宜性：從題目內容判斷研究的產品或消費情境，說明本研究以探索性因素分析將 "+nAll+" 個消費動機題項縮減為少數構面，作為市場區隔的基礎變數，使同一區隔的消費者在動機上具有高度同質性；接著報告 Bartlett 球形檢定（χ²、df、p）與 KMO 整體取樣適切性，並據此判斷資料是否適合進行因素分析。"+KMO_REF);
   let p2="第二段　萃取方法與題項剔除：說明本研究採主成分法萃取因素，以 Kaiser 法（特徵值大於 1）決定因素個數"+(k===r.kaiser?"":"（本分析的因素個數為研究者指定，請說明依據為累積解釋變異量與因素的可詮釋性）")+"，並以 Varimax 正交轉軸；明確寫出因素負荷量的門檻值為 "+cutT+"。";
   if (S.exHist.length) p2+="接著說明初步分析萃取出的因素個數，以及被剔除的題項與剔除理由（見【分析結果】的「被剔除的題項」）：交叉負荷量達門檻值者，寫作「具有交叉負荷量（大於 "+cutT+"）」；主要負荷量未達門檻值者，寫作「主要負荷量未達門檻值 "+cutT+"」。然後說明剔除後重新執行因素分析，最終萃取出的因素個數，並以「如表1所示」引用表格。";
   else p2+="說明所有題項的主要負荷量皆達門檻值 "+cutT+"，且沒有交叉負荷量，因此保留全部題項，並以「如表1所示」引用表格。";
@@ -1119,7 +1118,6 @@ function renderPrompt(){
   L.push("資料型態："+(r.binary?"0／1 二元資料":"連續尺度（如李克特量表）"));
   L.push("原始消費動機題項數："+nAll+"；保留題項數："+p);
   L.push("KMO = "+(a.kmo!=null?f3(a.kmo):"無法計算")+"；Bartlett 球形檢定 "+(a.bartlett?"χ²("+a.bartlett.df+") = "+a.bartlett.chi.toFixed(2)+"，"+pTxt(a.bartlett.p):"無法計算"));
-  if (a.msa){ const ms=a.msa.filter(x=>x!=null); L.push("個別題項 MSA 範圍："+f3(Math.min(...ms))+" 至 "+f3(Math.max(...ms))); }
   L.push("萃取方法：主成分分析；轉軸方法：Varimax（Kaiser 常態化）");
   L.push("門檻值："+cutT);
   if (S.exHist.length){
@@ -1145,9 +1143,9 @@ function renderPrompt(){
   if (negOnly.length) L.push("強烈負負荷的題項："+negOnly.map(it=>it.c.name+"（因素"+it.neg.map(j=>j+1).join("、因素")+"）").join("、"));
   L.push("");
   L.push("轉軸後負荷量矩陣（題項依主要負荷所在的因素排列）：");
-  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性","MSA"]).join("｜"));
+  L.push(["題項","題目內容",r.binary?"平均數（勾選率）":"平均數"].concat(Array.from({length:k},(_,j)=>"因素"+(j+1))).concat(["共同性"]).join("｜"));
   r.order.forEach(it=>{
-    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm),it.msa!=null?f2(it.msa):"—"]).join("｜"));
+    L.push([it.c.name, it.c.stem||"（同題項欄名）", it.mean.toFixed(2)].concat(it.row.map(f2)).concat([f2(it.comm)]).join("｜"));
   });
   L.push("");
   L.push("題項引用名稱：");
@@ -1520,8 +1518,8 @@ function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,""); }
 function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
-  const a1=[["題項","題目內容","平均數"].concat(fh).concat(["共同性","獨特性","MSA","主要負荷因素"])];
-  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.msa!=null?round(it.msa,3):"",it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"主要負荷量未達門檻值")])));
+  const a1=[["題項","題目內容","平均數"].concat(fh).concat(["共同性","獨特性","主要負荷因素"])];
+  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"主要負荷量未達門檻值")])));
   let cum=0;
   a1.push([]); a1.push(["轉軸後解釋變異量 (%)","",""].concat(sol.ss.map(v=>round(v/p*100,2))));
   a1.push(["累積解釋變異量 (%)","",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
