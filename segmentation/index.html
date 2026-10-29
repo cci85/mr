@@ -274,6 +274,22 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint">集群依人數由多到少編號。群中心值為各群在各構面上的平均標準分數，正值代表高於全體平均，負值代表低於全體平均；每列最高值以粗體加底色標示。</p>
     <div class="table-scroll" id="seg-table"></div>
     <div id="seg-msg"></div>
+    <h3>AI 報告指令（集群分析）：市場區隔暫時性報告</h3>
+    <p class="hint">指令已自動填入各群人數、群中心值與命名依據。複製後貼到 AI 對話中，AI 會撰寫市場區隔的暫時性報告：建立市場區隔的過程、各群命名、各群人數比較，以及可能的行銷策略與暫定目標市場。完整的區隔輪廓留待步驟 9 區隔剖析與步驟 11 報告確認。請把 AI 建議的區隔名稱貼回下方。</p>
+    <div class="row">
+      <button type="button" class="primary" id="btn-copy-ca">複製 AI 報告指令（集群分析）</button>
+      <span class="small" id="ca-prompt-len"></span>
+    </div>
+    <details>
+      <summary>檢視指令內容</summary>
+      <pre class="prompt" id="ca-prompt"></pre>
+    </details>
+    <h3>市場區隔結果表</h3>
+    <p class="hint">表格由本工具依分群結果產生，格式與數值不經 AI；每列最高的群中心值以粗體底線標示。欄名採用下方的區隔名稱；按「複製表1」後可直接貼到 Word。</p>
+    <div id="sn-msg"></div>
+    <div class="fnames" id="snames"></div>
+    <div class="table-scroll" id="ca-table"></div>
+    <button type="button" id="btn-copy-ca-table">複製表1</button>
   </section>
 
   <!-- 9 區隔剖析 -->
@@ -762,7 +778,7 @@ function loadSheet(name){
   S.headers=(aoa[0]||[]).map(h=>String(h).trim());
   S.rows=aoa.slice(1);
   S.stems=readStems(S.wb); S.groupNames=readGroups(S.wb);
-  S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[]; S.kept=new Set();
+  S.selected=new Set(); S.userNf=false; S.fnames=[]; S.seg=null; S.userK=false; S.excluded=new Set(); S.exHist=[]; S.kept=new Set(); S.segNames={};
   S.userCut=false;
   const cfg=name==="資料"?readCfg(S.wb):null;
   if (cfg&&Array.isArray(cfg.added)){
@@ -792,6 +808,7 @@ function applyCfg(cfg){
   if (Array.isArray(cfg.prof)){ const want=new Set(cfg.prof); S.profSel=new Set(S.profCols.filter(pc=>want.has(pc.name)).map(pc=>pc.ci)); }
   else ex.forEach(c=>S.profSel.add(c));
   S.kept=new Set((cfg.kept||[]).map(ci).filter(c=>c!=null));
+  S.segNames=cfg.segNames&&typeof cfg.segNames==="object"?cfg.segNames:{};
   S.nf=cfg.nf; S.userNf=!!cfg.userNf;
   if ([...$("cut").options].some(o=>+o.value===+cfg.cut)){ $("cut").value=String(+cfg.cut); S.userCut=true; }
   S.fnames=(cfg.fnames||[]).slice();
@@ -1273,6 +1290,7 @@ function runSeg(){
   const r=S.res;
   const key=r.cols.map(c=>c.ci).join(",")+"|"+S.nf;
   if (S.seg && S.seg.key===key){ renderK(); renderSegResult(); renderProfile(); renderSegPrompt(); return; }
+  if (S.seg) S.segNames={};
   S.seg=null;
   $("sec-k").hidden=false;
   if (S.nf<2){
@@ -1332,10 +1350,114 @@ function renderSegResult(){
   t+='<tr class="total"><td class="l">人數（比例）</td>'+c.N.map(x=>'<td>'+x+'（'+pct1(x/G.n)+'）</td>').join("")+'</tr></tbody></table>';
   $("seg-table").innerHTML=t;
   const m=[];
-  c.C.forEach((cc,g)=>{ if (cc.every(v=>v<=.1)) m.push("集群"+(g+1)+"在所有構面上都為負值或接近 0，沒有明顯的正向峰值；報告會依相對最不負的構面命名並加註。"); });
+  c.C.forEach((cc,g)=>{ if (cc.every(v=>v<=.1)) m.push("集群"+(g+1)+"在所有構面上都為負值或接近 0，沒有明顯的正向峰值；集群分析報告會以其最大負值從反面命名。"); });
   const un=[]; for (let j=0;j<k;j++) if (!(S.fnames[j]||"").trim()) un.push("因素"+(j+1));
   if (un.length) m.push("尚未填寫因素名稱："+un.join("、")+"。請在步驟 5 填入因素名稱，市場區隔報告才能以構面名稱為各群命名。");
   $("seg-msg").innerHTML=m.map(x=>'<div class="notice warn">'+esc(x)+'</div>').join("");
+  renderCaPrompt(); renderSegNames();
+}
+
+/* ---------- AI 指令（集群分析）與市場區隔結果表 ---------- */
+function segNames(){ const K=curRun().k; if (!S.segNames) S.segNames={}; if (!S.segNames[K]) S.segNames[K]=[]; return S.segNames[K]; }
+function slabel(g){ const v=(segNames()[g]||"").trim(); return v||("集群"+(g+1)); }
+function renderCaPrompt(){
+  const G=S.seg, c=curRun(), k=S.nf, r=S.res; if (!c) return;
+  const fl=Array.from({length:k},(_,j)=>flabel(j)), nAll=r.cols.length+S.exHist.length;
+  const L=[];
+  L.push("請根據下方【分群結果】，撰寫正式研究報告中「市場區隔分析」的「建立市場區隔」一節。此為市場區隔的暫時性報告：只依群中心值與各群人數命名並提出可能的行銷策略，尚未納入區隔剖析（輪廓變數）的結果。");
+  L.push("");
+  L.push("一、寫作內容（共三段，依序撰寫）");
+  L.push("第一段　建立市場區隔：說明在建立市場區隔之前，本研究先透過因素分析將 "+nAll+" 個消費動機題項縮減為 "+k+" 個動機因素，作為區隔變數；其次以集群分析的 K 平均法，以這 "+k+" 個消費動機因素為集群變數，將受訪者集成 "+c.k+" 個群別，各群的群中心值（即組平均數）與人數如表1所示；表中將每一列最高的群中心值以粗體底線標示，顯示為不同群別的特色。");
+  L.push("第二段　各群命名與人數比較：依【分群結果】的命名依據逐群命名。分到因素的群，寫法如「第1群在○○、○○上的平均數高於其他群，可命名為「○○群」」；沒有分到因素的群，寫法如「第3群在各因素上皆未高於其他群，其在○○上的平均數最低，可從反面命名為「○○群」」。接著比較各群人數，指出人數最多、次之與最少的群別。");
+  L.push("第三段　可能的行銷策略（暫時性答案）：逐群寫一句可能的行銷作為，須回溯到該群命名所依據的動機因素，說明「因為這群消費者重視（或不重視）什麼，所以可以提供什麼產品設計或溝通訴求」。最後寫出：若以各群人數比例衡量區隔吸引力，廠商可考慮鎖定人數最多的區隔為目標市場，並提出對應的產品方向。");
+  L.push("三段之後，以一句話說明：以上命名與行銷策略僅依群中心值與人數提出，屬暫時性結果，各區隔的完整輪廓與目標市場選擇，有待區隔剖析完成後再確認與修正。");
+  L.push("");
+  L.push("二、命名規則");
+  L.push("- 命名依據已由分析工具依下列規則算出，請直接採用，不得自行改選其他因素：每個因素歸入群中心值最大的那一群；分到因素的群，以所分到的因素命名（分到兩個以上時，名稱須涵蓋這些因素）；沒有分到因素的群，以該群群中心值最小的因素（最大負值）從反面命名。");
+  L.push("- 名稱須反映消費動機上的差異，至多 8 個字，並以「群」結尾，例如「嫌貴嫌甜群」「挑選嘗試群」。");
+  L.push("- 不需要每群都以兩個因素命名。");
+  L.push("- 若命名依據註明「另有正值」，代表該群在該因素上也高於全體平均，只是低於另一群；命名仍依最大負值，但可在命名說明中一併提及該正值。");
+  L.push("");
+  L.push("三、寫作規則");
+  L.push("- 採正式學術報告文體，以繁體中文撰寫；用詞一律使用「變數」，不得使用「變項」。");
+  L.push("- 以完整段落撰寫，不使用條列；不需輸出表格，表1由分析工具產生。");
+  L.push("- 群中心值以小數點後三位、省略整數位的 0 呈現（例如 .658、-1.223）。");
+  L.push("- 不得編造【分群結果】中沒有的數值或變數，不得推論各群的人口統計或購買行為。");
+  L.push("");
+  L.push("四、輸出格式");
+  L.push("第一行為標題「市場區隔分析」，第二行為小標題「1. 建立市場區隔」，接著依序輸出上述三段文字與暫時性說明。");
+  L.push("最後空一行，另起一行輸出「建議區隔名稱：集群1＝……群；集群2＝……群（填回市場區隔工具頁）」，句末的「（填回市場區隔工具頁）」須照抄；此行供研究者把名稱填回分析工具，不屬於報告內容。");
+  L.push("");
+  L.push("=====================");
+  L.push("【分群結果】");
+  L.push("=====================");
+  L.push("有效樣本數："+G.n+"；原始消費動機題項數："+nAll+"；集群變數："+fl.join("、")+"（標準化因素分數）；K 平均法分為 "+c.k+" 群，集群依人數由多到少編號。");
+  L.push("");
+  L.push("各因素的主導變數：");
+  const FI=faInfo(); FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)).join("、"):"無")));
+  L.push("");
+  L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+" "+x+" 人（"+Math.round(x/G.n*100)+"%）").join("、"));
+  L.push(["消費動機"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜"));
+  for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map(cc=>f3(cc[j]))).join("｜"));
+  L.push("命名依據：");
+  clusterFeats(c.C,fl).forEach((f,g)=>L.push("- 集群"+(g+1)+"（"+(f.type==="正向"?"分到因素":"沒有分到因素")+"）："+f.basis));
+  const text=L.join("\n");
+  $("ca-prompt").textContent=text;
+  $("ca-prompt-len").textContent=(fl.some((n,j)=>n==="因素"+(j+1))?"因素尚未全部命名・":"")+"共 "+text.length.toLocaleString()+" 字";
+}
+function renderSegNames(){
+  const c=curRun(); if (!c) return; const nm=segNames();
+  let h=""; for (let g=0;g<c.k;g++) h+='<div class="fname"><label for="sn'+g+'"><b>集群'+(g+1)+'</b><span>'+c.N[g]+' 人</span></label><input type="text" id="sn'+g+'" data-s="'+g+'" placeholder="區隔名稱，例：嫌貴嫌甜群" value="'+esc(nm[g]||"")+'"></div>';
+  $("snames").innerHTML=h;
+  $("snames").querySelectorAll("input[data-s]").forEach(i=>i.addEventListener("input",()=>{ segNames()[+i.dataset.s]=i.value; renderCaTable(); }));
+  renderCaTable();
+}
+function renderCaTable(){
+  const c=curRun(); if (!c) return;
+  const un=Array.from({length:c.k},(_,g)=>g).filter(g=>!(segNames()[g]||"").trim());
+  let m="";
+  if (un.length) m='<div class="notice warn namepaste"><b>'+un.map(g=>"集群"+(g+1)).join("、")+'尚未命名。</b>請把 AI 回覆最後一行「建議區隔名稱：……（填回市場區隔工具頁）」整行貼在下方，區隔名稱會自動填入，表格同步更新。'
+    +'<textarea id="seg-paste" rows="2" placeholder="例：建議區隔名稱：集群1＝嫌貴嫌甜群；集群2＝挑選嘗試群；集群3＝搭配聊天群（填回市場區隔工具頁）"></textarea><span class="small" id="seg-paste-msg"></span></div>';
+  $("sn-msg").innerHTML=m;
+  const sp=$("seg-paste"); if (sp) sp.addEventListener("input",()=>applySegPaste(sp.value));
+  $("ca-table").innerHTML='<p class="fa-cap">'+CA_CAP+'</p>'+caTableHTML(false);
+}
+function applySegPaste(txt){
+  const c=curRun(), re=/集群\s*(\d+)\s*[＝=：:]\s*([^；;，,、（(\n\r]+)/g; let m, got=0;
+  while ((m=re.exec(txt))){ const g=+m[1]-1, v=m[2].trim().replace(/[。」』]+$/,""); if (g>=0&&g<c.k&&v){ segNames()[g]=v; got++; } }
+  if (!got){ $("seg-paste-msg").textContent="找不到「集群1＝名稱」的格式，請確認貼上的是 AI 回覆的最後一行"; return; }
+  renderSegNames(); toast("已填入 "+got+" 個區隔名稱");
+}
+const CA_CAP="表1　市場區隔之群中心值與人數";
+function caTableHTML(word){
+  const G=S.seg, c=curRun(), k=S.nf;
+  const B=word?'border:1px solid #000;':'';
+  const base=word?'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 6pt;vertical-align:middle;'+B:'';
+  const cell=(txt,tag,extra)=>'<'+tag+(word?' style="'+base+'text-align:center;font-weight:normal;'+(extra||"")+'"':(extra?' class="'+extra+'"':' class="c"'))+'>'+txt+'</'+tag+'>';
+  let t='<table'+(word?' style="border-collapse:collapse;'+B+'"':' class="fa1"')+'><thead><tr>'+cell("消費動機","th")+c.N.map((_,g)=>cell((g+1)+". "+esc(slabel(g)),"th")).join("")+'</tr></thead><tbody>';
+  for (let j=0;j<k;j++){
+    const row=c.C.map(cc=>cc[j]), mx=Math.max(...row);
+    t+='<tr>'+cell(esc(flabel(j)),"td")+row.map(v=>v===mx?(word?cell("<b><u>"+f3(v)+"</u></b>","td"):'<td class="c"><b><u>'+f3(v)+'</u></b></td>'):cell(f3(v),"td")).join("")+'</tr>';
+  }
+  t+='<tr>'+cell("人數","td")+c.N.map(x=>cell(String(x),"td")).join("")+'</tr>';
+  t+='<tr>'+cell("人數比例","td")+c.N.map(x=>cell(Math.round(x/G.n*100)+"%","td")).join("")+'</tr>';
+  return t+'</tbody></table>';
+}
+function caTableText(){
+  const G=S.seg, c=curRun(), k=S.nf; const L=[CA_CAP,["消費動機"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("\t")];
+  for (let j=0;j<k;j++) L.push([flabel(j)].concat(c.C.map(cc=>f3(cc[j]))).join("\t"));
+  L.push(["人數"].concat(c.N.map(String)).join("\t")); L.push(["人數比例"].concat(c.N.map(x=>Math.round(x/G.n*100)+"%")).join("\t"));
+  return L.join("\n");
+}
+async function copyCaTable(){
+  const html='<p style="font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;">'+CA_CAP+'</p>'+caTableHTML(true), text=caTableText();
+  try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]); toast("已複製表1，可直接貼到 Word"); }
+  catch(e){
+    const box=document.createElement("div"); box.innerHTML=html; box.style.position="fixed"; box.style.left="-9999px"; document.body.appendChild(box);
+    const rg=document.createRange(); rg.selectNodeContents(box); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+    try{ document.execCommand("copy"); toast("已複製表1，可直接貼到 Word"); }catch(err){ toast("複製失敗，請直接選取表格複製"); }
+    sel.removeAllRanges(); box.remove();
+  }
 }
 
 /* ---------- 區隔剖析 ---------- */
@@ -1665,7 +1787,7 @@ function dlData(){
   ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
   const cfg={v:1, items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})),
     nf:k, userNf:S.userNf, cut:r.cut.v, fnames:Array.from({length:k},(_,j)=>(S.fnames[j]||"").trim()), K:c?c.k:null,
-    topic:$("topic").value, alpha:$("alpha").value, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
+    topic:$("topic").value, alpha:$("alpha").value, segNames:S.segNames||{}, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[])};
   const st=[["項目","內容"],
     ["說明","重新上傳此檔案時，市場區隔分析工具會依本工作表自動還原上次的分析；請勿修改本工作表。"],
     ["分析題項",cfg.items.join("、")],
@@ -1724,6 +1846,8 @@ $("btn-copy-seg").addEventListener("click",()=>{
   copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
 });
 $("btn-copy-fa").addEventListener("click",copyFaTable);
+$("btn-copy-ca").addEventListener("click",()=>copyText($("ca-prompt").textContent,"已複製 AI 報告指令（集群分析）"));
+$("btn-copy-ca-table").addEventListener("click",copyCaTable);
 $("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製 AI 報告指令（群數決定）"));
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
