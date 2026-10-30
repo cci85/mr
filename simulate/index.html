@@ -142,7 +142,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 1 上傳 -->
   <section class="panel" aria-labelledby="h1s">
     <h2 id="h1s"><span class="step">1</span>上傳原始問卷資料</h2>
-    <p class="hint">請上傳 Google 表單回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
+    <p class="hint">本工具僅適用 Google 表單的原始回覆：請上傳回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。請勿上傳問卷資料整理器產出的檔案，因為複選題已拆成 0／1 欄，擴充時選項組合會被打散，「欄名對照表」與「題組」工作表也不會保留；請先擴充原始回覆，再將擴充後的檔案送進問卷資料整理器。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
     <label class="dropzone" id="dropzone">
       <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
@@ -282,6 +282,7 @@ function readFile(file){
       const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string",cellDates:true}):XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:true}));
       if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
       S.wb=wb; S.fileName=file.name;
+      if (wb.SheetNames.includes("欄名對照表")) toast("這是問卷資料整理器產出的檔案；本工具僅適用 Google 表單原始回覆，請改上傳原始回覆");
       $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
       $("sheet-row").hidden=false; $("sheet").value=wb.SheetNames[0]; loadSheet(wb.SheetNames[0]);
     }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案":"無法解析此檔案，請確認格式"); }
