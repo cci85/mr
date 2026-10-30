@@ -223,10 +223,10 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 
   <!-- 6 AI 指令 -->
   <section class="panel" id="sec-prompt" aria-labelledby="h6s" hidden>
-    <h2 id="h6s"><span class="step">6</span>AI 報告指令（一）：因素分析報告</h2>
+    <h2 id="h6s"><span class="step">6</span>AI 報告指令：因素分析報告</h2>
     <p class="hint">指令會隨上方設定即時更新。複製後貼到 AI 對話中，AI 會撰寫因素分析報告：資料適宜性、萃取方法與被剔除的題項、各因素的主導變數與命名，以及哪個因素最受認同。行銷意涵留待步驟 11 輪廓分析完成後再撰寫。請把 AI 建議的因素名稱填回步驟 5。</p>
     <div class="row">
-      <button type="button" class="primary" id="btn-copy">複製 AI 報告指令（一）</button>
+      <button type="button" class="primary" id="btn-copy">複製因素分析報告指令</button>
       <span class="small" id="prompt-len"></span>
     </div>
     <details>
@@ -257,10 +257,10 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint small">輪廓係數衡量每位受訪者與自己所屬群的相近程度，介於 −1 與 1 之間；手肘圖中組內平方和下降幅度明顯趨緩之處，也可作為群數的參考。最後仍應考量各群能否清楚命名、是否具行銷意義。</p>
     <h3>採用的群數</h3>
     <div class="kpick" id="kpick"></div>
-    <h3>AI 報告指令（群數決定）：比較 3、4、5 群</h3>
+    <h3>AI 報告指令：群數決定（比較 3、4、5 群）</h3>
     <p class="hint">指令已自動填入 3、4、5 群的各群人數與群中心值。複製後貼到 AI 對話中，AI 會依群數決定的三項準則與條紋現象，比較各群數的優缺點並建議群數；請依建議在上方選擇採用的群數，再進行步驟 11 的正式命名。建議先把因素名稱填回步驟 5，AI 才能以構面名稱判讀。</p>
     <div class="row">
-      <button type="button" class="primary" id="btn-copy-k">複製 AI 報告指令（群數決定）</button>
+      <button type="button" class="primary" id="btn-copy-k">複製群數決定指令</button>
       <span class="small" id="k-prompt-len"></span>
     </div>
     <details>
@@ -275,10 +275,10 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint">集群依人數由多到少編號。群中心值為各群在各構面上的平均標準分數，正值代表高於全體平均，負值代表低於全體平均；每列最高值以粗體加底色標示。</p>
     <div class="table-scroll" id="seg-table"></div>
     <div id="seg-msg"></div>
-    <h3>AI 報告指令（集群分析）：市場區隔暫時性報告</h3>
+    <h3>AI 報告指令：集群分析（暫時性報告）</h3>
     <p class="hint">指令已自動填入各群人數、群中心值與命名依據。複製後貼到 AI 對話中，AI 會撰寫市場區隔的暫時性報告：建立市場區隔的過程、各群命名、各群人數比較，以及可能的行銷策略與暫定目標市場。完整的區隔輪廓留待步驟 9 輪廓分析與步驟 11 報告確認。請把 AI 建議的區隔名稱貼回下方。</p>
     <div class="row">
-      <button type="button" class="primary" id="btn-copy-ca">複製 AI 報告指令（集群分析）</button>
+      <button type="button" class="primary" id="btn-copy-ca">複製集群分析報告指令</button>
       <span class="small" id="ca-prompt-len"></span>
     </div>
     <details>
@@ -324,14 +324,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint small">資料檔在原始資料後方加上各因素分數（迴歸法，平均數 0、標準差 1；已命名者以因素名稱為欄名）與「集群」欄，並保留「欄名對照表」與「題組」工作表，另存「分析設定」工作表；下次上傳這個資料檔，會自動還原題項、被剔除的題項、因素個數、門檻值、因素名稱與集群數，可直接接續集群分析。因缺漏而排除的受訪者，這些欄位為空白。分析結果檔包含負荷量、特徵值、適切性檢定、群中心值、群數比較與輪廓分析。</p>
   </section>
 
-  <!-- 11 AI 指令（二） -->
+  <!-- 11 市場區隔分析報告指令 -->
   <section class="panel" id="sec-seg-prompt" aria-labelledby="h11s" hidden>
-    <h2 id="h11s"><span class="step">11</span>AI 報告指令（二）：市場區隔命名與行銷意涵</h2>
-    <p class="hint">指令已自動填入（A）各群人數與比例、（B）群中心值表與（D）輪廓分析的顯著結果；請在下方填寫（C），讓行銷意涵能扣合產品情境。</p>
-    <label for="topic"><b>（C）研究主題／產品類別簡述</b></label>
-    <textarea id="topic" placeholder="例：即飲包裝綠茶，研究對象為大學生"></textarea>
+    <h2 id="h11s"><span class="step">11</span>AI 報告指令：市場區隔分析報告（修正版）</h2>
+    <p class="hint">指令已自動填入集群分析（各群人數、群中心值、命名依據與主要題項）、輪廓分析的檢定結果，以及表3 的區隔輪廓整理；AI 會撰寫完整的市場區隔分析報告：建立市場區隔、輪廓分析、區隔輪廓整合與行銷策略，並提出暫定的目標市場。產品類別會由題目內容判斷；若資料由問卷資料整理器產生，研究對象會由篩選題判斷。</p>
+    <label for="topic"><b>研究主題（選填）</b></label>
+    <textarea id="topic" placeholder="可貼上問卷開頭的說明文字，或簡述產品類別、研究對象與研究目的，例：本問卷旨在瞭解您對即飲包裝綠茶的看法與消費行為……"></textarea>
     <div class="row">
-      <button type="button" class="primary" id="btn-copy-seg">複製 AI 報告指令（二）</button>
+      <button type="button" class="primary" id="btn-copy-seg">複製市場區隔分析報告指令</button>
       <span class="small" id="seg-prompt-len"></span>
     </div>
     <details>
@@ -360,103 +360,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 
   <footer>所有計算都在您的瀏覽器中完成，資料不會上傳。本工具不使用 AI 服務；報告由您把指令貼到自己的 AI 對話中產生。</footer>
 </main>
-<pre id="tpl" hidden>市場區隔分析報告生成提示詞（供研究者貼上K平均法分群結果後直接使用）
-================================================================
 
-【角色與任務】
-你是一位熟悉市場區隔分析流程的行銷研究助理。市場區隔分析的標準流程分為三個階段：
-（一）調查階段：以問卷蒐集受訪者在多項消費動機或需求陳述句上的態度；
-（二）分析階段：先以因素分析將原始題項縮減為少數幾個動機／需求構面，再以K平均法
-　　（K-means）依這些構面分數將受訪者分成數個區隔；
-（三）輪廓分析階段：依各區隔在各構面上的群中心值（即組平均數）為其命名，並推導對應的
-　　行銷意涵。
-
-研究者已完成前兩個階段的統計分析，接下來只會貼上兩項結果，不會提供逐題原始資料，
-你也不需要、也不應該要求更細部的逐題資料或任何額外的統計檢驗（例如逐題平均數比對、
-受訪者內標準化等），僅需依下列兩項資訊完成第三階段的命名與行銷意涵推導：
-
-（A）「各群人數與人數比例」：K平均法分群後，各群的樣本數與其占總樣本之百分比。
-
-（B）「群中心值表」：各消費動機／需求構面（因素分析所萃取之因素）在各群上的平均數
-　　（即集群中心值），通常為標準化分數，正值代表高於全體平均，負值代表低於全體平均。
-
-（C）「研究主題／產品類別簡述」：請研究者簡要說明本次資料所屬的產品類別或研究情境
-　　（例如「包裝咖啡飲料」「SUV汽車」「行動支付服務」等），以利後續行銷意涵能扣合
-　　具體產品情境，而非流於空泛描述。
-
-請根據以上三項資訊，依序完成以下輸出。全部內容請以「純文字」呈現，不需要另外製作
-成Word檔；若研究者提供的群中心值表需要重新整理呈現，可用Markdown表格格式輸出。
-
-【輸出一：方法論簡述】
-以一段文字簡要說明本分析之邏輯：先以因素分析將原始消費動機／需求題項縮減為少數幾個
-核心構面，再以K平均法依構面分數將受訪者分為若干區隔，最後依各區隔在各構面上的相對
-高低為其命名，並推導對應之行銷意涵。此段落不需要冗長的統計原理說明，重點在於讓報告
-讀者理解「這張表是怎麼來的」。
-
-【輸出二：群中心值表格重製】
-將研究者提供的群中心值表，以Markdown表格格式重新整理輸出，列為各消費動機／需求構面，
-欄為各區隔，並在最後一列加上各群人數與人數比例。每一列（即每一個構面）數值最高的
-儲存格請以**粗體**標示，代表該構面在哪一群的相對表現最突出。若同一群在多個構面上
-同時是最高值，全部予以標示，不需要只挑一個。
-
-【輸出三：各群命名與描述】
-針對每一個區隔，依下列邏輯完成命名與描述：
-
-一、命名原則：以該群在群中心值表中「相對最高」的那個構面作為命名依據，命名格式為
-　　「該構面名稱＋群」（例如「嫌貴嫌甜群」「挑選嘗試群」）。若該群同時在兩個構面上
-　　數值皆明顯偏高且相近，可合併命名或並列說明，不必勉強只取一個構面。
-
-二、務必誠實處理「沒有明確正向峰值」的情況：命名前請先檢查該群在所有構面上的數值是
-　　否「全部為負值或接近零」。如果是，代表這一群人在所有構面上都低於全體平均，並沒
-　　有真正突出的正向需求，此時雖然仍可依「相對最不負」的那個構面命名（例如若某群在
-　　四個構面上都是負值，其中一個構面是-0.09、其餘為-0.5以下，仍可用該構面命名），
-　　但務必在描述文字中明確註明「此群並無明顯正向峰值，命名係依相對最不負的構面而
-　　定」，不要讓讀者誤以為這一群對該構面有真正強烈的偏好。這一點請務必落實，不可
-　　省略。
-
-三、每一群的描述段落，請包含：群名、樣本數與百分比、支持命名的群中心值數字、以及
-　　用一到兩句話說明這群人可能的消費動機輪廓。描述請以連貫的段落呈現，不要條列式
-　　清單。
-
-【輸出四：行銷意涵推導】
-請以連貫的論述段落，依下列邏輯推導行銷意涵，段落之間需有邏輯銜接：
-
-一、逐群對應：針對每一群，將其命名所依據的構面，轉譯為研究者於（C）所描述之產品
-　　類別下的具體產品設計方向或溝通訴求（例如「嫌貴嫌甜群」對應到「推出平價或低糖
-　　版本產品」，「挑選嘗試群」對應到「強化新口味／限定款上市溝通」）。轉譯時請扣合
-　　（C）的產品情境，避免給出與產品類別無關的空泛建議。
-
-二、以人數比例判斷目標市場：說明若以各群人數比例作為衡量該區隔市場吸引力之依據，
-　　人數最多的一群通常可優先列為目標市場候選；並具體建議廠商可鎖定該群，推出對應
-　　之產品或溝通訴求。同時請提醒：人數僅為衡量區隔吸引力的其中一種簡化指標，實際
-　　目標市場選擇仍可能需要一併考量該群之購買力、成長潛力、競爭者涉入程度等其他
-　　因素，人數多寡不必然等同於商業價值最高。
-
-三、研究限制提醒：說明本次命名與行銷意涵推導，僅依據集群中心值與人數兩項簡化資訊
-　　進行，屬於探索性分析；受訪者在問卷上對某項動機給予較高評價，不代表其在實際購買
-　　行為中必然會因此支付溢價或改變選擇，這些構面所能提供的，是後續研究值得聚焦的
-　　候選方向，實際行銷決策仍建議搭配其他資料（如購買行為、聯合分析等）進一步驗證。
-
-【格式與用語提醒】
-- 全文使用繁體中文學術書面語，語氣嚴謹、避免口語化。
-- 一律使用「變數」，不使用「變項」。
-- 全部內容以純文字輸出即可，不需要另外做成Word檔；表格請用Markdown格式呈現。
-- 若研究者貼上的群數、構面數或欄位名稱與上述格式略有出入，請先合理判斷對應關係後
-  再進行分析，並在說明中簡要註明你的判讀方式。
-- 請勿主動要求研究者提供逐題原始資料或進行任何額外的統計檢驗（如逐題平均數比對、
-  受訪者內標準化等），本提示詞之分析僅依（A）（B）（C）三項資訊完成。
-
-================================================================
-【研究者請將資料貼於下方】
-
-（A）各群人數與人數比例：
-（請貼上）
-
-（B）群中心值表（各消費動機／需求因素於各群之平均數）：
-（請貼上）
-
-（C）研究主題／產品類別簡述：
-（請填寫）</pre>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1032,7 +936,7 @@ function renderCand(){
   const C=candidates(), KP=keptItems(); let h="";
   if (C.length||S.exHist.length||KP.length) h+='<h3>歸屬不明的題目</h3>';
   if (C.length){
-    h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：具有交叉負荷量的題目，題意與負荷量較高的構面一致者，可按「保留」，歸入該構面；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，或主要負荷量未達門檻值者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 AI 報告指令（一）的建議，並應在看分群結果之前完成。</p>';
+    h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：具有交叉負荷量的題目，題意與負荷量較高的構面一致者，可按「保留」，歸入該構面；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，或主要負荷量未達門檻值者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 因素分析報告指令的建議，並應在看分群結果之前完成。</p>';
     h+='<div class="table-scroll"><table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th class="l">情形</th><th class="l">最高的兩個負荷量</th><th></th></tr></thead><tbody>';
     C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td style="white-space:nowrap">'+(c.it.dom?'<button type="button" class="ghost" data-keep="'+c.it.c.ci+'">保留</button> ':'')+'<button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作輪廓變數</button></td></tr>'; });
     h+='</tbody></table></div>';
@@ -1371,7 +1275,7 @@ function renderSegResult(){
   renderCaPrompt(); renderSegNames();
 }
 
-/* ---------- AI 指令（集群分析）與市場區隔結果表 ---------- */
+/* ---------- AI 指令：集群分析與市場區隔結果表 ---------- */
 function segNames(){ const K=curRun().k; if (!S.segNames) S.segNames={}; if (!S.segNames[K]) S.segNames[K]=[]; return S.segNames[K]; }
 function slabel(g){ const v=(segNames()[g]||"").trim(); return v||("集群"+(g+1)); }
 function renderCaPrompt(){
@@ -1633,7 +1537,8 @@ function profText(){
   sig.forEach((x,i)=>{
     const t=x.test;
     if (x.type==="num"){
-      L.push((i+1)+". "+x.pc.name+(x.pc.stem?"「"+x.pc.stem+"」":"")+"（自因素分析剔除的動機題，未參與分群；變異數分析 F("+t.df1+", "+t.df2+") = "+t.F.toFixed(2)+"，"+pTxt(t.p)+"，η² = "+f2(t.eta2)+"）");
+      const st=String(x.pc.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"");
+      L.push((i+1)+". "+itemRef(x.pc.name)+(st?"「"+st+"」":"")+"（自因素分析剔除的動機題，未參與分群；變異數分析 F("+t.df1+", "+t.df2+") = "+t.F.toFixed(2)+"，"+pTxt(t.p)+"，η² = "+f2(t.eta2)+"）");
       L.push("   標準化平均數（平均數 0、標準差 1，可與群中心值直接比較）："+x.zmeans.map((v,g)=>cl(g)+" "+(v==null?"—":f2(v))).join("、"));
       L.push("   原始平均數："+x.means.map((v,g)=>cl(g)+" "+(v==null?"—":v.toFixed(2))).join("、")+"；全體 "+x.overall.toFixed(2));
     } else if (x.type==="bin"){
@@ -1643,14 +1548,14 @@ function profText(){
       L.push("   全體："+x.share.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))).join("、"));
     } else {
       L.push((i+1)+". "+profLabel(x.pc)+"（卡方檢定 χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
-      x.rows.forEach(row=>L.push("   "+row.level+"（"+row.n+" 人）："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")));
+      x.rows.forEach(row=>L.push("   "+catLabel(row.level)+"（"+row.n+" 人）："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")));
       L.push("   全體："+x.share.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))).join("、"));
     }
   });
   return L.join("\n");
 }
 
-/* ---------- AI 指令（群數決定） ---------- */
+/* ---------- AI 指令：群數決定 ---------- */
 /* 命名依據：每個因素歸入群中心值最大（最大正值）的群；沒有分到因素的群，以該群的最大負值命名 */
 function namingCells(C){ /* 回傳 mark[g][j]：命名依據所在的格 */
   const K=C.length, k=C[0].length, mark=C.map(()=>new Array(k).fill(false)), has=new Array(K).fill(false);
@@ -1837,32 +1742,95 @@ function renderKit(){
   }));
 }
 
-/* ---------- AI 指令（二） ---------- */
+/* ---------- 選用：AI 繪圖指令與報告用圖表 ---------- */
+/* ---------- 篩選題（研究對象） ---------- */
+function readScreen(wb){
+  const ws=wb&&wb.Sheets["欄名對照表"]; if (!ws) return null;
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
+  const qs=aoa.filter(r=>String(r[0]).trim()==="（已移除）"&&String(r[1]).trim()==="篩選題").map(r=>String(r[3]||"").trim()).filter(Boolean);
+  const rule=aoa.find(r=>String(r[0]).trim()==="篩選刪除筆數");
+  if (!qs.length&&!(rule&&String(rule[2]||"").trim())) return null;
+  return {qs, rule:rule?String(rule[2]||"").trim():""};
+}
+
+/* ---------- AI 指令：市場區隔分析報告（修正版） ---------- */
 function renderSegPrompt(){
   renderKPrompt(); if (S.seg&&curRun()){ renderCaPrompt(); renderCaTable(); }
   if (!S.seg||!curRun()) return;
-  const G=S.seg, c=curRun(), k=S.nf;
-  const A=c.N.map((x,g)=>"集群"+(g+1)+"：n = "+x+"（"+pct1(x/G.n)+"）").join("\n")+"\n合計：n = "+G.n+"（100.0%）";
-  const B=["數值為標準化因素分數的平均數（平均數 0、標準差 1）；以 K 平均法分為 "+c.k+" 群，集群依人數由多到少編號。",
-    ["構面"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜")]
-    .concat(Array.from({length:k},(_,j)=>[flabel(j)].concat(c.C.map(cc=>f2(cc[j]))).join("｜"))).join("\n");
-  const C=$("topic").value.trim()||"（請填寫）";
-  const D=profText();
-  let t=$("tpl").textContent;
-  t=t.replace("（A）各群人數與人數比例：\n（請貼上）","（A）各群人數與人數比例：\n"+A)
-     .replace("（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n（請貼上）","（B）群中心值表（各消費動機／需求因素於各群之平均數）：\n"+B)
-     .replace("（C）研究主題／產品類別簡述：\n（請填寫）","（C）研究主題／產品類別簡述：\n"+C);
-  if (D){
-    const hasNum=S.prof&&S.prof.list.some(x=>x.type==="num");
-    t=t.replace("而非流於空泛描述。","而非流於空泛描述。\n\n（D）「輪廓分析結果」：各區隔在使用情境、購買行為、基本資料等變數上的卡方檢定結果"+(hasNum?"，\n　　以及自因素分析剔除之跨構面動機題的變異數分析結果（以標準化平均數呈現，\n　　可與（B）群中心值直接比較）":"")+"，\n　　僅列出達顯著水準者，用以描繪各區隔的輪廓。")
-       .replace("請根據以上三項資訊","請根據以上四項資訊")
-       .replace("可能的消費動機輪廓。","可能的消費動機輪廓；若（D）中該群有顯著偏高或偏低的\n　　特徵，請一併納入輪廓描述，並註明其統計依據。")
-       .replace("本提示詞之分析僅依（A）（B）（C）三項資訊完成。","本提示詞之分析僅依（A）（B）（C）（D）四項資訊完成。");
-    t=t.trimEnd()+"\n\n（D）輪廓分析結果：\n"+D;
+  const G=S.seg, c=curRun(), K=c.k, k=S.nf, r=S.res, fl=Array.from({length:k},(_,j)=>flabel(j));
+  const P=S.prof&&S.prof.K===K?S.prof:null, FI=faInfo(), mk=namingCells(c.C);
+  const named=Array.from({length:K},(_,g)=>(segNames()[g]||"").trim()), allNamed=named.every(Boolean);
+  const topic=$("topic").value.trim(), scr=readScreen(S.wb);
+  const stemOf=it=>String(it.c.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"");
+  const L=[];
+  L.push("請根據下方【分析結果】，撰寫正式研究報告中的「市場區隔分析」一章，整合集群分析（建立市場區隔）與輪廓分析的結果，並依兩者提出各區隔的行銷策略建議。");
+  L.push("");
+  L.push("一、研究背景的判斷");
+  L.push("- 產品類別：依【分析結果】中消費動機題目的內容判斷；若有「研究主題（研究者提供）」，以研究者提供者為準。");
+  L.push("- 研究對象：只能依「研究主題（研究者提供）」或「篩選題」判斷；兩者都沒有時，以「受訪者」稱之，不得自行假設研究對象（例如大學生、上班族）。");
+  L.push("");
+  L.push("二、寫作內容（依序撰寫）");
+  L.push("第一節　建立市場區隔");
+  L.push("1. 說明在建立市場區隔之前，本研究先透過因素分析將 "+(r.cols.length+S.exHist.length)+" 個消費動機題項縮減為 "+k+" 個動機因素，作為區隔變數；其次以集群分析的 K 平均法，以這些動機因素為集群變數，將受訪者集成 "+K+" 個群別，各群的群中心值（即組平均數）與人數如表1所示，表中以粗體底線標示各群的命名依據。");
+  L.push("2. 依【分析結果】的命名依據逐群說明命名理由："+(allNamed?"各群名稱已由研究者確定，請直接使用，不得更改；":"")+"分到因素的群，寫法如「第1群在○○、○○上的平均數高於其他群，命名為「○○群」」；沒有分到因素的群，寫法如「第3群在各因素上皆未高於其他群，其在○○上的平均數最低，從反面命名為「○○群」」。接著比較各群人數，指出人數最多、次之與最少的群別。");
+  L.push("3. 本節只建立與命名市場區隔，不撰寫行銷策略。");
+  L.push("");
+  L.push("第二節　輪廓分析");
+  L.push("1. 先以一段文字說明輪廓分析的目的：市場區隔依消費動機建立，但動機無法直接觀察；輪廓分析比較各區隔在人口統計、行為與生活型態等輪廓變數上的差異，使各區隔可被辨識與觸及。質性輪廓變數以卡方獨立性檢定檢驗其與市場區隔的關聯，方格內為以輪廓變數類別為條件的區隔百分比，與全體區隔比例比較；某一方格的調整後殘差顯著時，表示該類別的受訪者明顯集中於該區隔。自因素分析剔除的動機題項則作為輪廓變數，以單因子變異數分析比較各區隔的平均數。");
+  L.push("2. 依【分析結果】的「輪廓分析結果」，逐一說明達顯著的輪廓變數：在內文寫出檢定結果（例如 χ²(3) = 9.62，p = .022），再說明哪些類別的受訪者明顯集中於哪個區隔（只採用標示 ▲ 者，寫出該類別在該區隔的百分比與全體比例），並以「如表2所示」引用表格。不得使用「高出 5 個百分點」之類的經驗法則，也不得把未標示 ▲ 的差異寫成顯著。");
+  L.push("3. 以一句話列出未達顯著的輪廓變數，說明其在各區隔間沒有明顯差異。");
+  L.push("4. 若有達顯著的剔除題項（變異數分析），寫出 F 值與 p 值，並說明標準化平均數明顯偏高（≥ .30）的區隔，作為該區隔的額外動機。");
+  L.push("");
+  L.push("第三節　區隔輪廓整合與行銷策略");
+  L.push("1. 先以一段文字說明：整合前兩節的結果，將各區隔的消費動機與輪廓特徵整理如表3所示，並據此提出行銷策略建議。");
+  L.push("2. 逐一撰寫各區隔，小標題為「（一）區隔1：○○群（35%）」，每個區隔兩段：");
+  L.push("   第一段　核心特質：先說明命名因素的主要題項（見「各群的主要題項」，須逐題納入，以「項目＋題號（簡稱）」引用）反映的消費動機，再整合該群在輪廓分析中顯著偏高的特徵與額外動機，描繪這群消費者是誰。");
+  L.push("   第二段　行銷策略建議：以「建議」的語氣提出四個面向：產品策略（產品配置、功能、規格或包裝）、品牌形象（品牌應塑造的個性與聯想）、溝通重點或訴求（廣告訊息與訴求主軸），三者須回溯到主要題項的內容；通路與媒體則只能依該群顯著偏高的輪廓特徵（例如購買通路、社群平台、休閒活動、購買時機）提出，並說明依據；該群沒有相關的顯著輪廓特徵時，寫明「輪廓分析未發現該群在通路或媒體上的明顯偏好，宜採廣泛觸及」，不得自行推論。以最大負值從反面命名的群，主要題項代表這群消費者不重視的動機，請說明不宜採用的訴求。");
+  L.push("3. 最後以「目標市場（暫定）」為小標題寫一段：綜合三項準則建議主要與次要目標市場並說明理由：(1) 規模：各區隔的人數比例；(2) 可觸及性：是否有顯著的通路、媒體或生活型態特徵，使企業能接觸到這群人；(3) 可詮釋性：消費動機是否鮮明、可轉化為具體的產品與溝通訴求。結尾說明此選擇屬暫時性結論，後續將再納入品牌忠誠度或品牌選擇等績效指標，評估各區隔的吸引力。");
+  L.push("");
+  L.push("三、寫作規則");
+  L.push("- 採正式學術報告文體，以繁體中文撰寫，以完整段落呈現（第三節的小標題除外），不使用條列；用詞一律使用「變數」，不得使用「變項」。");
+  L.push("- 表1、表2、表3 由分析工具產生，不需輸出表格，只需在內文引用。");
+  L.push("- 行銷策略一律以「建議」表述，不得使用「所以可以」「必須」等過於肯定的語氣。");
+  L.push("- 群中心值以小數點後三位、省略整數位的 0 呈現（例如 .658、-1.223）；百分比取整數。");
+  L.push("- 不得編造【分析結果】中沒有的數值、變數或類別。");
+  L.push("");
+  L.push("四、輸出格式");
+  L.push("第一行為標題「市場區隔分析」，依序以「1. 建立市場區隔」「2. 輪廓分析」「3. 區隔輪廓整合與行銷策略」為小節標題撰寫。"+(allNamed?"":"最後空一行，另起一行輸出「建議區隔名稱：集群1＝……群；集群2＝……群（填回市場區隔工具頁）」，句末的「（填回市場區隔工具頁）」須照抄；此行不屬於報告內容。"));
+  L.push("");
+  L.push("=====================");
+  L.push("【分析結果】");
+  L.push("=====================");
+  L.push("研究主題（研究者提供）："+(topic||"未提供"));
+  if (scr){ L.push("篩選題（未通過者已刪除，可據以判斷研究對象）："+(scr.qs.length?scr.qs.map(q=>"「"+q+"」").join("、"):"")+(scr.rule?"；篩選條件："+scr.rule:"")); }
+  else L.push("篩選題：無資料");
+  L.push("有效樣本數："+G.n+"；K 平均法分為 "+K+" 群，集群依人數由多到少編號。");
+  L.push("");
+  L.push("各因素的主導變數（依負荷量由高到低）：");
+  FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」").join("、"):"無")));
+  L.push("");
+  L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+(named[g]?"（"+named[g]+"）":"")+" "+x+" 人（"+Math.round(x/G.n*100)+"%）").join("、"));
+  L.push("群中心值（表1；標準化因素分數的平均數，* 為命名依據）：");
+  L.push(["消費動機"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜"));
+  for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map((cc,g)=>f3(cc[j])+(mk[g][j]?"*":""))).join("｜"));
+  L.push("命名依據：");
+  clusterFeats(c.C,fl).forEach((f,g)=>L.push("- 集群"+(g+1)+(named[g]?"「"+named[g]+"」":"")+"（"+(f.type==="正向"?"分到因素":"沒有分到因素")+"）："+f.basis));
+  L.push("各群的主要題項（每個命名因素取負荷量最高的前 2 題）：");
+  c.C.forEach((cc,g)=>{ const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
+    fs.sort((a,b)=>cc[b]-cc[a]).forEach(j=>L.push("- 集群"+(g+1)+"・"+fl[j]+"（"+f2(cc[j])+(cc[j]<0?"，代表這群消費者不重視此動機":"")+"）："+FI.F[j].items.slice(0,2).map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」").join("；"))); });
+  L.push("");
+  L.push("輪廓分析結果（顯著水準 α = "+fp(alpha())+"）：");
+  if (!P||!P.list.length) L.push("尚未進行輪廓分析（步驟 9 沒有勾選輪廓變數）。");
+  else {
+    const D=profText(); L.push(D.split("\n").slice(1).join("\n")||"所檢定的變數皆未達顯著水準。");
+    const ns=P.list.filter(x=>!x.sig).map(x=>x.type==="num"?itemRef(x.pc.name):(x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]+"："+optLabel(x.pc):x.pc.name):profLabel(x.pc)));
+    L.push("未達顯著的輪廓變數："+(ns.length?ns.join("、"):"無"));
   }
-  const text=t.trim();
+  L.push("");
+  if (P){ L.push("區隔輪廓整理（表3）："); kitT3Rows().forEach(rw=>L.push(rw[0]+"｜"+rw[1].join("｜"))); }
+  const text=L.join("\n");
   $("seg-prompt").textContent=text;
-  $("seg-prompt-len").textContent=(C==="（請填寫）"?"尚未填寫研究主題・":"")+"共 "+text.length.toLocaleString()+" 字";
+  $("seg-prompt-len").textContent=(allNamed?"":"區隔尚未全部命名・")+"共 "+text.length.toLocaleString()+" 字";
   $("sec-seg-prompt").hidden=false;
   renderKit();
 }
@@ -2004,15 +1972,12 @@ $("dl-result").addEventListener("click",dlResult);
 $("alpha").addEventListener("input",()=>{ if (S.seg){ renderProfile(true); renderSegPrompt(); } });
 $("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); });
 $("topic").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
-$("btn-copy-seg").addEventListener("click",()=>{
-  if (!$("topic").value.trim()){ toast("請先填寫（C）研究主題／產品類別"); $("topic").focus(); return; }
-  copyText($("seg-prompt").textContent,"已複製 AI 報告指令（二）");
-});
+$("btn-copy-seg").addEventListener("click",()=>copyText($("seg-prompt").textContent,"已複製市場區隔分析報告指令"));
 $("btn-copy-fa").addEventListener("click",copyFaTable);
-$("btn-copy-ca").addEventListener("click",()=>copyText($("ca-prompt").textContent,"已複製 AI 報告指令（集群分析）"));
+$("btn-copy-ca").addEventListener("click",()=>copyText($("ca-prompt").textContent,"已複製集群分析報告指令"));
 $("btn-copy-ca-table").addEventListener("click",copyCaTable);
-$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製 AI 報告指令（群數決定）"));
-$("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製 AI 報告指令（一）"));
+$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製群數決定指令"));
+$("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製因素分析報告指令"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
 })();
 </script>
