@@ -107,6 +107,7 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .namepaste textarea:focus{outline:2px solid var(--warn);outline-offset:1px}
 .savebox{margin-top:18px;padding:12px 14px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface-2)}
 .savebox h3{margin-top:0}
+.kit-h{margin-top:22px}
 .fa-cap{margin:8px 0 4px;font-weight:700}
 .fnames{display:grid;gap:8px;margin:8px 0}
 .fname{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:6px 12px;align-items:center;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2)}
@@ -337,6 +338,9 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <summary>檢視指令內容</summary>
       <pre class="prompt" id="seg-prompt"></pre>
     </details>
+    <h3 class="kit-h">報告用圖表</h3>
+    <p class="hint">以下圖表由本工具依分析結果產生，格式與數值不經 AI；欄名採用步驟 8 的區隔名稱，表2、表3 依步驟 9 的輪廓分析結果與顯著水準即時更新。表格按「複製」後可直接貼到 Word；若需要圖形，可使用最下方的 AI 繪圖指令。</p>
+    <div id="kit"></div>
   </section>
 
   <!-- 截圖版 -->
@@ -1444,6 +1448,7 @@ function renderCaTable(){
   $("sn-msg").innerHTML=m;
   const sp=$("seg-paste"); if (sp) sp.addEventListener("input",()=>applySegPaste(sp.value));
   $("ca-table").innerHTML='<p class="fa-cap">'+CA_CAP+'</p>'+caTableHTML(false);
+  renderKit();
 }
 function applySegPaste(txt){
   const c=curRun(), re=/集群\s*(\d+)\s*[＝=：:]\s*([^；;，,、（(\n\r]+)/g; let m, got=0;
@@ -1715,6 +1720,120 @@ function renderKPrompt(){
   $("k-prompt-len").textContent=(fl.some((n,j)=>n==="因素"+(j+1))?"因素尚未全部命名・":"")+"共 "+text.length.toLocaleString()+" 字";
 }
 
+/* ---------- 報告用圖表（步驟 11） ---------- */
+const W_STYLE=(extra)=>'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 6pt;vertical-align:middle;border:1px solid #000;'+(extra||"");
+function kitSig(){ const P=S.prof; return P?P.list.filter(x=>x.sig&&(x.type==="cat"||x.type==="bin")):[]; }
+function kitShare(){ const G=S.seg, c=curRun(); return c.N.map(x=>x/G.n); }
+/* 表2 輪廓分析表 */
+function kitT2HTML(word){
+  const c=curRun(), K=c.k, L=kitSig(), P=S.prof;
+  const td=(t,al,extra)=>word?'<td'+(extra||"")+' style="'+W_STYLE('text-align:'+(al||"center")+';')+'">'+t+'</td>':'<td'+(extra||"")+' class="'+(al==="left"?"l":"c")+'">'+t+'</td>';
+  const th=t=>word?'<th style="'+W_STYLE('text-align:center;font-weight:normal;')+'">'+t+'</th>':'<th>'+t+'</th>';
+  let h='<table'+(word?' style="border-collapse:collapse;border:1px solid #000;"':' class="fa1"')+'><thead><tr>'+th("輪廓變數")+th("類別")+c.N.map((_,g)=>th((g+1)+". "+esc(slabel(g)))).join("")+th("人數")+'</tr></thead><tbody>';
+  const groups=[]; L.forEach(x=>{ if (x.type==="bin"){ const key="bin:"+(x.pc.prefix||"__"); let gp=groups.find(z=>z.key===key); if (!gp){ gp={key,title:x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"),rows:[],bin:true}; groups.push(gp); } gp.rows.push({label:x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name,row:x.rows[0],t:x.test}); }
+    else groups.push({key:"cat:"+x.pc.ci,title:profLabel(x.pc),rows:x.rows.map(r=>({label:r.level,row:r})),t:x.test}); });
+  groups.forEach(gp=>{
+    gp.rows.forEach((r,i)=>{
+      h+='<tr>';
+      if (i===0) h+=td(esc(gp.title)+(gp.bin?"<br>（勾選者）":"")+(!gp.bin&&gp.t?"<br>χ²("+gp.t.df+") = "+gp.t.chi.toFixed(2)+"，"+pTxt(gp.t.p).replace("<","&lt;"):""),"center",gp.rows.length>1?' rowspan="'+gp.rows.length+'"':"");
+      h+=td(esc(r.label)+(gp.bin&&r.t?"<br>"+pTxt(r.t.p).replace("<","&lt;"):""),"left");
+      h+=r.row.pct.map((v,g)=>{ const s=v==null?"—":Math.round(v*100)+"%"; return td(r.row.mark[g]>0?"<b><u>"+s+"</u></b>":s); }).join("");
+      h+=td(String(r.row.n))+'</tr>';
+    });
+  });
+  h+='<tr>'+td("全體（各區隔比例）","center",' colspan="2"')+kitShare().map(v=>td(Math.round(v*100)+"%")).join("")+td(String(S.seg.n))+'</tr></tbody></table>';
+  return h;
+}
+const KIT_T2_CAP="表2　市場區隔之輪廓分析", KIT_T2_NOTE=()=>"註：僅列出與市場區隔之關聯達顯著水準（α = "+fp(alpha())+"）的輪廓變數；百分比為該類別（或勾選該選項）的受訪者分布在各區隔的比例（以輪廓變數為條件），請與「全體（各區隔比例）」比較；粗體底線表示該格調整後殘差顯著偏高。";
+/* 表3 區隔輪廓整理 */
+function kitT3Rows(){
+  const c=curRun(), K=c.k, k=S.nf, fl=Array.from({length:k},(_,j)=>flabel(j)), mk=namingCells(c.C), FI=faInfo();
+  const short=it=>{ const m=String(it.c.name).match(/^[A-Za-z]+\d+\s*(.+)$/); return m?m[1]:(it.c.stem||it.c.name); };
+  const rows=[["人數",c.N.map(String)],["百分比",c.N.map(x=>Math.round(x/S.seg.n*100)+"%")]];
+  rows.push(["消費動機",c.C.map((cc,g)=>{ const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
+    const neg=fs.every(j=>cc[j]<0); const items=[].concat(...fs.sort((a,b)=>cc[b]-cc[a]).map(j=>FI.F[j].items.slice(0,2).map(short)));
+    return items.length?(neg?"不重視："+items.join("、"):items.join("、")):"—"; })]);
+  const P=S.prof, ex=P?P.list.filter(x=>x.type==="num"&&x.sig):[];
+  if (ex.length) rows.push(["額外動機",c.C.map((_,g)=>{ const a=ex.filter(x=>x.zmeans[g]!=null&&x.zmeans[g]>=.30).map(x=>{ const m=String(x.pc.name).match(/^[A-Za-z]+\d+\s*(.+)$/); return m?m[1]:x.pc.name; }); return a.length?a.join("、"):"—"; })]);
+  const L=kitSig(), seen=[];
+  L.forEach(x=>{
+    const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題")):profLabel(x.pc);
+    let r=seen.find(z=>z[0]===title); if (!r){ r=[title,Array.from({length:K},()=>[])]; seen.push(r); }
+    if (x.type==="bin"){ const lab=x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name; x.rows[0].mark.forEach((m,g)=>{ if (m>0) r[1][g].push(lab); }); }
+    else x.rows.forEach(row=>row.mark.forEach((m,g)=>{ if (m>0) r[1][g].push(row.level); }));
+  });
+  seen.forEach(r=>rows.push([r[0],r[1].map(a=>a.length?a.join("、"):"—")]));
+  return rows;
+}
+function kitT3HTML(word){
+  const c=curRun();
+  const td=(t,b)=>word?'<td style="'+W_STYLE('text-align:center;'+(b?"font-weight:bold;white-space:nowrap;":""))+'">'+t+'</td>':'<td class="c"'+(b?' style="font-weight:700;white-space:nowrap"':'')+'>'+t+'</td>';
+  let h='<table'+(word?' style="border-collapse:collapse;border:1px solid #000;"':' class="fa1"')+'><thead><tr>'+td("市場區隔",true)+c.N.map((_,g)=>td((g+1)+". "+esc(slabel(g)))).join("")+'</tr></thead><tbody>';
+  kitT3Rows().forEach(r=>{ h+='<tr>'+td(esc(r[0]),true)+r[1].map(v=>td(esc(v))).join("")+'</tr>'; });
+  return h+'</tbody></table>';
+}
+const KIT_T3_CAP="表3　市場區隔與區隔輪廓之整理";
+async function kitCopyTable(cap,html,note,name){
+  const fs='font-family:\'Times New Roman\',\'新細明體\',serif;';
+  const full='<p style="'+fs+'font-size:12pt;">'+cap+'</p>'+html+(note?'<p style="'+fs+'font-size:10pt;">'+note+'</p>':'');
+  const box=document.createElement("div"); box.innerHTML=full; const text=box.innerText;
+  try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([full],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]); toast("已複製"+name+"，可直接貼到 Word"); }
+  catch(e){ box.style.position="fixed"; box.style.left="-9999px"; document.body.appendChild(box); const rg=document.createRange(); rg.selectNodeContents(box); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(rg); try{ document.execCommand("copy"); toast("已複製"+name+"，可直接貼到 Word"); }catch(err){ toast("複製失敗，請直接選取後複製"); } sel.removeAllRanges(); box.remove(); }
+}
+/* 選用：AI 繪圖指令 */
+const DRAW_OUT="輸出方式：請以 Python（matplotlib）繪製，設定可顯示繁體中文的字型（例如 Noto Sans CJK TC、Microsoft JhengHei 或 PingFang TC），白色背景，輸出 300 dpi 的 PNG 圖檔；若無法執行程式，請提供完整、可直接執行的程式碼。請直接使用下方數值，不得自行更改、重新計算或增刪資料。";
+function drawPrompt1(){
+  const c=curRun(), K=c.k, k=S.nf, fl=Array.from({length:k},(_,j)=>flabel(j)), mk=namingCells(c.C);
+  const L=["請依下方【群中心值表】繪製「圖1　各市場區隔之消費動機輪廓」，作為市場區隔報告的圖形。","","繪圖規格：",
+  "1. 分面發散長條圖：每個市場區隔一個小圖，同一列並排（區隔數超過 4 個時分兩列）；小圖標題為「編號. 區隔名稱（人數比例）」。",
+  "2. 每個小圖的縱軸依表中順序列出各消費動機因素；橫向長條自 0 向右（正值，綠色）或向左（負值，紅色）延伸；所有小圖使用相同的橫軸範圍，並在 0 處畫一條垂直參考線。",
+  "3. 長條末端標示群中心值，小數點後三位、省略整數位的 0（例如 .761、-1.155）。",
+  "4. 表中標示 * 的格子為該區隔的命名依據，長條以深色呈現並將數值加粗；其餘長條以淺色呈現。",
+  "5. 不要使用雷達圖；不加圖例，改在圖下方加註：「長條向右（綠）為高於全體平均，向左（紅）為低於全體平均；深色為各區隔的命名依據。」","",DRAW_OUT,"",
+  "【群中心值表】（數值為標準化因素分數的平均數；* 為命名依據）",["消費動機"].concat(c.N.map((x,g)=>(g+1)+". "+slabel(g)+"（"+Math.round(x/S.seg.n*100)+"%）")).join("｜")];
+  for (let j=0;j<k;j++) L.push([fl[j]].concat(c.C.map((cc,g)=>f3(cc[j])+(mk[g][j]?"*":""))).join("｜"));
+  return L.join("\n");
+}
+function drawPrompt2(){
+  const c=curRun(), K=c.k, L0=kitSig(), share=kitShare(); if (!L0.length) return "";
+  const L=["請依下方【輪廓分析表】繪製「圖2　輪廓變數之區隔分布偏離」，作為市場區隔報告的圖形。","","繪圖規格：",
+  "1. 熱圖：列為各輪廓變數的類別（或複選題選項），依輪廓變數分組並在組間畫分隔線，左側標示輪廓變數名稱與類別；欄為各市場區隔，欄名為「編號. 區隔名稱」。",
+  "2. 格子顏色代表「該格百分比 − 最下方全體比例」的百分點差距：高於全體為綠色、低於全體為紅色，差距愈大顏色愈深，以 ±15 個百分點為最深色；差距為 0 時接近白色。",
+  "3. 格內文字為該格百分比（整數百分比）；標示 ▲ 者為顯著偏高，文字加粗並保留 ▲。",
+  "4. 最下方加一列「全體（各區隔比例）」，不上色、文字加粗，作為比較基準。",
+  "5. 圖下方加註：「格內為以輪廓變數為條件的區隔百分比；綠色愈深表示愈高於全體比例，紅色愈深表示愈低；▲ 為顯著偏高。」","",DRAW_OUT,"",
+  "【輪廓分析表】（百分比為該類別或勾選該選項的受訪者分布在各區隔的比例，列合計 100%）",["輪廓變數","類別"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("｜")];
+  L0.forEach(x=>{
+    const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"))+"（勾選者）":profLabel(x.pc);
+    const rows=x.type==="bin"?[{label:x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name,row:x.rows[0]}]:x.rows.map(r=>({label:r.level,row:r}));
+    rows.forEach(r=>L.push([title,r.label].concat(r.row.pct.map((v,g)=>v==null?"—":Math.round(v*100)+"%"+(r.row.mark[g]>0?" ▲":""))).join("｜")));
+  });
+  L.push(["全體（各區隔比例）",""].concat(share.map(v=>Math.round(v*100)+"%")).join("｜"));
+  return L.join("\n");
+}
+function renderKit(){
+  const box=$("kit"); if (!box||!S.seg||!curRun()||!S.prof||S.prof.K!==curRun().k) return;
+  const L=kitSig(), un=Array.from({length:curRun().k},(_,g)=>g).filter(g=>!(segNames()[g]||"").trim());
+  let h='';
+  if (un.length) h+='<div class="notice warn">'+un.map(g=>"集群"+(g+1)).join("、")+'尚未命名；請在步驟 8 填入區隔名稱，圖表的欄名會自動更新。</div>';
+  h+='<h3>'+KIT_T2_CAP+'</h3>';
+  if (L.length){ h+='<div class="table-scroll">'+kitT2HTML(false)+'</div><p class="hint small">'+KIT_T2_NOTE()+'</p><div class="row"><button type="button" data-kit="t2">複製表2</button></div>'; }
+  else h+='<div class="notice warn">步驟 9 沒有與市場區隔關聯達顯著的質性輪廓變數，因此不產生表2。</div>';
+  h+='<h3>'+KIT_T3_CAP+'</h3><div class="table-scroll">'+kitT3HTML(false)+'</div><p class="hint small">消費動機為各群命名因素負荷量最高的前 2 題（從反面命名者標示「不重視」）；額外動機為達顯著且標準化平均數 ≥ .30 的剔除題項；其餘各列為該群顯著偏高的類別，「—」表示沒有顯著偏高的類別。</p><div class="row"><button type="button" data-kit="t3">複製表3</button></div>';
+  const p2=drawPrompt2();
+  h+='<h3>選用：AI 繪圖指令</h3><p class="hint">若報告需要圖形，可複製下列指令貼到 AI 對話中（建議使用能執行程式的 AI），由 AI 依表格數值繪圖；是否加入圖形由各組自行決定。</p>'
+    +'<div class="row"><button type="button" data-kit="d1">複製繪圖指令：圖1 消費動機輪廓</button>'+(p2?'<button type="button" data-kit="d2">複製繪圖指令：圖2 輪廓變數偏離</button>':'')+'</div>'
+    +'<details><summary>檢視圖1 繪圖指令</summary><pre class="prompt">'+esc(drawPrompt1())+'</pre></details>'
+    +(p2?'<details><summary>檢視圖2 繪圖指令</summary><pre class="prompt">'+esc(p2)+'</pre></details>':'');
+  box.innerHTML=h;
+  box.querySelectorAll("button[data-kit]").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.kit;
+    if (k==="d1") copyText(drawPrompt1(),"已複製圖1 繪圖指令"); else if (k==="d2") copyText(drawPrompt2(),"已複製圖2 繪圖指令");
+    else if (k==="t2") kitCopyTable(KIT_T2_CAP,kitT2HTML(true),KIT_T2_NOTE(),"表2");
+    else if (k==="t3") kitCopyTable(KIT_T3_CAP,kitT3HTML(true),"","表3");
+  }));
+}
+
 /* ---------- AI 指令（二） ---------- */
 function renderSegPrompt(){
   renderKPrompt(); if (S.seg&&curRun()){ renderCaPrompt(); renderCaTable(); }
@@ -1742,6 +1861,7 @@ function renderSegPrompt(){
   $("seg-prompt").textContent=text;
   $("seg-prompt-len").textContent=(C==="（請填寫）"?"尚未填寫研究主題・":"")+"共 "+text.length.toLocaleString()+" 字";
   $("sec-seg-prompt").hidden=false;
+  renderKit();
 }
 
 /* ---------- 下載 ---------- */
