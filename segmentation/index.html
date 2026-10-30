@@ -1723,6 +1723,7 @@ function renderKPrompt(){
 /* ---------- 報告用圖表（步驟 11） ---------- */
 const W_STYLE=(extra)=>'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 6pt;vertical-align:middle;border:1px solid #000;'+(extra||"");
 function optLabel(pc){ const n=String(pc.name), rest=n.replace(new RegExp("^"+(pc.prefix||"")+"\\d*"),"").replace(/^[\s_\-－—．.、:：]+/,""); return rest||n; }
+function catLabel(t){ return String(t).replace(/^\s*\d+\s*[.．、)）]\s*/,"")||String(t); }
 function kitSig(){ const P=S.prof; return P?P.list.filter(x=>x.sig&&(x.type==="cat"||x.type==="bin")):[]; }
 function kitShare(){ const G=S.seg, c=curRun(); return c.N.map(x=>x/G.n); }
 /* 表2 輪廓分析表 */
@@ -1732,7 +1733,7 @@ function kitT2HTML(word){
   const th=t=>word?'<th style="'+W_STYLE('text-align:center;font-weight:normal;')+'">'+t+'</th>':'<th>'+t+'</th>';
   let h='<table'+(word?' style="border-collapse:collapse;border:1px solid #000;"':' class="fa1"')+'><thead><tr>'+th("輪廓變數")+th("類別")+c.N.map((_,g)=>th((g+1)+". "+esc(slabel(g)))).join("")+th("人數")+'</tr></thead><tbody>';
   const groups=[]; L.forEach(x=>{ if (x.type==="bin"){ const key="bin:"+(x.pc.prefix||"__"); let gp=groups.find(z=>z.key===key); if (!gp){ gp={key,title:x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"),rows:[],bin:true}; groups.push(gp); } gp.rows.push({label:optLabel(x.pc),row:x.rows[0],t:x.test}); }
-    else groups.push({key:"cat:"+x.pc.ci,title:profLabel(x.pc),rows:x.rows.map(r=>({label:r.level,row:r})),t:x.test}); });
+    else groups.push({key:"cat:"+x.pc.ci,title:profLabel(x.pc),rows:x.rows.map(r=>({label:catLabel(r.level),row:r})),t:x.test}); });
   groups.forEach(gp=>{
     gp.rows.forEach((r,i)=>{
       h+='<tr>';
@@ -1762,7 +1763,7 @@ function kitT3Rows(){
     const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題")):profLabel(x.pc);
     let r=seen.find(z=>z[0]===title); if (!r){ r=[title,Array.from({length:K},()=>[])]; seen.push(r); }
     if (x.type==="bin"){ const lab=optLabel(x.pc); x.rows[0].mark.forEach((m,g)=>{ if (m>0) r[1][g].push(lab); }); }
-    else x.rows.forEach(row=>row.mark.forEach((m,g)=>{ if (m>0) r[1][g].push(row.level); }));
+    else x.rows.forEach(row=>row.mark.forEach((m,g)=>{ if (m>0) r[1][g].push(catLabel(row.level)); }));
   });
   seen.forEach(r=>rows.push([r[0],r[1].map(a=>a.length?a.join("、"):"—")]));
   return rows;
@@ -1807,7 +1808,7 @@ function drawPrompt2(){
   "【輪廓分析表】（百分比為該類別或勾選該選項的受訪者分布在各區隔的比例，列合計 100%）",["輪廓變數","類別"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("｜")];
   L0.forEach(x=>{
     const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"))+"（勾選者）":profLabel(x.pc);
-    const rows=x.type==="bin"?[{label:optLabel(x.pc),row:x.rows[0]}]:x.rows.map(r=>({label:r.level,row:r}));
+    const rows=x.type==="bin"?[{label:optLabel(x.pc),row:x.rows[0]}]:x.rows.map(r=>({label:catLabel(r.level),row:r}));
     rows.forEach(r=>L.push([title,r.label].concat(r.row.pct.map((v,g)=>v==null?"—":Math.round(v*100)+"%"+(r.row.mark[g]>0?" ▲":""))).join("｜")));
   });
   L.push(["全體（各區隔比例）",""].concat(share.map(v=>Math.round(v*100)+"%")).join("｜"));
