@@ -1564,7 +1564,7 @@ function computeProfile(){
     {
       let levels;
       if (pc.type==="bin") levels=["1","0"];
-      else { const cnt=new Map(); obs.forEach(([,v])=>{ const s=String(v).trim(); cnt.set(s,(cnt.get(s)||0)+1); }); levels=[...cnt.keys()].sort((x,y)=>cnt.get(y)-cnt.get(x)); }
+      else { const cnt=new Map(); obs.forEach(([,v])=>{ const s=String(v).trim(); cnt.set(s,(cnt.get(s)||0)+1); }); levels=[...cnt.keys()].sort((x,y)=>cnt.get(y)-cnt.get(x)); const lead=t=>{ const m=String(t).match(/^\s*(\d+)\s*[.．、)）]/); return m?+m[1]:null; }; if (levels.some(t=>lead(t)!=null)) levels.sort((x,y)=>{ const a=lead(x), b=lead(y); if (a==null&&b==null) return 0; if (a==null) return 1; if (b==null) return -1; return a-b; }); }
       const T=levels.map(()=>new Array(K).fill(0));
       obs.forEach(([l,v])=>{ const s=pc.type==="bin"?String(num(v)):String(v).trim(); const li=levels.indexOf(s); if (li>=0) T[li][l]++; });
       const res=Stats.chisq(T);
@@ -1722,6 +1722,7 @@ function renderKPrompt(){
 
 /* ---------- 報告用圖表（步驟 11） ---------- */
 const W_STYLE=(extra)=>'font-family:\'Times New Roman\',\'新細明體\',serif;font-size:12pt;color:#000;padding:2pt 6pt;vertical-align:middle;border:1px solid #000;'+(extra||"");
+function optLabel(pc){ const n=String(pc.name), rest=n.replace(new RegExp("^"+(pc.prefix||"")+"\\d*"),"").replace(/^[\s_\-－—．.、:：]+/,""); return rest||n; }
 function kitSig(){ const P=S.prof; return P?P.list.filter(x=>x.sig&&(x.type==="cat"||x.type==="bin")):[]; }
 function kitShare(){ const G=S.seg, c=curRun(); return c.N.map(x=>x/G.n); }
 /* 表2 輪廓分析表 */
@@ -1730,7 +1731,7 @@ function kitT2HTML(word){
   const td=(t,al,extra)=>word?'<td'+(extra||"")+' style="'+W_STYLE('text-align:'+(al||"center")+';')+'">'+t+'</td>':'<td'+(extra||"")+' class="'+(al==="left"?"l":"c")+'">'+t+'</td>';
   const th=t=>word?'<th style="'+W_STYLE('text-align:center;font-weight:normal;')+'">'+t+'</th>':'<th>'+t+'</th>';
   let h='<table'+(word?' style="border-collapse:collapse;border:1px solid #000;"':' class="fa1"')+'><thead><tr>'+th("輪廓變數")+th("類別")+c.N.map((_,g)=>th((g+1)+". "+esc(slabel(g)))).join("")+th("人數")+'</tr></thead><tbody>';
-  const groups=[]; L.forEach(x=>{ if (x.type==="bin"){ const key="bin:"+(x.pc.prefix||"__"); let gp=groups.find(z=>z.key===key); if (!gp){ gp={key,title:x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"),rows:[],bin:true}; groups.push(gp); } gp.rows.push({label:x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name,row:x.rows[0],t:x.test}); }
+  const groups=[]; L.forEach(x=>{ if (x.type==="bin"){ const key="bin:"+(x.pc.prefix||"__"); let gp=groups.find(z=>z.key===key); if (!gp){ gp={key,title:x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"),rows:[],bin:true}; groups.push(gp); } gp.rows.push({label:optLabel(x.pc),row:x.rows[0],t:x.test}); }
     else groups.push({key:"cat:"+x.pc.ci,title:profLabel(x.pc),rows:x.rows.map(r=>({label:r.level,row:r})),t:x.test}); });
   groups.forEach(gp=>{
     gp.rows.forEach((r,i)=>{
@@ -1760,7 +1761,7 @@ function kitT3Rows(){
   L.forEach(x=>{
     const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題")):profLabel(x.pc);
     let r=seen.find(z=>z[0]===title); if (!r){ r=[title,Array.from({length:K},()=>[])]; seen.push(r); }
-    if (x.type==="bin"){ const lab=x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name; x.rows[0].mark.forEach((m,g)=>{ if (m>0) r[1][g].push(lab); }); }
+    if (x.type==="bin"){ const lab=optLabel(x.pc); x.rows[0].mark.forEach((m,g)=>{ if (m>0) r[1][g].push(lab); }); }
     else x.rows.forEach(row=>row.mark.forEach((m,g)=>{ if (m>0) r[1][g].push(row.level); }));
   });
   seen.forEach(r=>rows.push([r[0],r[1].map(a=>a.length?a.join("、"):"—")]));
@@ -1806,7 +1807,7 @@ function drawPrompt2(){
   "【輪廓分析表】（百分比為該類別或勾選該選項的受訪者分布在各區隔的比例，列合計 100%）",["輪廓變數","類別"].concat(c.N.map((_,g)=>(g+1)+". "+slabel(g))).join("｜")];
   L0.forEach(x=>{
     const title=x.type==="bin"?(x.pc.prefix&&S.groupNames[x.pc.prefix]?S.groupNames[x.pc.prefix]:(x.pc.prefix?"代碼 "+x.pc.prefix:"複選題"))+"（勾選者）":profLabel(x.pc);
-    const rows=x.type==="bin"?[{label:x.pc.name.replace(new RegExp("^"+(x.pc.prefix||"")+"\\d*"),"")||x.pc.name,row:x.rows[0]}]:x.rows.map(r=>({label:r.level,row:r}));
+    const rows=x.type==="bin"?[{label:optLabel(x.pc),row:x.rows[0]}]:x.rows.map(r=>({label:r.level,row:r}));
     rows.forEach(r=>L.push([title,r.label].concat(r.row.pct.map((v,g)=>v==null?"—":Math.round(v*100)+"%"+(r.row.mark[g]>0?" ▲":""))).join("｜")));
   });
   L.push(["全體（各區隔比例）",""].concat(share.map(v=>Math.round(v*100)+"%")).join("｜"));
