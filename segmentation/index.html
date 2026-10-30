@@ -1340,7 +1340,7 @@ function renderSegNames(){
   const c=curRun(); if (!c) return; const nm=segNames();
   let h=""; for (let g=0;g<c.k;g++) h+='<div class="fname"><label for="sn'+g+'"><b>集群'+(g+1)+'</b><span>'+c.N[g]+' 人</span></label><input type="text" id="sn'+g+'" data-s="'+g+'" placeholder="區隔名稱，例：嫌貴嫌甜群" value="'+esc(nm[g]||"")+'"></div>';
   $("snames").innerHTML=h;
-  $("snames").querySelectorAll("input[data-s]").forEach(i=>i.addEventListener("input",()=>{ segNames()[+i.dataset.s]=i.value; renderCaTable(); }));
+  $("snames").querySelectorAll("input[data-s]").forEach(i=>i.addEventListener("input",()=>{ segNames()[+i.dataset.s]=i.value; renderSegPrompt(); }));
   renderCaTable();
 }
 function renderCaTable(){
@@ -1358,7 +1358,7 @@ function applySegPaste(txt){
   const c=curRun(), re=/集群\s*(\d+)\s*[＝=：:]\s*([^；;，,、（(\n\r]+)/g; let m, got=0;
   while ((m=re.exec(txt))){ const g=+m[1]-1, v=m[2].trim().replace(/[。」』]+$/,""); if (g>=0&&g<c.k&&v){ segNames()[g]=v; got++; } }
   if (!got){ $("seg-paste-msg").textContent="找不到「集群1＝名稱」的格式，請確認貼上的是 AI 回覆的最後一行"; return; }
-  renderSegNames(); toast("已填入 "+got+" 個區隔名稱");
+  renderSegNames(); renderSegPrompt(); toast("已填入 "+got+" 個區隔名稱");
 }
 const CA_CAP="表1　市場區隔之群中心值與人數";
 function caTableHTML(word){
