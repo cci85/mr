@@ -303,14 +303,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <section class="panel" id="sec-prof" aria-labelledby="h9s" hidden>
     <h2 id="h9s"><span class="step">9</span>輪廓分析</h2>
     <p class="hint">比較各區隔在其他變數上的差異：單選題與複選 0／1 欄位以卡方檢定比較各群比例。連續數值（例如年齡、品牌評價）會在「指標」一節以驗證性因素分析建立指標後，再以變異數分析比較各區隔；但在步驟 5 自因素分析剔除的題目，會列為輪廓變數，以單因子變異數分析比較各群平均數。下列清單已排除因素分析使用的題項與時間戳記、學號等識別欄位；單選題只列出 12 個類別以內的欄位。</p>
-    <div class="row">
-      <label class="inline">顯著水準 α <input type="number" id="alpha" value="0.10" min="0.001" max="0.5" step="0.01"></label>
-      <label class="inline"><input type="checkbox" id="only-sig">只顯示達顯著的變數</label>
-    </div>
     <details open>
       <summary>選擇輪廓變數</summary>
       <div class="groups" id="prof-vars" style="margin-top:8px"></div>
     </details>
+    <div class="row">
+      <label class="inline">顯著水準 α <input type="number" id="alpha" value="0.10" min="0.001" max="0.5" step="0.01"></label>
+      <label class="inline"><input type="checkbox" id="only-sig">只顯示達顯著的變數</label>
+    </div>
     <div id="prof-out"></div>
   </section>
 
