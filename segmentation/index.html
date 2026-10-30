@@ -1735,8 +1735,9 @@ function kitT2HTML(word){
   groups.forEach(gp=>{
     gp.rows.forEach((r,i)=>{
       h+='<tr>';
-      if (i===0) h+=td(esc(gp.title)+(gp.bin?"<br>（勾選者）":"")+(!gp.bin&&gp.t?"<br>χ²("+gp.t.df+") = "+gp.t.chi.toFixed(2)+"，"+pTxt(gp.t.p).replace("<","&lt;"):""),"center",gp.rows.length>1?' rowspan="'+gp.rows.length+'"':"");
-      h+=td(esc(r.label)+(gp.bin&&r.t?"<br>"+pTxt(r.t.p).replace("<","&lt;"):""),"left");
+      const rs=gp.rows.length>1?' rowspan="'+gp.rows.length+'"':"";
+      if (i===0) h+=td(esc(gp.title)+(gp.bin?"<br>（勾選者）":""),"center",rs);
+      h+=td(esc(r.label),"left");
       h+=r.row.pct.map((v,g)=>{ const s=v==null?"—":Math.round(v*100)+"%"; return td(r.row.mark[g]>0?"<b><u>"+s+"</u></b>":s); }).join("");
       h+=td(String(r.row.n))+'</tr>';
     });
@@ -1744,7 +1745,7 @@ function kitT2HTML(word){
   h+='<tr>'+td("全體（各區隔比例）","center",' colspan="2"')+kitShare().map(v=>td(Math.round(v*100)+"%")).join("")+td(String(S.seg.n))+'</tr></tbody></table>';
   return h;
 }
-const KIT_T2_CAP="表2　市場區隔之輪廓分析", KIT_T2_NOTE=()=>"註：僅列出與市場區隔之關聯達顯著水準（α = "+fp(alpha())+"）的輪廓變數；百分比為該類別（或勾選該選項）的受訪者分布在各區隔的比例（以輪廓變數為條件），請與「全體（各區隔比例）」比較；粗體底線表示該格調整後殘差顯著偏高。";
+const KIT_T2_CAP="表2　市場區隔之輪廓分析", KIT_T2_NOTE=()=>"註：僅列出與市場區隔之關聯達顯著水準（α = "+fp(alpha())+"）的輪廓變數。方格內是以輪廓變數類別為條件的區隔比例，明顯高於全體區隔比例者以粗體底線標示。";
 /* 表3 區隔輪廓整理 */
 function kitT3Rows(){
   const c=curRun(), K=c.k, k=S.nf, fl=Array.from({length:k},(_,j)=>flabel(j)), mk=namingCells(c.C), FI=faInfo();
