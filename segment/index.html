@@ -1515,14 +1515,19 @@ function computeProfile(){
       const res=Stats.chisq(T);
       const colN=new Array(K).fill(0); T.forEach(row=>row.forEach((x,g)=>colN[g]+=x));
       const N=colN.reduce((s,x)=>s+x,0);
-      const rows=levels.map((lv,li)=>{ const rn=T[li].reduce((s,x)=>s+x,0); return {level:lv, n:rn, pct:T[li].map(x=>rn?x/rn:null), all:rn/N,
-        mark:T[li].map((x,g)=>(res&&res.p<a&&res.adj[li][g]!=null)?(res.adj[li][g]>=zc?1:(res.adj[li][g]<=-zc?-1:0)):0)}; });
+      const rows=levels.map((lv,li)=>{ const rn=T[li].reduce((s,x)=>s+x,0), idx=T[li].map((x,g)=>{ const e=rn*colN[g]/N; return e>0?x/e*100:null; });
+        return {level:lv, n:rn, small:rn<MIN_N, pct:T[li].map(x=>rn?x/rn:null), all:rn/N, idx,
+        mark:idx.map(v=>(res&&res.p<a&&v!=null)?(v>=IDX_HI?1:(v<=IDX_LO?-1:0)):0)}; });
       out.push({pc,type:pc.type,n:N,colN,share:colN.map(x=>N?x/N:null),rows:pc.type==="bin"?rows.slice(0,1):rows,test:res,sig:res&&res.p<a});
     }
   });
   return {list:out,a,zc,K};
 }
+/* 區隔偏高／偏低：整體卡方檢定達顯著，且指數（觀察次數 ÷ 期望次數 × 100）≥ 120 或 ≤ 80；類別人數未達 30 人者標示人數少 */
+const IDX_HI=120, IDX_LO=80, MIN_N=30;
 function markTxt(m){ return m>0?"▲":(m<0?"▼":""); }
+function smallTag(row){ return row&&row.small?'<br><span class="small faint">'+row.n+' 人，人數少，僅供參考</span>':''; }
+function idxTxt(row,g){ return row.mark[g]&&row.idx[g]!=null?"（指數 "+Math.round(row.idx[g])+"）":""; }
 function renderProfile(keepPicker){
   if (!S.seg||!curRun()) return;
   $("sec-prof").hidden=false; $("sec-anova").hidden=false;
@@ -1560,7 +1565,7 @@ function renderProfile(keepPicker){
     for (const [key,list] of g){
       html+='<h3>'+esc(key!=="__"&&S.groupNames[key]?S.groupNames[key]+"（"+key+"）":(key==="__"?"複選題":"代碼 "+key))+'：勾選者的區隔分布</h3><div class="table-scroll"><table><thead><tr><th class="l">選項（勾選者）</th>'+headP+'<th>χ²</th><th>p</th></tr></thead><tbody>';
       list.forEach(x=>{ const row=x.rows[0], t=x.test;
-        html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(x.pc.name)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+row.n+'</td>'
+        html+='<tr'+(x.sig?' class="sigrow"':'')+'><td class="l">'+esc(x.pc.name)+smallTag(row)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+row.n+'</td>'
           +(t?'<td>'+t.chi.toFixed(2)+'</td><td>'+pTxtShort(t.p)+'</td>':'<td colspan="2">無法計算</td>')+'</tr>'; });
       const x0=list[0]; html+='<tr class="total"><td class="l">全體（各區隔比例）</td>'+x0.share.map(v=>'<td>'+(v==null?"—":pct1(v))+'</td>').join("")+'<td>'+x0.n+'</td><td colspan="2"></td></tr></tbody></table></div>';
     }
@@ -1570,18 +1575,18 @@ function renderProfile(keepPicker){
     const t=x.test;
     html+='<h3>'+esc(profLabel(x.pc))+'<span class="testtxt'+(x.sig?" sig":"")+'">'+(t?'χ²('+t.df+') = '+t.chi.toFixed(2)+'，'+pTxt(t.p):'無法計算')+(t&&t.lowExp>.2?'；期望次數小於 5 的格子占 '+pct1(t.lowExp):'')+'</span></h3>';
     html+='<div class="table-scroll"><table><thead><tr><th class="l">類別</th>'+headP+'</tr></thead><tbody>';
-    x.rows.forEach(row=>{ html+='<tr><td class="l">'+esc(row.level)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+row.n+'</td></tr>'; });
+    x.rows.forEach(row=>{ html+='<tr><td class="l">'+esc(row.level)+smallTag(row)+'</td>'+row.pct.map((v,gi)=>'<td class="'+(row.mark[gi]>0?"up":row.mark[gi]<0?"down":"")+'">'+(v==null?"—":pct1(v))+markTxt(row.mark[gi])+'</td>').join("")+'<td>'+row.n+'</td></tr>'; });
     html+='<tr class="total"><td class="l">全體（各區隔比例）</td>'+x.share.map(v=>'<td>'+(v==null?"—":pct1(v))+'</td>').join("")+'<td>'+x.n+'</td></tr></tbody></table></div>';
   });
   if (!shown.length&&chiL.length) html+='<p class="hint">沒有達顯著水準的變數。</p>';
-  html+='<p class="hint small">輪廓變數為 X、市場區隔為 Y：每一列的百分比為該類別（或勾選該選項）的受訪者分布在各區隔的比例（以輪廓變數為條件，列合計 100%），請與最下方「全體（各區隔比例）」比較。達顯著時，▲／▼表示該格調整後殘差高於 '+P.zc.toFixed(3)+' 或低於 −'+P.zc.toFixed(3)+'（對應雙尾 α = '+fp(P.a)+'），即該類別的受訪者落在該區隔的比例顯著高於或低於全體。</p>';
+  html+='<p class="hint small">輪廓變數為 X、市場區隔為 Y：每一列的百分比為該類別（或勾選該選項）的受訪者分布在各區隔的比例（以輪廓變數為條件，列合計 100%），請與最下方「全體（各區隔比例）」比較。整體檢定達顯著時，▲／▼表示該格的指數（觀察次數 ÷ 期望次數 × 100）≥ '+IDX_HI+' 或 ≤ '+IDX_LO+'，即該類別的受訪者落在該區隔的比例明顯高於或低於全體；指數 = 該格百分比 ÷ 全體比例 × 100。類別人數未達 '+MIN_N+' 人者標示「人數少」，其百分比與指數變動大，僅供參考。</p>';
   $("prof-out").innerHTML=html;
 }
 function ghTxt(d){ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return "集群"+(hi+1)+" > 集群"+(lo+1)+"（"+pTxt(d.p)+"）"; }
 function profText(){
   const P=S.prof; if (!P||!P.list.length) return null;
   const sig=P.list.filter(x=>x.sig), K=P.K, cl=g=>"集群"+(g+1);
-  const L=["顯著水準 α = "+fp(P.a)+"；共檢定 "+P.list.length+" 個變數，以下列出達顯著者。輪廓變數為 X、市場區隔為 Y：百分比為該類別（或勾選該選項）的受訪者分布在各集群的比例（以輪廓變數為條件），應與「全體」的各集群比例比較；▲／▼表示該類別的受訪者落在該群的比例顯著高於／低於全體（調整後殘差絕對值大於 "+P.zc.toFixed(3)+"）。量化輪廓變數以單因子變異數分析比較，標準化平均數以參與分群的有效樣本標準化（平均數 0、標準差 1），可與群中心值直接比較；達顯著者以 Games-Howell 法進行事後比較，只列出平均數差異達顯著的集群配對。"];
+  const L=["顯著水準 α = "+fp(P.a)+"；共檢定 "+P.list.length+" 個變數，以下列出達顯著者。輪廓變數為 X、市場區隔為 Y：百分比為該類別（或勾選該選項）的受訪者分布在各集群的比例（以輪廓變數為條件），應與「全體」的各集群比例比較；▲／▼表示整體檢定達顯著，且該類別的受訪者落在該群的比例明顯高於／低於全體：指數（觀察次數 ÷ 期望次數 × 100，等於該格百分比 ÷ 全體比例 × 100）≥ "+IDX_HI+" 為 ▲，≤ "+IDX_LO+" 為 ▼，標示 ▲／▼ 的格子附上指數；類別人數未達 "+MIN_N+" 人者註明「人數少，僅供參考」。量化輪廓變數以單因子變異數分析比較，標準化平均數以參與分群的有效樣本標準化（平均數 0、標準差 1），可與群中心值直接比較；達顯著者以 Games-Howell 法進行事後比較，只列出平均數差異達顯著的集群配對。"];
   if (!sig.length){ L.push("所檢定的變數皆未達顯著水準。"); return L.join("\n"); }
   sig.forEach((x,i)=>{
     const t=x.test;
@@ -1595,11 +1600,11 @@ function profText(){
     } else if (x.type==="bin"){
       const row=x.rows[0];
       L.push((i+1)+". "+profLabel(x.pc)+"（勾選者的區隔分布；χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
-      L.push("   勾選者 "+row.n+" 人："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、"));
+      L.push("   勾選者 "+row.n+" 人"+(row.small?"（人數少，僅供參考）":"")+"："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])+idxTxt(row,g)).join("、"));
       L.push("   全體："+x.share.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))).join("、"));
     } else {
       L.push((i+1)+". "+profLabel(x.pc)+"（卡方檢定 χ²("+t.df+") = "+t.chi.toFixed(2)+"，"+pTxt(t.p)+"）");
-      x.rows.forEach(row=>L.push("   "+catLabel(row.level)+"（"+row.n+" 人）："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])).join("、")));
+      x.rows.forEach(row=>L.push("   "+catLabel(row.level)+"（"+row.n+" 人"+(row.small?"，人數少，僅供參考":"")+"）："+row.pct.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))+markTxt(row.mark[g])+idxTxt(row,g)).join("、")));
       L.push("   全體："+x.share.map((v,g)=>cl(g)+" "+(v==null?"—":pct1(v))).join("、"));
     }
   });
@@ -1830,9 +1835,9 @@ function renderSegPrompt(){
   L.push("3. 本節只建立與命名市場區隔，不撰寫行銷策略。");
   L.push("");
   L.push("第二節　輪廓分析");
-  L.push("1. 先以一段文字說明輪廓分析的目的：市場區隔依消費動機建立，但動機無法直接觀察；輪廓分析比較各區隔在人口統計、行為與生活型態等輪廓變數上的差異，使各區隔可被辨識與觸及。質性輪廓變數以卡方獨立性檢定檢驗其與市場區隔的關聯，方格內為以輪廓變數類別為條件的區隔百分比，與全體區隔比例比較；某一方格的調整後殘差顯著時，表示該類別的受訪者明顯集中於該區隔。量化輪廓變數（"+numDesc+"）則以單因子變異數分析比較各區隔的平均數，達顯著者再以 Games-Howell 法進行事後比較。");
+  L.push("1. 先以一段文字說明輪廓分析的目的：市場區隔依消費動機建立，但動機無法直接觀察；輪廓分析比較各區隔在人口統計、行為與生活型態等輪廓變數上的差異，使各區隔可被辨識與觸及。質性輪廓變數以卡方獨立性檢定檢驗其與市場區隔的關聯，方格內為以輪廓變數類別為條件的區隔百分比，與全體區隔比例比較；整體檢定達顯著時，再以指數（觀察次數 ÷ 期望次數 × 100）判斷各方格：指數 ≥ "+IDX_HI+" 表示該類別的受訪者明顯集中於該區隔。量化輪廓變數（"+numDesc+"）則以單因子變異數分析比較各區隔的平均數，達顯著者再以 Games-Howell 法進行事後比較。");
   if (loose) L.push("   這段文字須另加一句說明顯著水準：「由於輪廓分析屬探索性描述，目的在於辨識各區隔的潛在特徵，為降低遺漏重要特徵的風險，本研究將顯著水準放寬為 α = "+AT+"。」");
-  L.push("2. 依【分析結果】的「輪廓分析結果」，逐一說明達顯著的輪廓變數：在內文寫出檢定結果（例如 χ²(3) = 9.62，p = .022），再說明哪些類別的受訪者明顯集中於哪個區隔（只採用標示 ▲ 者，寫出該類別在該區隔的百分比與全體比例），並以「如表2所示」引用表格。不得使用「高出 5 個百分點」之類的經驗法則，也不得把未標示 ▲ 的差異寫成顯著。"+(loose?"第一次提到檢定結果時寫明「在 α = "+AT+" 下達顯著」，之後可簡稱達顯著。":"")+(weak?"p 值介於 .10 與 "+AT+" 之間者，在檢定結果後註明「屬較弱的線索」。":"")+"整體檢定達顯著、但沒有任何類別標示 ▲ 的變數，不個別說明，併入第 3 點。");
+  L.push("2. 依【分析結果】的「輪廓分析結果」，逐一說明達顯著的輪廓變數：在內文寫出檢定結果（例如 χ²(3) = 9.62，p = .022），再說明哪些類別的受訪者明顯集中於哪個區隔（只採用標示 ▲ 者，寫出該類別在該區隔的百分比、全體比例與指數；註明「人數少，僅供參考」者，須在內文一併註明），並以「如表2所示」引用表格。不得把未標示 ▲ 的差異寫成明顯集中。"+(loose?"第一次提到檢定結果時寫明「在 α = "+AT+" 下達顯著」，之後可簡稱達顯著。":"")+(weak?"p 值介於 .10 與 "+AT+" 之間者，在檢定結果後註明「屬較弱的線索」。":"")+"整體檢定達顯著、但沒有任何類別標示 ▲ 的變數，不個別說明，併入第 3 點。");
   L.push("3. 以一句話列出未達顯著的輪廓變數，說明其在各區隔間沒有明顯差異；整體檢定達顯著、但沒有任何類別標示 ▲ 的變數，另以一句話說明其未呈現特定區隔集中。");
   L.push("4. 若有達顯著的量化輪廓變數（變異數分析），寫出 F 值、p 值與 η²，並依【分析結果】的 Games-Howell 事後比較說明哪些區隔之間的平均數差異達顯著（只採用列出的配對，不得自行推論）；標準化平均數明顯偏高（≥ .30）者，剔除題項作為該區隔的額外動機，CFA 指標則作為該區隔的構念特徵（同時寫出原始平均數）。第一次提到 CFA 指標時，說明其為經驗證性因素分析確認之構念題項的平均數。"+(weak?"p 值介於 .10 與 "+AT+" 之間者，同樣註明「屬較弱的線索」。":""));
   L.push("");
@@ -1940,7 +1945,7 @@ function segSheets(wb){
         a3.push(["","","全體（各區隔比例 %）"].concat(x.share.map(v=>v==null?"":round(v*100,1))).concat([x.n,"","","",""]));
       }
     });
-    a3.push([]); a3.push(["顯著水準 α = "+fp(P.a)+"；卡方檢定的百分比以輪廓變數為條件（該類別或勾選者分布在各集群的比例，列合計 100%），請與「全體（各區隔比例）」比較；▲／▼表示調整後殘差絕對值大於 "+P.zc.toFixed(3)+"，該類別的受訪者落在該群的比例顯著高於／低於全體"]);
+    a3.push([]); a3.push(["顯著水準 α = "+fp(P.a)+"；卡方檢定的百分比以輪廓變數為條件（該類別或勾選者分布在各集群的比例，列合計 100%），請與「全體（各區隔比例）」比較；▲／▼表示整體檢定達顯著，且指數（觀察次數 ÷ 期望次數 × 100）≥ "+IDX_HI+" 或 ≤ "+IDX_LO+"，該類別的受訪者落在該群的比例明顯高於／低於全體；類別人數未達 "+MIN_N+" 人者僅供參考"]);
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a3),"輪廓分析");
   }
 }
