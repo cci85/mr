@@ -938,6 +938,7 @@ function renderCand(){
   const C=candidates(), KP=keptItems(); let h="";
   if (C.length||S.exHist.length||KP.length) h+='<h3>歸屬不明的題目</h3>';
   if (C.length){
+    if (S.exHist.length) h+='<div class="notice warn"><b>尚有 '+C.length+' 題歸屬不明，請逐題決定保留或剔除：</b>'+C.map(c=>esc(c.it.c.name)+'（'+c.reason+'）').join('、')+'。具有交叉負荷量的題目，若依題意應歸入負荷量較高的構面，請按「保留」。</div>';
     h+='<p class="hint">下列題目的主要負荷量未達門檻值，或具有交叉負荷量（另一個因素的負荷量也達門檻值）。請依題意判斷：具有交叉負荷量的題目，題意與負荷量較高的構面一致者，可按「保留」，歸入該構面；題意明顯不同於所有保留構面（例如代表另一種獨立的動機）者，或主要負荷量未達門檻值者，可剔除並改作步驟 9 的輪廓變數。每次剔除一題後會重新分析，因素個數與其他題目的歸屬都可能改變，請再檢查是否出現新的歸屬不明題目；若已手動設定與特徵值大於 1 不同的因素個數，剔除後會維持該設定；判斷時可參考步驟 6 因素分析報告指令的建議，並應在看分群結果之前完成。</p>';
     h+='<div class="table-scroll"><table><thead><tr><th class="l">題項</th><th class="l">題目內容</th><th class="l">情形</th><th class="l">最高的兩個負荷量</th><th></th></tr></thead><tbody>';
     C.forEach(c=>{ h+='<tr><td class="l">'+esc(c.it.c.name)+'</td><td class="l stemcell">'+esc(c.it.c.stem||"")+'</td><td class="l">'+c.reason+'</td><td class="l">'+c.loadTxt+'</td><td style="white-space:nowrap">'+(c.it.dom?'<button type="button" class="ghost" data-keep="'+c.it.c.ci+'">保留</button> ':'')+'<button type="button" class="ghost" data-ex="'+c.it.c.ci+'">剔除並改作輪廓變數</button></td></tr>'; });
@@ -954,11 +955,12 @@ function renderCand(){
     h+='</tbody></table></div>';
   }
   $("cand").innerHTML=h;
+  if (S.scrollCand){ S.scrollCand=false; if (C.length) setTimeout(()=>$("cand").scrollIntoView({behavior:"smooth",block:"start"}),50); }
   $("cand").querySelectorAll("button[data-ex]").forEach(b=>b.addEventListener("click",()=>{
     const ci=+b.dataset.ex, c=C.find(x=>x.it.c.ci===ci);
     S.selected.delete(ci); S.excluded.add(ci); S.profSel.add(ci); S.kept.delete(ci);
     S.exHist.push({ci,name:c.it.c.name,stem:c.it.c.stem||"",reason:c.reason,loadTxt:c.loadTxt,nf:S.nf,mean:c.it.mean});
-    renderGroups(); analyze(); toast("已剔除 "+c.it.c.name+"，並重新分析");
+    S.scrollCand=true; renderGroups(); analyze(); toast("已剔除 "+c.it.c.name+"，並重新分析");
   }));
   $("cand").querySelectorAll("button[data-keep]").forEach(b=>b.addEventListener("click",()=>{ S.kept.add(+b.dataset.keep); renderCand(); renderPrompt(); }));
   $("cand").querySelectorAll("button[data-unkeep]").forEach(b=>b.addEventListener("click",()=>{ S.kept.delete(+b.dataset.unkeep); renderCand(); renderPrompt(); }));
