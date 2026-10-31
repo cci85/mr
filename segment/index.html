@@ -1537,7 +1537,7 @@ function renderProfile(keepPicker){
   html+='<div class="notice '+(nSig?"ok":"warn")+'">共檢定 '+chiL.length+' 個變數，其中 '+nSig+' 個達顯著水準（p &lt; '+fp(P.a)+'）。</div>';
   if (numL.length) ah+='<div class="notice '+(nSigN?"ok":"warn")+'">共檢定 '+numL.length+' 個變數，其中 '+nSigN+' 個達顯著水準（p &lt; '+fp(P.a)+'）。</div>';
   const shown=P.list.filter(x=>x.type!=="num"&&(!onlySig||x.sig));
-  const nums=numL.filter(x=>!onlySig||x.sig);
+  const nums=numL; /* 變異數分析變數少，不受步驟 4「只顯示達顯著」影響，一律列出 */
   const cl=g=>"集群"+(g+1)+((segNames()[g]||"").trim()?"（"+segNames()[g].trim()+"）":"");
   [["__idx","CFA 指標"],["__ex","EFA 剔除的題項"]].forEach(([key,title])=>{
     const L=nums.filter(x=>(isIndex(x.pc)?"__idx":"__ex")===key); if (!L.length) return;
@@ -1551,7 +1551,6 @@ function renderProfile(keepPicker){
     const ph=L.filter(x=>x.sig);
     if (ph.length) ah+='<p class="small"><b>事後比較（Games-Howell）：</b>'+ph.map(x=>esc(numLabel(x.pc))+'：'+(x.gh.length?x.gh.map(d=>{ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return "集群"+(hi+1)+" > 集群"+(lo+1); }).join("、"):"整體檢定顯著，但沒有任何兩群的差異達顯著")).join("；")+'</p>';
   });
-  if (numL.length&&!nums.length) ah+='<p class="hint">沒有達顯著水準的變數。</p>';
   if (numL.length) ah+='<p class="hint small">上方數字為標準化平均數（以參與分群的有效樣本標準化，平均數 0、標準差 1），可與群中心值直接比較；下方灰字為原始平均數（CFA 指標為題項平均數，保留原量表的單位）。標準化不影響 F、p 與 η²。顯著時以粗體標示平均數最高的集群，並以 Games-Howell 法列出平均數差異達顯著（p &lt; '+fp(P.a)+'）的集群配對。</p>';
   $("anova-out").innerHTML=ah;
   /* 複選 0／1：依代碼分組 */
