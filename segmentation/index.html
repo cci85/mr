@@ -1486,8 +1486,8 @@ function computeProfile(){
   });
   return {list:out,a,zc,K};
 }
-/* 區隔偏高／偏低：整體卡方檢定達顯著，且指數（觀察次數 ÷ 期望次數 × 100）≥ 120 或 ≤ 80；類別人數未達 30 人者標示人數少 */
-const IDX_HI=120, IDX_LO=80, MIN_N=30;
+/* 區隔偏高／偏低：整體卡方檢定達顯著，且指數（觀察次數 ÷ 期望次數 × 100）≥ 110 或 ≤ 90；類別人數未達 30 人者標示人數少 */
+const IDX_HI=110, IDX_LO=90, MIN_N=30;
 function markTxt(m){ return m>0?"▲":(m<0?"▼":""); }
 function smallTag(row){ return row&&row.small?'<br><span class="small faint">'+row.n+' 人，人數少，僅供參考</span>':''; }
 function idxTxt(row,g){ return row.mark[g]&&row.idx[g]!=null?"（指數 "+Math.round(row.idx[g])+"）":""; }
