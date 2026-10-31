@@ -1652,9 +1652,9 @@
     const issues = nameIssues().filter(t => /重複/.test(t));
     if (issues.length){ toast('欄名有重複，請先在步驟 3 修正', 'error'); return; }
     const out = buildOutput();
-    const base = (state.csvFileName || '問卷資料').replace(/\.(xlsx|csv)$/i, '');
+    const base = 'clean_' + (state.csvFileName || '問卷資料').replace(/\.(xlsx|csv)$/i, '').replace(/_整理後_\d{8}$/, '').replace(/^clean_(.*)_\d{8}$/, '$1').replace(/^(?:clean_)+/, '');
     if (typeof XLSX === 'undefined'){
-      saveFile(base + '_整理後_' + dateStamp() + '.csv', toCSVString(out.cols.map(o => o.name), out.rows));
+      saveFile(base + '_' + dateStamp() + '.csv', toCSVString(out.cols.map(o => o.name), out.rows));
       toast('Excel 功能載入失敗，已改為下載 CSV（不含欄名對照表）', 'error');
       return;
     }
@@ -1670,7 +1670,7 @@
       ws3['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 60 }, { wch: 6 }];
       XLSX.utils.book_append_sheet(wb, ws3, '題組');
       const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      saveFile(base + '_整理後_' + dateStamp() + '.xlsx', new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      saveFile(base + '_' + dateStamp() + '.xlsx', new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
     }catch(err){
       console.error(err);
       toast('產生 Excel 檔時發生錯誤', 'error');
@@ -1679,7 +1679,7 @@
 
   /* ---------- settings ---------- */
   document.getElementById('btn-export-config').addEventListener('click', function(){
-    saveFile('問卷整理設定_' + dateStamp() + '.json', JSON.stringify({ tool: 'survey-organizer', version: 1, cfg: state.cfg, short: state.short, lgname: state.lgname }, null, 2), { bom: false });
+    saveFile('clean-config_' + (state.csvFileName || '問卷資料').replace(/\.(xlsx|csv)$/i, '').replace(/_整理後_\d{8}$/, '').replace(/^clean_(.*)_\d{8}$/, '$1').replace(/^(?:clean_)+/, '') + '_' + dateStamp() + '.json', JSON.stringify({ tool: 'survey-organizer', version: 1, cfg: state.cfg, short: state.short, lgname: state.lgname }, null, 2), { bom: false });
   });
   document.getElementById('input-import-config').addEventListener('change', function(e){
     const file = e.target.files[0];

@@ -160,6 +160,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <label class="inline">工作表 <select id="sheet"></select></label>
       <button type="button" class="ghost" id="btn-remove">移除檔案</button>
     </div>
+    <div id="raw-msg"></div>
   </section>
 
   <!-- 2 選題項 -->
@@ -704,6 +705,7 @@ function loadSheet(name){
     S.headers=S.headers.filter((h,i)=>!drop.has(i)); S.rows=S.rows.map(r=>r.filter((v,i)=>!drop.has(i)));
   }
   $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 筆）";
+  { const isRaw=S.headers.some(h=>/^(時間戳記|timestamp)$/i.test(h))&&!S.wb.Sheets["欄名對照表"]; $("raw-msg").innerHTML=isRaw?'<div class="notice warn"><b>這是 Google 表單的原始回覆。</b>複選題尚未拆成 0／1 欄，題項也尚未依量表分組。請先以<a href="../organizer/">問卷資料整理器</a>整理後再上傳。</div>':""; }
   detectNumeric(); detectProfile();
   const ok=cfg&&applyCfg(cfg);
   if (ok) $("dz-label").textContent+="；已依「分析設定」工作表還原上次的分析";
@@ -738,7 +740,7 @@ function num(v){ if (v===""||v===null||v===undefined) return null; const x=typeo
 function detectNumeric(){
   S.numCols=[];
   S.headers.forEach((h,ci)=>{
-    if (!h || /^id$/i.test(h)) return;
+    if (!h || /^id$/i.test(h) || /^(時間戳記|timestamp)$/i.test(h)) return;
     let cnt=0, bad=0; const vals=new Set();
     for (const r of S.rows){ const v=r[ci]; if (v===""||v===null||v===undefined) continue; const x=num(v); if (x===null){ bad++; break; } cnt++; vals.add(x); }
     if (bad||cnt<3||vals.size<2) return;
@@ -1837,7 +1839,8 @@ function renderSegPrompt(){
 
 /* ---------- 下載 ---------- */
 function round(x,d){ const m=Math.pow(10,d); return Math.round(x*m)/m; }
-function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_(因素分數資料|集群資料|市場區隔資料|市場區隔分析結果)$/,""); }
+function stamp(){ return S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_(因素分析資料|因素分數資料|集群資料|市場區隔資料|市場區隔分析結果|EFA分析結果|CFA分析結果)$/,"").replace(/^(?:(?:fa|seg|efa-result|cfa-result|seg-result)_)+/,""); }
+function outName(prefix){ return prefix+"_"+stamp()+".xlsx"; }
 function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
@@ -1890,7 +1893,7 @@ function dlResult(){
   if (!S.res) return;
   const wb=XLSX.utils.book_new();
   loadingSheets(wb); segSheets(wb);
-  XLSX.writeFile(wb,stamp()+"_市場區隔分析結果.xlsx");
+  XLSX.writeFile(wb,outName("seg-result"));
 }
 function dlData(suffix){
   const r=S.res; if (!r) return; const k=S.nf;
@@ -1929,7 +1932,7 @@ function dlData(suffix){
     ["設定代碼",JSON.stringify(cfg)]];
   const sw=XLSX.utils.aoa_to_sheet(st); sw["!cols"]=[{wch:26},{wch:80}];
   XLSX.utils.book_append_sheet(wb,sw,"分析設定");
-  XLSX.writeFile(wb,stamp()+"_"+(typeof suffix==="string"?suffix:"市場區隔資料")+".xlsx");
+  XLSX.writeFile(wb,outName(suffix==="因素分數資料"?"fa":"seg"));
 }
 
 /* ---------- 複製 ---------- */
@@ -1953,7 +1956,7 @@ const dz=$("dropzone");
 dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if (f) readFile(f); });
 $("sheet").addEventListener("change",e=>loadSheet(e.target.value));
 $("btn-remove").addEventListener("click",()=>{
-  S.wb=null; S.rows=[]; S.headers=[]; S.res=null; $("file").value="";
+  $("raw-msg").innerHTML=""; S.wb=null; S.rows=[]; S.headers=[]; S.res=null; $("file").value="";
   $("dz-label").textContent="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡"; $("sheet-row").hidden=true; $("sec-items").hidden=true; hideFrom("sec-adequacy");
 });
 $("nf").addEventListener("input",()=>{

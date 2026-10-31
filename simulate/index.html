@@ -438,7 +438,7 @@ function download(){
     ["產生日期",new Date().toLocaleString("zh-TW")],
     [],["欄位","處理方式"]].concat(G.cols.map(c=>[c.name,TYPE_NAME[c.type]]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),"模擬說明");
-  XLSX.writeFile(wb,S.fileName.replace(/\.(xlsx|csv|omv)$/i,"")+"_練習擴充"+(S.rows.length+G.rows.length)+"份.xlsx");
+  XLSX.writeFile(wb,"sim_"+S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_練習擴充\d+份$/,"").replace(/^sim_(.*)_\d+$/,"$1").replace(/^(?:sim_)+/,"")+"_"+(S.rows.length+G.rows.length)+".xlsx");
 }
 
 /* ---------- 事件 ---------- */
