@@ -660,5 +660,7 @@ build();
 /* 記住研究標的，供知覺定位問卷產生器帶入（同一網站、同一瀏覽器） */
 (function(){ const t=document.getElementById("target"); if (!t) return; t.addEventListener("input",()=>{ try{ localStorage.setItem("mr.researchTarget", t.value.trim()); }catch(e){} }); })();
 </script>
+<style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
+<nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>
 </body>
 </html>
