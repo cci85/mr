@@ -2333,15 +2333,13 @@
       html += '<p class="hint small">負荷量 = 特徵向量 × √特徵值，即選項與主成分之間的相關係數；絕對值 ≥ .5 以粗體標示。主成分的正負方向可任意翻轉，本工具以絕對值最大的負荷量為正。</p>';
 
       /* 5. 競爭圖 */
-      const mapNo = Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1);
-      html += '<h4 class="pca-sub"><span class="pca-no">五</span>圖' + mapNo + '　' + escapeHtml(String(res.name).replace(/^[^｜]*｜/, '')) + '圖</h4>';
+      html += '<h4 class="pca-sub"><span class="pca-no">五</span><span class="fig-head" data-qid="' + escapeHtml(res.qid) + '"></span>' + escapeHtml(String(res.name).replace(/^[^｜]*｜/, '')) + '圖</h4>';
       html += '<p class="hint small">以第一、第二主成分負荷量為座標，圓的面積與勾選率成正比（每張圖以勾選率最高的選項為最大圓），愈常被同時勾選的選項位置愈靠近。名稱可以用滑鼠拖曳調整位置，下載的圖會依調整後的位置輸出，按「還原標籤位置」可回到自動排版；滑鼠停在圓上可看到完整選項與勾選率。未納入分析的選項不畫入圖中，列在圖下方。</p>';
       html += '<figure class="map-wrap">' + buildMapSVG(res, MAP_THEME_PAGE) + '</figure>';
     }
 
-    const figNo = Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1);
     html += '<div class="row-actions pca-actions">' +
-      (res.ok ? '<button type="button" class="btn btn-secondary" data-role="copy-map">複製圖' + figNo + '（貼到 Word）</button>' : '') +
+      (res.ok ? '<button type="button" class="btn btn-secondary" data-role="copy-map">複製<span class="fig-btn" data-qid="' + escapeHtml(res.qid) + '">圖</span>（貼到 Word）</button>' : '') +
       '<button type="button" class="btn btn-secondary" data-role="dl-csv">下載分析結果 CSV</button>' +
       (res.ok ? '<button type="button" class="btn btn-ghost" data-role="dl-png">下載競爭圖 PNG</button>' +
                 '<button type="button" class="btn btn-text" data-role="reset-labels">還原標籤位置</button>' +
@@ -2999,7 +2997,22 @@
 
   /* ---------- 整份 AI 報告指令（全部勾選的題組） ---------- */
   state.reportOff = state.reportOff || {};
-  function figNoOf(res){ return Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1); }
+  /* 圖號依「納入 AI 報告」的勾選順序重新編號；未納入的題組不編號。並排比較模式依題組順序編號。 */
+  function figNoOf(res){
+    if (state.seg.col && state.seg.mode === 'compare') return Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1);
+    const i = reportGroups().findIndex(r => r.qid === res.qid);
+    return i >= 0 ? i + 1 : null;
+  }
+  function updateFigNumbers(){
+    const byQid = {};
+    (state.pca || []).forEach(r => { if (!byQid[r.qid]) byQid[r.qid] = r; });
+    document.querySelectorAll('#pca-results .fig-head, #pca-results .fig-btn').forEach(el => {
+      const res = byQid[el.dataset.qid];
+      const n = res ? figNoOf(res) : null;
+      if (el.classList.contains('fig-head')) el.textContent = n ? '圖' + n + '　' : '';
+      else el.textContent = n ? '圖' + n : '圖';
+    });
+  }
   function reportGroups(){
     if (!state.pca || (state.seg.col && state.seg.mode === 'compare')) return [];
     return state.pca.filter(r => r.ok && !state.reportOff[r.qid]);
@@ -3009,6 +3022,7 @@
     if (!bar) return;
     const cmp = state.seg.col && state.seg.mode === 'compare';
     const n = reportGroups().length;
+    updateFigNumbers();
     const btn = document.getElementById('btn-full-report');
     btn.disabled = cmp || !n;
     document.getElementById('full-report-note').textContent = cmp
