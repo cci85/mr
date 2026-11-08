@@ -2326,7 +2326,8 @@
       html += '<p class="hint small">負荷量 = 特徵向量 × √特徵值，即選項與主成分之間的相關係數；絕對值 ≥ .5 以粗體標示。主成分的正負方向可任意翻轉，本工具以絕對值最大的負荷量為正。</p>';
 
       /* 5. 競爭圖 */
-      html += '<h4 class="pca-sub"><span class="pca-no">五</span>競爭圖</h4>';
+      const mapNo = Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1);
+      html += '<h4 class="pca-sub"><span class="pca-no">五</span>圖' + mapNo + '　' + escapeHtml(String(res.name).replace(/^[^｜]*｜/, '')) + '競爭圖</h4>';
       html += '<p class="hint small">以第一、第二主成分負荷量為座標，圓的面積與勾選率成正比（每張圖以勾選率最高的選項為最大圓），愈常被同時勾選的選項位置愈靠近。名稱可以用滑鼠拖曳調整位置，下載的圖會依調整後的位置輸出，按「還原標籤位置」可回到自動排版；滑鼠停在圓上可看到完整選項與勾選率。未納入分析的選項不畫入圖中，列在圖下方。</p>';
       html += '<figure class="map-wrap">' + buildMapSVG(res, MAP_THEME_PAGE) + '</figure>';
     }
