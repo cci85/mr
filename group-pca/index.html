@@ -2331,11 +2331,13 @@
       html += '<figure class="map-wrap">' + buildMapSVG(res, MAP_THEME_PAGE) + '</figure>';
     }
 
+    const figNo = Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1);
     html += '<div class="row-actions pca-actions">' +
+      (res.ok ? '<button type="button" class="btn btn-secondary" data-role="copy-map">複製圖' + figNo + '（貼到 Word）</button>' : '') +
       '<button type="button" class="btn btn-secondary" data-role="dl-csv">下載分析結果 CSV</button>' +
       (res.ok ? '<button type="button" class="btn btn-ghost" data-role="dl-png">下載競爭圖 PNG</button>' +
                 '<button type="button" class="btn btn-text" data-role="reset-labels">還原標籤位置</button>' +
-                '<button type="button" class="btn btn-ghost" data-role="dl-svg">下載競爭圖 SVG</button>' : '') +
+                '' : '') +
       (res.ok ? '<button type="button" class="btn btn-ghost" data-role="copy-table">複製勾選率表</button>' : '') +
       (res.ok && !(state.seg.col && state.seg.mode === 'compare') ? '<button type="button" class="btn btn-primary" data-role="ai-report">複製 AI 報告指令</button>' : '') +
       '</div>';
@@ -2616,6 +2618,15 @@
     }
     const segPart = res.seg ? '_' + safeName(res.seg.col) + '-' + safeName(res.seg.value) : '';
     const base = '題組分析_' + safeName(res.name) + segPart + '_' + dateStamp();
+    if (btn.dataset.role === 'copy-map'){
+      const label = btn.textContent.replace(/^複製/, '').replace(/（.*$/, '');
+      try{
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': mapPngBlob(res, 2) })])
+          .then(() => toast('已複製' + label + '，可直接貼到 Word', 'success'))
+          .catch(() => toast('此瀏覽器無法複製圖片，請改用「下載競爭圖 PNG」', 'error'));
+      }catch(err){ toast('此瀏覽器無法複製圖片，請改用「下載競爭圖 PNG」', 'error'); }
+      return;
+    }
     if (btn.dataset.role === 'copy-table'){
       copyRateTable(res);
       return;
@@ -2626,8 +2637,6 @@
     }
     if (btn.dataset.role === 'dl-csv'){
       saveFile(base + '.csv', pcaCsv(res));
-    } else if (btn.dataset.role === 'dl-svg'){
-      saveFile('競爭圖_' + safeName(res.name) + segPart + '_' + dateStamp() + '.svg', buildMapSVG(res, MAP_THEME_EXPORT), { bom: false });
     } else if (btn.dataset.role === 'dl-png'){
       mapPngBlob(res, 2)
         .then(blob => saveFile('競爭圖_' + safeName(res.name) + segPart + '_' + dateStamp() + '.png', blob))
