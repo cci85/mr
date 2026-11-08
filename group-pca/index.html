@@ -557,6 +557,9 @@
     .crosstab-controls, .chisq-controls{ flex-direction:column; align-items:stretch; }
     .crosstab-controls select, .chisq-controls select{ min-width:0; }
   }
+  .rep-inc{display:inline-flex;align-items:center;gap:6px;margin:2px 0 6px;font-size:13px;color:var(--ink-soft);cursor:pointer}
+  .rep-inc input{accent-color:var(--accent)}
+  .full-report-bar{align-items:center;margin:0 0 14px}
 </style>
 
 </head>
@@ -700,6 +703,11 @@
         <p class="hint">每個題組各自分析：勾選率 → Pearson 相關係數矩陣 → 特徵值 → 未轉軸負荷量 → 競爭圖。建立或修改題組後會自動重新計算。</p>
       </div>
     </div>
+    <div class="row-actions full-report-bar" id="full-report-bar">
+      <button class="btn btn-primary" id="btn-full-report" type="button">複製 AI 報告指令（全部題組）</button>
+      <span class="hint small" id="full-report-note"></span>
+    </div>
+    <details class="prompt-peek" id="full-report-peek" hidden><summary>AI 報告指令內容</summary><textarea readonly rows="12" aria-label="AI 報告指令內容"></textarea></details>
     <div class="seg-panel" id="seg-panel">
       <div class="seg-row">
         <label class="seg-field" for="min-rate">勾選率低於
@@ -2262,6 +2270,9 @@
   function renderPcaCard(res){
     let html = '<article class="pca-card" data-key="' + escapeHtml(res.key) + '">';
     html += '<header class="pca-head"><h3>' + escapeHtml(res.name) + '</h3>';
+    if (res.ok && !(state.seg.col && state.seg.mode === 'compare')){
+      html += '<label class="rep-inc"><input type="checkbox" data-role="rep-inc" data-qid="' + escapeHtml(res.qid) + '"' + (state.reportOff && state.reportOff[res.qid] ? '' : ' checked') + '> 納入 AI 報告</label>';
+    }
     if (res.seg) html += '<p class="seg-tag">區隔：' + escapeHtml(res.seg.col) + '＝' + escapeHtml(res.seg.value) + '</p>';
     if (res.ok){
       html += '<p class="pca-meta"><span>' + (res.seg ? 'n' : 'N') + ' = ' + res.N + '</span><span>K = ' + res.K + ' 個選項</span>' +
@@ -2336,7 +2347,6 @@
                 '<button type="button" class="btn btn-text" data-role="reset-labels">還原標籤位置</button>' +
                 '' : '') +
       (res.ok ? '<button type="button" class="btn btn-ghost" data-role="copy-table">複製勾選率表</button>' : '') +
-      (res.ok && !(state.seg.col && state.seg.mode === 'compare') ? '<button type="button" class="btn btn-primary" data-role="ai-report">複製 AI 報告指令</button>' : '') +
       '</div>';
     html += '</article>';
     return html;
@@ -2451,12 +2461,14 @@
     if (!sg.col){
       state.pca = qs.map(q => remember(analyzeGroup(q, allIdx, null)));
       box.innerHTML = state.pca.map(r => renderPcaCard(r)).join('');
+      refreshFullReportBar();
       return;
     }
     if (sg.mode === 'single'){
       const idxs = segIdxs(sg.value);
       state.pca = qs.map(q => remember(analyzeGroup(q, idxs, { col: sg.col, value: sg.value })));
       box.innerHTML = state.pca.map(r => renderPcaCard(r)).join('');
+      refreshFullReportBar();
       return;
     }
     const cats = segCandidates().find(c => c.col === sg.col).values.map(x => x.v);
@@ -2470,6 +2482,7 @@
       list.forEach(r => state.pca.push(r));
       return renderCompareCard(overall, list);
     }).join('');
+    refreshFullReportBar();
   }
 
   function renderCompareCard(overall, list){
@@ -2982,6 +2995,143 @@
       navigator.clipboard.writeText(text).then(okMsg, function(){ showBox(); toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製'); });
     }catch(err){ showBox(); toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製'); }
   }
+
+
+  /* ---------- 整份 AI 報告指令（全部勾選的題組） ---------- */
+  state.reportOff = state.reportOff || {};
+  function figNoOf(res){ return Math.max(1, (state.dummy ? state.dummy.qs.findIndex(q => q.id === res.qid) : 0) + 1); }
+  function reportGroups(){
+    if (!state.pca || (state.seg.col && state.seg.mode === 'compare')) return [];
+    return state.pca.filter(r => r.ok && !state.reportOff[r.qid]);
+  }
+  function refreshFullReportBar(){
+    const bar = document.getElementById('full-report-bar');
+    if (!bar) return;
+    const cmp = state.seg.col && state.seg.mode === 'compare';
+    const n = reportGroups().length;
+    const btn = document.getElementById('btn-full-report');
+    btn.disabled = cmp || !n;
+    document.getElementById('full-report-note').textContent = cmp
+      ? '並排比較模式不提供 AI 報告指令；請改選「不區隔」或「指定一個類別」。'
+      : (n ? '目前納入 ' + n + ' 張圖；可在各題組卡片取消「納入 AI 報告」。' : '沒有納入報告的題組，請在題組卡片勾選「納入 AI 報告」。');
+  }
+
+  function buildFullReportPrompt(){
+    const list = reportGroups();
+    const pc = v => (v * 100).toFixed(1) + '%';
+    const first = list[0];
+    const L = [];
+    L.push(
+'複選題（Pick any/J）競爭圖報告撰寫提示詞',
+'================================================================',
+'',
+'【角色與任務】',
+'你是一位熟悉 Pick any/J 複選題資料分析方法的行銷研究助理。本提示詞最後附有 ' + list.length + ' 個題組的',
+'分析結果：各選項的勾選率、未轉軸主成分分析的前兩個主成分負荷量與解釋比例，以及相關最強的',
+'選項配對。這些數值已計算完成，每個題組的圖也已由研究者另行繪製，你不需要重新計算，也不可以',
+'繪圖。請直接於本次回覆中依【輸出順序與版面】完成整份報告，不要先詢問是否開始，也不要只提供',
+'作法說明。',
+'',
+'【動筆前的判斷（判斷過程不寫入回覆）】',
+'- 構面：依各題組的原題目與選項內容，判斷每個題組屬於哪一種構面：品牌使用、消費情境（選項實為',
+'  利益或價值時稱為「消費價值」）、媒體接觸、通路使用，或其他（自行判斷最接近的一類）。',
+'- 產品類別：依原題目判斷本問卷的產品類別（例如「包裝綠茶」）；無法判斷時以「本產品類別」稱之。',
+'',
+'【輸出順序與版面】',
+'整份回覆就是報告本身，依下列順序排列：',
+'　首段說明 → 〔插入圖N〕→ 圖標題 → 該圖段落 →（下一張圖重複）……',
+'- 首段之後，依資料中的題組順序，每個題組各輸出三樣東西：單獨一行「〔插入圖N〕」（供研究者貼上',
+'  已繪製的圖；不可繪圖，也不可以文字、符號或表格描繪圖形）、下一行圖標題、接著一段文字。',
+'- 圖標題格式為「圖N ＋ 產品類別 ＋ 圖名」，圖名依構面而定：品牌使用為「品牌競爭圖」、消費情境為',
+'  「消費情境圖」、媒體接觸為「媒體接觸圖」、通路使用為「通路使用圖」，其他構面依內容命名（例如',
+'  「消費價值圖」）。例如「圖1 包裝綠茶的品牌競爭圖」。圖號 N 依資料中各題組標示的圖號。',
+'- 除圖標題外，不加任何標題、小標題、編號或條列；不輸出表格。',
+'- 回覆中不可出現報告以外的任何文字：不要開場白與結語、備註或附註，不要向研究者提問，也不要',
+'  交代你做了哪些判斷。',
+'',
+'【首段說明（約 300 字，一段）】',
+'概略說明本報告各圖的統計方法與判讀方式，不引用文獻，內容依序為：',
+'- 統計方法：將複選題資料（勾選為 1、未勾選為 0）的皮爾森相關係數矩陣，以主成分分析濃縮為',
+'  二維座標，座標為前兩個主成分的負荷量。',
+'- 泡泡大小：圓圈面積與該選項的勾選率成正比。',
+'- 距離的意義：距離反映受訪者同時勾選兩個選項的程度。位置相近、落在同一側的選項常被同一批',
+'  受訪者同時勾選（正相關）；分居兩側且距離較遠的選項較少被同時勾選（負相關）。',
+'- 依構面的解讀方式：只說明本報告實際出現的構面，例如品牌使用──距離相近表示落在同一考慮集合、',
+'  彼此替代競爭，分居兩側表示各自擁有不同的顧客群；消費情境──相近表示需求狀態相近、可整合為',
+'  同一訴求，分居兩側表示對應不同動機；媒體接觸──相近表示受眾重疊、同時投放的額外觸及有限，',
+'  分居兩側表示受眾互補、搭配投放可擴大觸及；通路使用──相近表示同一群消費者同時使用，分居兩側',
+'  表示各自涵蓋不同的消費者。',
+'',
+'【各圖段落（每段約 500 字，一段）】',
+'以「如圖N所示」或「從圖N可觀察到」起始，內容依序為：',
+'1. 勾選率：只寫勾選率最高的前 3 個選項及其百分比（取到整數）；其他選項不寫百分比。',
+'2. 解釋比例：以一句話寫出前兩個主成分合計的解釋變異比例。',
+'3. 群聚與策略角色：依負荷量座標判定群聚，替每個群聚取一個簡短、平實的名稱並列出成員，依勾選',
+'   率高低與位置指出其策略角色：勾選率高且位置獨立為「類別基本門檻」（多數人共有、不構成差異化',
+'   來源）；勾選率高且彼此群聚為「主力訴求組合」（目前的主要競爭範圍）；勾選率低但彼此群聚為',
+'   「利基區隔」（規模小但同質性高）；勾選率低且位置孤立為「邊緣待觀察」。兩個主成分負荷量皆',
+'   接近零的選項，不賦予策略角色，也不可解讀為「介於兩群之間」。',
+'4. 依構面解讀距離：以首段所述的解讀方式，說明同側相近與分居兩側的選項代表什麼行銷意義。',
+'   可參考資料中的相關配對判斷哪些選項同側、哪些分居兩側，但不寫出 r 值或相關係數的數字。',
+'5. 行銷策略概述：一兩句話概述可採取的行銷方向，指出對象與訴求重點即可，不寫執行細節，',
+'   也不排列優先順序。',
+'',
+'【格式與用語提醒】',
+'- 全文使用繁體中文學術書面語，語氣嚴謹、中立、客觀；一律使用「變數」，不使用「變項」。',
+'- 選項名稱照資料原樣使用，不縮減、不改寫、不加前綴或代碼。',
+'- 群聚與距離之判讀須以負荷量為依據，不可僅憑選項名稱或一般印象推測；每一項判斷須有勾選率或',
+'  相對位置作為依據，不作資料無法支持的斷言。',
+'- 不使用修飾性或宣傳性用語（例如「精準觸及」「強化品牌力」「打造」「引爆」「極具潛力」），不使用',
+'  比喻、口號或廣告標語，不重複首段已說明的方法。',
+'- 行銷策略一律使用建議語氣（「可」「建議」「宜」），不使用「須」「必須」「應該」「務必」等命令語氣。',
+'',
+'================================================================',
+'【分析資料】',
+'',
+'分析對象：' + (first && first.seg ? '「' + first.seg.col + '」為「' + first.seg.value + '」的受訪者' : '全部有效受訪者') +
+  '；樣本數：' + (first && first.seg ? 'n' : 'N') + ' = ' + (first ? first.N : 0) +
+  '；勾選率門檻：全體受訪者勾選率低於 ' + minRateText() + ' 的選項不納入分析。');
+    list.forEach(res => {
+      const no = figNoOf(res);
+      const stems = groupStems(res);
+      const sorted = res.used.map((it, i) => ({ it: it, i: i })).sort((x, y) => y.it.rate - x.it.rate);
+      const cp = corrPairs(res);
+      L.push('', '────────────────', '【圖' + no + '】題組名稱：' + String(res.name).replace(/^[^｜]*｜/, ''));
+      L.push('原題目：' + (stems.length ? stems.join('／') : '（未提供，請依題組名稱與選項內容判斷）'));
+      if (res.lowItems.length) L.push('未納入分析（勾選率低於門檻）：' + res.lowItems.map(it => it.option).join('、'));
+      L.push('選項勾選率（由高到低）：' + sorted.map(x => x.it.option + ' ' + pc(x.it.rate)).join('、'));
+      L.push('前兩個主成分累積解釋變異比例：' + pc(res.explained) + '（第一主成分 ' + pc(res.eigen[0] / res.K) + '、第二主成分 ' + pc(res.eigen[1] / res.K) + '）');
+      L.push('負荷量（第一主成分為橫向位置，第二主成分為縱向位置）：');
+      sorted.forEach(x => L.push('  ' + x.it.option + '｜' + f3(res.loadings[x.i][0]) + '｜' + f3(res.loadings[x.i][1])));
+      L.push('相關最強的配對（僅供判斷位置，報告中不寫出數字）：正相關 ' +
+        (cp.pos.length ? cp.pos.map(p => p.a + '－' + p.b).join('、') : '無') + '；負相關 ' +
+        (cp.neg.length ? cp.neg.map(p => p.a + '－' + p.b).join('、') : '無'));
+    });
+    return L.join('\n');
+  }
+
+  function copyFullReportPrompt(){
+    const list = reportGroups();
+    if (!list.length){ toast('沒有納入報告的題組', 'error'); return; }
+    const text = buildFullReportPrompt();
+    const okMsg = function(){ toast('已複製 AI 報告指令（' + list.length + ' 張圖），請貼到其他 AI', 'success'); };
+    const showBox = function(){
+      const d = document.getElementById('full-report-peek');
+      d.hidden = false; d.open = true;
+      const ta = d.querySelector('textarea'); ta.value = text; ta.focus(); ta.select();
+    };
+    if (copyTextSync(text)){ okMsg(); return; }
+    try{
+      navigator.clipboard.writeText(text).then(okMsg, function(){ showBox(); toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製'); });
+    }catch(err){ showBox(); toast('無法自動複製，指令已選取，請按 Ctrl+C（Mac 為 ⌘+C）複製'); }
+  }
+  document.getElementById('btn-full-report').addEventListener('click', copyFullReportPrompt);
+  document.getElementById('pca-results').addEventListener('change', function(e){
+    const cb = e.target.closest('input[data-role="rep-inc"]');
+    if (!cb) return;
+    if (cb.checked) delete state.reportOff[cb.dataset.qid]; else state.reportOff[cb.dataset.qid] = true;
+    refreshFullReportBar();
+  });
 
   /* ---------- boot ---------- */
   updateVisibility();
