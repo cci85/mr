@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Google 表單產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#f5f3ee; --surface:#ffffff; --surface-2:#faf8f3; --border:#ddd7c9; --border-strong:#c7bea9;
+  --ink:#232019; --ink-soft:#655e4d; --ink-faint:#8f886f;
+  --accent:#28594f; --accent-strong:#1b4139; --accent-soft:#e1ece7; --accent-contrast:#ffffff;
+  --warn:#95591b; --warn-soft:#f6ecda; --danger:#9c3b3b; --danger-soft:#f7e6e4;
+  --code-bg:#fbfaf3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+    --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+    --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+    --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+    --code-bg:#181e1b;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141612; --surface:#1c1f1a; --surface-2:#20241e; --border:#373d33; --border-strong:#4a5140;
+  --ink:#eae7dc; --ink-soft:#b7b3a1; --ink-faint:#847e69;
+  --accent:#79bda7; --accent-strong:#9bd2bf; --accent-soft:#213b34; --accent-contrast:#0c1210;
+  --warn:#dba064; --warn-soft:#3b2c19; --danger:#e08e8e; --danger-soft:#3c2320;
+  --code-bg:#181e1b;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.65}
+.page{max-width:900px;margin:0 auto;padding:36px 16px 72px;display:flex;flex-direction:column;gap:20px}
+.eyebrow{margin:0 0 8px;font-size:12.5px;letter-spacing:.12em;color:var(--accent);font-weight:700}
+h1{font-family:"Noto Serif TC",serif;font-size:clamp(26px,4vw,32px);margin:0 0 10px}
+.lede{margin:0;color:var(--ink-soft);max-width:64ch;font-size:15px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px}
+.card-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.step{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-contrast);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:2px}
+.card h2{font-family:"Noto Serif TC",serif;font-size:19px;margin:0 0 4px}
+.hint{margin:0;color:var(--ink-soft);font-size:13.5px}
+.dropzone{display:flex;align-items:center;justify-content:center;text-align:center;border:1.5px dashed var(--border-strong);border-radius:10px;padding:26px 16px;cursor:pointer;color:var(--ink-soft);background:var(--surface-2)}
+.dropzone.drag{border-color:var(--accent);background:var(--accent-soft)}
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:8px;padding:9px 16px;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--ink)}
+.btn-primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:4px 0 14px}
+.stat{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.stat .n{font-size:22px;font-weight:700;color:var(--accent-strong);font-variant-numeric:tabular-nums}
+.stat .k{font-size:12.5px;color:var(--ink-soft)}
+.notice{border-radius:9px;padding:10px 14px;font-size:13.5px;margin:10px 0}
+.notice-warn{background:var(--warn-soft);color:var(--warn)}
+.notice-tip{background:var(--accent-soft);color:var(--accent-strong)}
+.notice ul{margin:6px 0 0;padding-left:20px}
+.part{margin-top:18px}
+.part-title{font-weight:700;font-size:15.5px;color:var(--accent-strong);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:8px}
+.part-desc,.q-help{font-size:13px;color:var(--ink-soft);margin:2px 0 6px;white-space:pre-wrap}
+.q{border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:8px 0;background:var(--surface)}
+.q-top{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.q-title{flex:1 1 360px;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.q select{font:inherit;font-size:13px;padding:4px 6px;border-radius:6px;border:1px solid var(--border-strong);background:var(--surface-2);color:var(--ink)}
+.badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-strong);margin-left:6px;white-space:nowrap}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.opts{margin:6px 0 0;padding-left:22px;font-size:13.5px}
+.opts li{margin:1px 0}
+.scale-items{margin:6px 0 0;padding-left:22px;font-size:13.5px}
+ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
+ol.steps a{color:var(--accent-strong);font-weight:600}
+details summary{cursor:pointer;font-size:13px;color:var(--ink-soft)}
+pre{white-space:pre-wrap;word-break:break-all;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.55;background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:420px;overflow:auto}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toolbox-back{display:block;padding:10px 16px;font:500 14px/1.4 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:#ffffffcc;border-bottom:1px solid #ddd7c9}
+.toolbox-back a{color:#28594f;text-decoration:none}
+.toolbox-back a:hover{text-decoration:underline}
+@media (prefers-color-scheme:dark){.toolbox-back{background:#1c1f1acc;border-bottom-color:#373d33}.toolbox-back a{color:#79bda7}}
+</style>
+</head>
+<body>
+<nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
+<div class="page">
+  <header>
+    <p class="eyebrow">問卷設計 · Google 表單</p>
+    <h1>Google 表單產生器</h1>
+    <p class="lede">上傳問卷 Word 檔，工具會在瀏覽器中逐題讀出題目與選項，請先核對題數，再產生 Google Apps Script 程式碼。程式碼由工具直接產生，不經過 AI，題目與選項文字與 Word 檔完全一致。</p>
+  </header>
+
+  <section class="card">
+    <div class="card-head"><span class="step">1</span><div>
+      <h2>上傳問卷 Word 檔</h2>
+      <p class="hint">支援 .docx。題目以「題號＋句點」開頭（例如「1. 請問…」），選項以「○」（單選）或「□」（複選）開頭；李克特量表以表格呈現，第一列為 1、2、3、4、5。</p>
+    </div></div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file" accept=".docx" hidden>
+      <span id="drop-label">選擇或拖曳 Word (.docx) 檔案到這裡</span>
+    </label>
+  </section>
+
+  <section class="card" id="sec-check" hidden>
+    <div class="card-head"><span class="step">2</span><div>
+      <h2>核對題目</h2>
+      <p class="hint">請對照 Word 檔確認題數與選項數。題型讀錯時，可在每題右側修改。</p>
+    </div></div>
+    <div class="stats" id="stats"></div>
+    <div id="warns"></div>
+    <div id="preview"></div>
+  </section>
+
+  <section class="card" id="sec-code" hidden>
+    <div class="card-head"><span class="step">3</span><div>
+      <h2>建立 Google 表單</h2>
+      <p class="hint">程式執行一次會建立兩份表單，方便比較量表的呈現方式：A 版每題一個線性刻度，B 版每組一個矩陣題。選定後請刪除另一份，以免回覆分散在兩份表單。</p>
+    </div></div>
+    <ol class="steps">
+      <li>按「複製程式碼」。</li>
+      <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
+      <li>執行完成後，在下方「執行紀錄」查看兩份表單的填答網址與編輯網址，以及題數核對結果。</li>
+    </ol>
+    <div class="row">
+      <button class="btn btn-primary" id="btn-copy" type="button">複製程式碼</button>
+      <span class="hint" id="copy-note"></span>
+    </div>
+    <details><summary>檢視程式碼</summary><pre id="code"></pre></details>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+let toastT = null;
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2600); }
+
+let doc = null;   /* 解析結果 */
+
+/* ---------- 讀取 Word ---------- */
+function htmlToBlocks(html){
+  const d = new DOMParser().parseFromString(html, 'text/html');
+  const out = [];
+  const clean = s => String(s || '').replace(/ /g, ' ').replace(/[ \t　]+/g, ' ').trim();
+  Array.prototype.forEach.call(d.body.children, el => {
+    const tag = el.tagName;
+    if (tag === 'TABLE'){
+      const rows = Array.prototype.map.call(el.querySelectorAll('tr'), tr => Array.prototype.map.call(tr.children, td => clean(td.textContent)));
+      out.push({ kind: 'table', rows: rows });
+    } else if (tag === 'OL' || tag === 'UL'){
+      Array.prototype.forEach.call(el.querySelectorAll('li'), li => { const t = clean(li.textContent); if (t) out.push({ kind: 'p', text: t }); });
+    } else {
+      const parts = el.innerHTML.split(/<br\s*\/?>/i);
+      parts.forEach(part => { const tmp = d.createElement('div'); tmp.innerHTML = part; const t = clean(tmp.textContent); if (t) out.push({ kind: 'p', text: t }); });
+    }
+  });
+  return out;
+}
+
+const RE_PART = /^第\s*[一二三四五六七八九十0-9]+\s*部[分份]/;
+const RE_Q = /^(\d{1,3})\s*[\.．、]\s*(.+)$/;
+const OPT_SYM = /[○◯●□■☐◻]/;
+const RE_STOP = /終止作答|停止作答|結束作答/;
+const RE_OTHER = /^其他/;
+const CN_NUM = { '一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10 };
+
+function isJunk(t){ return !/[一-鿿A-Za-z0-9]/.test(t); }
+function splitOptions(t){
+  const out = []; const re = /([○◯●□■☐◻])\s*([^○◯●□■☐◻]*)/g; let m;
+  while ((m = re.exec(t))){ const txt = m[2].trim(); if (txt) out.push({ sym: m[1], text: txt }); }
+  return out;
+}
+function maxSelectOf(title){
+  let m = title.match(/(?:至多|最多(?:選)?|限選)\s*([0-9一二三四五六七八九十])\s*(?:項|個)/);
+  if (!m) return null;
+  return /\d/.test(m[1]) ? Number(m[1]) : CN_NUM[m[1]];
+}
+function scaleInfo(text, header){
+  const nums = header.map(h => h.trim()).filter(h => /^\d+$/.test(h)).map(Number);
+  const min = nums.length ? Math.min.apply(null, nums) : 1, max = nums.length ? Math.max.apply(null, nums) : 5;
+  const labels = {};
+  const re = /(\d)\s*[＝=]\s*([^，,、；;）)\s]+)/g; let m;
+  while ((m = re.exec(text || ''))) labels[Number(m[1])] = m[2];
+  return { min: min, max: max, low: labels[min] || '非常不同意', high: labels[max] || '非常同意' };
+}
+
+function parse(blocks){
+  const D = { title: '', desc: [], end: '', parts: [], ignored: [] };
+  let part = null, q = null, pending = [];
+  const ensurePart = () => { if (!part){ part = { title: '', desc: [], items: [] }; D.parts.push(part); } return part; };
+  const closeQ = () => { q = null; };
+  blocks.forEach((b, i) => {
+    if (b.kind === 'table'){
+      const rows = b.rows.filter(r => r.some(c => c));
+      if (!rows.length) return;
+      let hi = rows.findIndex(r => r.filter(c => /^\d+$/.test(c)).length >= 3);
+      const header = hi >= 0 ? rows[hi] : [];
+      const items = rows.filter((r, k) => k !== hi && r[0] && !/^題目$/.test(r[0])).map(r => r[0]);
+      const intro = pending.join('\n'); pending = [];
+      const cur = ensurePart();
+      const info = scaleInfo(intro || (!cur.items.length ? cur.desc.join('\n') : ''), header);
+      ensurePart().items.push({ type: 'scale', intro: intro, min: info.min, max: info.max, low: info.low, high: info.high, rows: items });
+      closeQ();
+      return;
+    }
+    const t = b.text;
+    if (!D.title){ if (isJunk(t)) { D.ignored.push(t); return; } D.title = t; return; }
+    if (isJunk(t)){ D.ignored.push(t); return; }
+    if (RE_PART.test(t)){ part = { title: t, desc: [], items: [] }; D.parts.push(part); closeQ(); pending = []; return; }
+    if (OPT_SYM.test(t.charAt(0))){
+      const opts = splitOptions(t);
+      if (!q){ D.ignored.push(t); return; }
+      opts.forEach(o => q.options.push(o.text));
+      if (!q.symSet) q.symSet = opts[0] ? opts[0].sym : '';
+      return;
+    }
+    const mq = t.match(RE_Q);
+    if (mq){
+      const p = ensurePart();
+      if (pending.length){ p.items.push({ type: 'text', text: pending.join('\n') }); pending = []; }
+      q = { type: '', title: t, help: [], options: [], symSet: '' };
+      p.items.push(q);
+      return;
+    }
+    if (/到此結束|感謝您的填答|再次感謝/.test(t) && i >= blocks.length - 3){ D.end = t; return; }
+    if (!D.parts.length){ D.desc.push(t); return; }
+    if (q && !q.options.length){ q.help.push(t); return; }
+    if (part && !part.items.length){ part.desc.push(t); return; }
+    pending.push(t); closeQ();
+  });
+  if (pending.length) ensurePart().items.push({ type: 'text', text: pending.join('\n') });
+  D.parts.forEach(p => p.items.forEach(it => {
+    if (it.type === 'scale' || it.type === 'text') return;
+    it.type = !it.options.length ? 'short' : (/[□■☐◻]/.test(it.symSet) ? 'checkbox' : 'radio');
+    it.max = it.type === 'checkbox' ? maxSelectOf(it.title) : null;
+  }));
+  return D;
+}
+
+/* ---------- 顯示核對畫面 ---------- */
+function counts(){
+  const c = { parts: doc.parts.filter(p => p.title).length, radio: 0, checkbox: 0, short: 0, scale: 0, scaleGroups: 0, options: 0 };
+  doc.parts.forEach(p => p.items.forEach(it => {
+    if (it.type === 'scale'){ c.scale += it.rows.length; c.scaleGroups++; }
+    else if (it.type === 'radio' || it.type === 'checkbox'){ c[it.type]++; c.options += it.options.length; }
+    else if (it.type === 'short') c.short++;
+  }));
+  c.questions = c.radio + c.checkbox + c.short + c.scale;
+  return c;
+}
+function render(){
+  const c = counts();
+  $('stats').innerHTML = [
+    ['題目總數', c.questions], ['單選題', c.radio], ['複選題', c.checkbox], ['量表題', c.scale + '（' + c.scaleGroups + ' 組）'],
+    ['簡答題', c.short], ['選項總數', c.options], ['部分', c.parts]
+  ].map(x => '<div class="stat"><div class="n">' + x[1] + '</div><div class="k">' + x[0] + '</div></div>').join('');
+  const warns = [];
+  const nums = [];
+  doc.parts.forEach(p => p.items.forEach(it => {
+    if (it.type === 'scale') it.rows.forEach(r => { const m = r.match(/^(\d{1,3})/); if (m) nums.push(Number(m[1])); });
+    else if (it.title){ const m = it.title.match(RE_Q); if (m) nums.push(Number(m[1])); }
+  }));
+  const miss = [];
+  for (let k = 1; k < nums.length; k++) if (nums[k] !== nums[k-1] + 1) miss.push(nums[k-1] + ' → ' + nums[k]);
+  if (miss.length) warns.push('題號不連續：' + miss.join('、') + '。請對照 Word 檔確認是否漏讀。');
+  doc.parts.forEach(p => p.items.forEach(it => { if (it.type === 'short') warns.push('「' + it.title.slice(0, 30) + '」沒有讀到選項，暫列為簡答題；若應有選項，請檢查 Word 檔的選項是否以「○」或「□」開頭。'); }));
+  if (doc.ignored.length) warns.push('下列段落沒有可辨識的文字，已略過：' + doc.ignored.map(t => '「' + t + '」').join('、'));
+  $('warns').innerHTML = (warns.length ? '<div class="notice notice-warn"><strong>請檢查：</strong><ul>' + warns.map(w => '<li>' + esc(w) + '</li>').join('') + '</ul></div>' : '<div class="notice notice-tip">題號連續，沒有發現漏讀的跡象。仍請對照 Word 檔確認題數與選項數。</div>');
+  let h = '<div class="part"><div class="part-title">' + esc(doc.title) + '</div>' + (doc.desc.length ? '<div class="part-desc">' + esc(doc.desc.join('\n')) + '</div>' : '') + '</div>';
+  doc.parts.forEach((p, pi) => {
+    h += '<div class="part">' + (p.title ? '<div class="part-title">' + esc(p.title) + '</div>' : '') + (p.desc.length ? '<div class="part-desc">' + esc(p.desc.join('\n')) + '</div>' : '');
+    p.items.forEach((it, ii) => {
+      if (it.type === 'text'){ h += '<div class="part-desc">' + esc(it.text) + '</div>'; return; }
+      if (it.type === 'scale'){
+        h += '<div class="q"><div class="q-top"><div class="q-title">' + (it.intro ? esc(it.intro) : '量表') + '</div><span class="badge">量表 ' + it.rows.length + ' 題（' + it.min + '＝' + esc(it.low) + '，' + it.max + '＝' + esc(it.high) + '）</span></div><ol class="scale-items" style="list-style:none;padding-left:8px">' + it.rows.map(r => '<li>' + esc(r) + '</li>').join('') + '</ol></div>';
+        return;
+      }
+      const stop = it.options.filter(o => RE_STOP.test(o)).length;
+      const other = it.options.some(o => RE_OTHER.test(o));
+      h += '<div class="q"><div class="q-top"><div class="q-title">' + esc(it.title) +
+        (it.max ? '<span class="badge">至多 ' + it.max + ' 項</span>' : '') +
+        (stop ? '<span class="badge warn">篩選：選「' + esc(it.options.find(o => RE_STOP.test(o))) + '」跳到結尾</span>' : '') +
+        (other ? '<span class="badge">含「其他」填答</span>' : '') +
+        '</div><select data-p="' + pi + '" data-i="' + ii + '" aria-label="題型">' +
+        [['radio','單選'],['checkbox','複選'],['short','簡答']].map(o => '<option value="' + o[0] + '"' + (it.type === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
+        (it.help.length ? '<div class="q-help">' + esc(it.help.join('\n')) + '</div>' : '') +
+        (it.options.length ? '<ol class="opts">' + it.options.map(o => '<li>' + esc(o) + '</li>').join('') + '</ol>' : '') + '</div>';
+    });
+    h += '</div>';
+  });
+  if (doc.end) h += '<div class="part"><div class="part-desc">結尾訊息：' + esc(doc.end) + '</div></div>';
+  $('preview').innerHTML = h;
+  $('sec-check').hidden = false;
+  $('sec-code').hidden = false;
+  $('code').textContent = buildScript();
+}
+$('preview').addEventListener('change', e => {
+  const s = e.target.closest('select[data-p]'); if (!s) return;
+  const it = doc.parts[+s.dataset.p].items[+s.dataset.i];
+  it.type = s.value; it.max = it.type === 'checkbox' ? maxSelectOf(it.title) : null;
+  render();
+});
+
+/* ---------- 產生 Apps Script ---------- */
+function buildScript(){
+  const c = counts();
+  const data = { title: doc.title, desc: doc.desc.join('\n'), end: doc.end, parts: doc.parts.map(p => ({
+    title: p.title, desc: p.desc.join('\n'),
+    items: p.items.map(it => it.type === 'scale' ? { type: 'scale', intro: it.intro, min: it.min, max: it.max, low: it.low, high: it.high, rows: it.rows }
+      : it.type === 'text' ? { type: 'text', text: it.text }
+      : { type: it.type, title: it.title, help: it.help.join('\n'), options: it.options, max: it.max })
+  })) };
+  const expect = { questions: c.questions, options: c.options };
+  return [
+'/**',
+' * 由「Google 表單產生器」自動產生：' + doc.title,
+' * 執行 createForm 會建立兩份表單：',
+' *   A 版：每題量表各為一個線性刻度（ScaleItem）',
+' *   B 版：每組量表為一個矩陣題（GridItem）',
+' * 選定其中一份後，請刪除另一份，以免回覆分散。',
+' * 題目與選項文字儲存在下方 DATA，請勿手動刪改；應有 ' + c.questions + ' 題、' + c.options + ' 個選項（不含量表）。',
+' */',
+'function createForm() {',
+'  var a = buildForm_(false);',
+'  var b = buildForm_(true);',
+'  Logger.log("A 版（線性刻度）填答網址：" + a.getPublishedUrl());',
+'  Logger.log("A 版（線性刻度）編輯網址：" + a.getEditUrl());',
+'  Logger.log("B 版（矩陣題）填答網址：" + b.getPublishedUrl());',
+'  Logger.log("B 版（矩陣題）編輯網址：" + b.getEditUrl());',
+'}',
+'',
+'function buildForm_(useGrid) {',
+'  var form = FormApp.create(DATA.title + (useGrid ? "（B 版：矩陣題）" : "（A 版：線性刻度）"));',
+'  if (DATA.desc) form.setDescription(DATA.desc);',
+'  if (DATA.end) form.setConfirmationMessage(DATA.end);',
+'  var made = { questions: 0, options: 0 };',
+'  DATA.parts.forEach(function (part, pi) {',
+'    if (part.title) {',
+'      if (pi === 0) form.addSectionHeaderItem().setTitle(part.title).setHelpText(part.desc || "");',
+'      else form.addPageBreakItem().setTitle(part.title).setHelpText(part.desc || "");',
+'    }',
+'    part.items.forEach(function (it, ii) {',
+'      if (it.type === "text") {',
+'        form.addSectionHeaderItem().setTitle(it.text);',
+'      } else if (it.type === "scale") {',
+'        if (useGrid) {',
+'          var cols = [];',
+'          for (var v = it.min; v <= it.max; v++) cols.push(String(v));',
+'          var g = form.addGridItem().setTitle(it.intro || part.title || "請依同意程度作答").setRows(it.rows).setColumns(cols).setRequired(true);',
+'          g.setHelpText(it.min + "＝" + it.low + "，" + it.max + "＝" + it.high);',
+'          made.questions += it.rows.length;',
+'        } else {',
+'          if (it.intro) form.addSectionHeaderItem().setTitle(it.intro);',
+'          it.rows.forEach(function (r) {',
+'            form.addScaleItem().setTitle(r).setBounds(it.min, it.max).setLabels(it.low, it.high).setRequired(true);',
+'            made.questions++;',
+'          });',
+'        }',
+'      } else if (it.type === "short") {',
+'        var s = form.addTextItem().setTitle(it.title).setRequired(true);',
+'        if (it.help) s.setHelpText(it.help);',
+'        made.questions++;',
+'      } else {',
+'        var other = it.options.filter(function (o) { return /^其他/.test(o); });',
+'        var opts = it.options.filter(function (o) { return !/^其他/.test(o); });',
+'        var stop = it.type === "radio" && it.options.some(function (o) { return /終止作答|停止作答|結束作答/.test(o); });',
+'        var q = it.type === "checkbox" ? form.addCheckboxItem() : form.addMultipleChoiceItem();',
+'        q.setTitle(it.title).setRequired(true);',
+'        if (it.help) q.setHelpText(it.help);',
+'        if (stop) {',
+'          q.setChoices(it.options.map(function (o) {',
+'            return q.createChoice(o, /終止作答|停止作答|結束作答/.test(o) ? FormApp.PageNavigationType.SUBMIT : FormApp.PageNavigationType.CONTINUE);',
+'          }));',
+'        } else {',
+'          q.setChoiceValues(opts);',
+'          if (other.length) q.showOtherOption(true);',
+'        }',
+'        if (it.type === "checkbox" && it.max) {',
+'          q.setValidation(FormApp.createCheckboxValidation().requireSelectAtMost(it.max).build());',
+'        }',
+'        made.questions++;',
+'        made.options += it.options.length;',
+'        var next = part.items[ii + 1];',
+'        if (stop && (next || pi < DATA.parts.length - 1)) {',
+'          if (next || !DATA.parts[pi + 1].title) form.addPageBreakItem();',
+'        }',
+'      }',
+'    });',
+'  });',
+'  var ok = made.questions === EXPECT.questions && made.options === EXPECT.options;',
+'  Logger.log((useGrid ? "B 版" : "A 版") + "題數核對：建立 " + made.questions + " 題、" + made.options + " 個選項；應為 " + EXPECT.questions + " 題、" + EXPECT.options + " 個選項。" + (ok ? "相符。" : "不相符，請檢查！"));',
+'  if (!ok) throw new Error("題數不相符，請檢查程式碼中的 DATA 是否被修改。");',
+'  return form;',
+'}',
+'',
+'var EXPECT = ' + JSON.stringify(expect) + ';',
+'',
+'var DATA = ' + JSON.stringify(data, null, 2) + ';',
+''
+  ].join('\n');
+}
+
+/* ---------- 上傳 ---------- */
+function handleFile(f){
+  if (!f) return;
+  if (!/\.docx$/i.test(f.name)){ toast('請上傳 .docx 檔'); return; }
+  if (!window.mammoth){ toast('Word 讀取元件尚未載入，請稍候再試'); return; }
+  $('drop-label').textContent = '讀取中…';
+  f.arrayBuffer().then(buf => window.mammoth.convertToHtml({ arrayBuffer: buf })).then(r => {
+    doc = parse(htmlToBlocks(r.value));
+    $('drop-label').textContent = '已讀取：' + f.name;
+    render();
+    toast('已讀取 ' + counts().questions + ' 題');
+  }).catch(err => { console.error(err); $('drop-label').textContent = '選擇或拖曳 Word (.docx) 檔案到這裡'; toast('讀取失敗，請確認是正常的 .docx 檔'); });
+}
+$('file').addEventListener('change', e => handleFile(e.target.files[0]));
+const dz = $('dropzone');
+['dragenter','dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', e => handleFile(e.dataTransfer.files && e.dataTransfer.files[0]));
+
+$('btn-copy').addEventListener('click', () => {
+  const text = $('code').textContent;
+  const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  const done = () => { toast('已複製程式碼'); $('copy-note').textContent = '已複製，請貼到 Apps Script 編輯器。'; };
+  if (ok) { done(); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => toast('無法複製，請展開「檢視程式碼」手動選取'));
+});
+})();
+</script>
+<nav class="toolbox-back" style="border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px"><a href="../">← 回行銷研究工具箱</a></nav>
+</body>
+</html>
