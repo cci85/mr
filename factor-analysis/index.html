@@ -303,6 +303,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h3>驗證性因素分析結果表</h3>
     <div class="table-scroll" id="cfa-table"></div>
     <button type="button" id="btn-copy-cfa-table">複製表2</button>
+    <h3>AI 回覆與 Word 報告</h3>
+    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：開頭自動加上標題「驗證性因素分析」，「〔插入表2〕」會換成上方的表2（含註）。</p>
+    <textarea id="cfa-reply" rows="10" placeholder="貼上 AI 的完整回覆"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button type="button" class="primary" id="btn-docx-cfa">下載 Word 報告（.docx）</button>
+      <span class="small" id="cfa-reply-msg"></span>
+    </div>
     <div class="notice ok" style="margin-top:14px"><b>下一步：</b>完成 CFA 後，請<a href="#" data-goto="dl">前往下載結果</a>，下載因素分析資料檔（含 CFA 建立的指標），再上傳至市場區隔分析。</div>
   </section>
   </div>
@@ -327,6 +334,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../omv-reader.js"></script>
+<script src="../docx-report.js"></script>
 <script>
 /* ===== STATS-BEGIN（純計算函式，可單獨測試） ===== */
 const Stats = (function(){
@@ -1155,128 +1163,6 @@ async function copyFaTable(){
     try{ document.execCommand("copy"); toast("已複製表1，可直接貼到 Word"); }catch(err){ toast("複製失敗，請直接選取表格複製"); }
     sel.removeAllRanges(); box.remove();
   }
-}
-
-/* ---------- AI 回覆 → Word 報告（.docx） ---------- */
-const REPORT_TITLE="消費動機因素分析";
-function cleanMd(t){ return t.replace(/^\s*#{1,6}\s*/,"").replace(/^\s*>\s?/,"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/__(.+?)__/g,"$1").trim(); }
-function parseReply(txt){
-  let lines=String(txt||"").replace(/\r/g,"").split("\n").map(cleanMd);
-  const ti=lines.findIndex(l=>l===REPORT_TITLE);
-  if (ti>0) lines=lines.slice(ti);                      // 去掉報告前的「歸屬不明題目的內容判斷」等建議
-  lines=lines.filter(l=>l&&!/^建議因素名稱/.test(l)&&!/^[-*_]{3,}$/.test(l));
-  return lines.map(l=>/^[〔\[［【]\s*插入表\s*1\s*[〕\]］】]$/.test(l)?{t:"table"}:{t:"p",x:l});
-}
-function onReplyInput(){
-  const v=$("ai-reply").value, msg=$("ai-reply-msg");
-  if (!v.trim()){ msg.textContent=""; return; }
-  if (/建議因素名稱/.test(v)){ const nl=v.split(/\n/).find(l=>/建議因素名稱/.test(l)); if (nl) applyNamePaste(nl); }
-  const B=parseReply(v), np=B.filter(b=>b.t==="p").length, hasT=B.some(b=>b.t==="table");
-  const un=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim());
-  msg.textContent="已讀取 "+np+" 段"+(hasT?"，含表1位置":"；找不到「〔插入表1〕」，表1 將放在第一次提到表1的段落之後")+(un.length?"；"+un.map(j=>"因素"+(j+1)).join("、")+"尚未命名":"");
-}
-/* HTML 表格 → OOXML（處理 rowspan／colspan） */
-function xesc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-const W_RPR='<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="新細明體" w:cs="Times New Roman"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>';
-function wRuns(text){ return String(text).split("\n").map((seg,i)=>(i?'<w:r>'+W_RPR+'<w:br/></w:r>':'')+(seg?'<w:r>'+W_RPR+'<w:t xml:space="preserve">'+xesc(seg)+'</w:t></w:r>':'')).join(""); }
-function htmlTableToW(html,widths){
-  const tb=new DOMParser().parseFromString(html,"text/html").querySelector("table");
-  const rows=[...tb.rows], grid=rows.map(()=>[]);
-  let ncol=0;
-  rows.forEach((tr,ri)=>{
-    let c=0;
-    [...tr.cells].forEach(td=>{
-      while (grid[ri][c]) c++;
-      const rs=td.rowSpan||1, cs=td.colSpan||1;
-      const tmp=td.cloneNode(true); tmp.querySelectorAll("br").forEach(b=>b.replaceWith("\n"));
-      const al=td.tagName==="TH"||!td.classList.contains("l")?"center":"left";
-      for (let r=0;r<rs;r++){ if (!grid[ri+r]) grid[ri+r]=[]; grid[ri+r][c]= r===0?{txt:tmp.textContent,al,cs,rs,head:td.tagName==="TH"}:{cont:true,cs}; for (let k=1;k<cs;k++) grid[ri+r][c+k]={skip:true}; }
-      c+=cs; ncol=Math.max(ncol,c);
-    });
-  });
-  const tw=widths&&widths.length===ncol?widths:Array.from({length:ncol},()=>Math.floor(9000/ncol));
-  const bd='<w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="000000"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="000000"/>';
-  let x='<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:jc w:val="center"/><w:tblBorders>'+bd+'</w:tblBorders><w:tblCellMar><w:left w:w="100" w:type="dxa"/><w:right w:w="100" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'+tw.map(w=>'<w:gridCol w:w="'+w+'"/>').join("")+'</w:tblGrid>';
-  grid.forEach(row=>{
-    const isHead=row.some(c=>c&&c.head);
-    x+='<w:tr>'+(isHead?'<w:trPr><w:tblHeader/></w:trPr>':'');
-    for (let c=0;c<ncol;c++){
-      const cell=row[c]; if (!cell||cell.skip) { if (!cell) x+='<w:tc><w:tcPr><w:tcW w:w="'+tw[c]+'" w:type="dxa"/></w:tcPr><w:p/></w:tc>'; continue; }
-      const cs=cell.cs||1, w=tw.slice(c,c+cs).reduce((a,b)=>a+b,0);
-      let pr='<w:tcW w:w="'+w+'" w:type="dxa"/>'+(cs>1?'<w:gridSpan w:val="'+cs+'"/>':'');
-      if (cell.cont) pr+='<w:vMerge/>'; else if (cell.rs>1) pr+='<w:vMerge w:val="restart"/>';
-      pr+='<w:vAlign w:val="center"/>';
-      x+='<w:tc><w:tcPr>'+pr+'</w:tcPr><w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="'+(cell.cont?"center":cell.al)+'"/></w:pPr>'+(cell.cont?'':wRuns(cell.txt))+'</w:p></w:tc>';
-    }
-    x+='</w:tr>';
-  });
-  return x+'</w:tbl>';
-}
-function wPara(text,opt){
-  opt=opt||{};
-  const ind=opt.indent?'<w:ind w:firstLineChars="200" w:firstLine="480"/>':'';
-  const rpr=opt.bold?W_RPR.replace('<w:sz ','<w:b/><w:bCs/><w:sz ').replace(/w:val="24"/g,'w:val="'+(opt.sz||24)+'"'):W_RPR;
-  return '<w:p><w:pPr>'+(opt.keepNext?'<w:keepNext/>':'')+'<w:spacing w:before="'+(opt.before||0)+'" w:after="'+(opt.after||0)+'" w:line="'+(opt.line||360)+'" w:lineRule="auto"/>'+ind+'<w:jc w:val="'+(opt.jc||"both")+'"/></w:pPr><w:r>'+rpr+'<w:t xml:space="preserve">'+xesc(text)+'</w:t></w:r></w:p>';
-}
-function buildDocXml(blocks){
-  const tableXml=wPara(FA_CAP,{jc:"left",keepNext:true,before:120,line:240,after:60})+htmlTableToW(faTableHTML(false),[1800,3200,1000,1000,2000])+wPara("",{line:240});
-  if (!blocks.some(b=>b.t==="table")){
-    let i=blocks.findIndex(b=>b.t==="p"&&/表\s*1/.test(b.x));
-    if (i<0) i=blocks.length-1;
-    blocks.splice(i+1,0,{t:"table"});
-  }
-  let body=""; let first=true;
-  blocks.forEach(b=>{
-    if (b.t==="table"){ body+=tableXml; first=false; return; }
-    if (first&&b.x===REPORT_TITLE) body+=wPara(b.x,{bold:true,sz:28,jc:"center",after:240});
-    else body+=wPara(b.x,{indent:true});
-    first=false;
-  });
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+body
-    +'<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="851" w:footer="992" w:gutter="0"/></w:sectPr></w:body></w:document>';
-}
-/* 最小 zip（不壓縮）＋ CRC32 */
-const CRC_T=(()=>{ const t=new Uint32Array(256); for (let n=0;n<256;n++){ let c=n; for (let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
-function crc32(u){ let c=0xFFFFFFFF; for (let i=0;i<u.length;i++) c=CRC_T[(c^u[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
-function makeZip(files){
-  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
-  const d=new Date(), dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate(), tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1);
-  files.forEach(f=>{
-    const name=enc.encode(f.name), data=enc.encode(f.data), crc=crc32(data);
-    const h=new DataView(new ArrayBuffer(30));
-    h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,0,true); h.setUint16(10,tm,true); h.setUint16(12,dt,true);
-    h.setUint32(14,crc,true); h.setUint32(18,data.length,true); h.setUint32(22,data.length,true); h.setUint16(26,name.length,true); h.setUint16(28,0,true);
-    parts.push(new Uint8Array(h.buffer),name,data);
-    const c=new DataView(new ArrayBuffer(46));
-    c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,0,true); c.setUint16(12,tm,true); c.setUint16(14,dt,true);
-    c.setUint32(16,crc,true); c.setUint32(20,data.length,true); c.setUint32(24,data.length,true); c.setUint16(28,name.length,true); c.setUint32(42,off,true);
-    central.push(new Uint8Array(c.buffer),name);
-    off+=30+name.length+data.length;
-  });
-  const csize=central.reduce((a,b)=>a+b.length,0), e=new DataView(new ArrayBuffer(22));
-  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csize,true); e.setUint32(16,off,true);
-  return new Blob(parts.concat(central,[new Uint8Array(e.buffer)]),{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-}
-function downloadDocx(){
-  if (!S.res){ toast("尚未完成因素分析"); return; }
-  const v=$("ai-reply").value;
-  if (!v.trim()){ toast("請先貼上 AI 回覆"); $("ai-reply").focus(); return; }
-  if (/建議因素名稱/.test(v)){ const nl=v.split(/\n/).find(l=>/建議因素名稱/.test(l)); if (nl) applyNamePaste(nl); }
-  const B=parseReply(v);
-  if (!B.some(b=>b.t==="p")){ toast("回覆中沒有可放入報告的段落"); return; }
-  const styles='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault>'+W_RPR.replace(/^<w:rPr>|<\/w:rPr>$/g,"").replace(/^/,'<w:rPr>')+'<w:lang w:val="en-US" w:eastAsia="zh-TW"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblCellMar><w:left w:w="108" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>';
-  const blob=makeZip([
-    {name:"[Content_Types].xml",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>'},
-    {name:"_rels/.rels",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'},
-    {name:"word/_rels/document.xml.rels",data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
-    {name:"word/document.xml",data:buildDocXml(B)},
-    {name:"word/styles.xml",data:styles}
-  ]);
-  const d=new Date(), ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0");
-  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="因素分析報告_"+ds+".docx";
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-  const un=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim());
-  toast("已下載 Word 報告"+(un.length?"；"+un.map(j=>"因素"+(j+1)).join("、")+"尚未命名":""));
 }
 
 /* ================= 市場區隔（集群分析＋輪廓分析） ================= */
@@ -2352,8 +2238,15 @@ $("only-sig")&&$("only-sig").addEventListener("change",()=>{ if (S.seg) renderPr
 $("topic")&&$("topic").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
 $("btn-copy-seg")&&$("btn-copy-seg").addEventListener("click",()=>copyText($("seg-prompt").textContent,"已複製市場區隔分析報告指令"));
 $("btn-copy-fa").addEventListener("click",copyFaTable);
-$("btn-docx").addEventListener("click",downloadDocx);
-$("ai-reply").addEventListener("input",onReplyInput);
+/* AI 回覆 → Word 報告（共用 ../docx-report.js） */
+const unnamedMsg=()=>{ if (!S.res) return ""; const un=Array.from({length:S.nf},(_,j)=>j).filter(j=>!(S.fnames[j]||"").trim()); return un.length?"；"+un.map(j=>"因素"+(j+1)).join("、")+"尚未命名":""; };
+DocxReport.bind({ textarea:"ai-reply", button:"btn-docx", msg:"ai-reply-msg", toast, filename:"因素分析報告",
+  title:"消費動機因素分析", nameLine:/^建議因素名稱/, onNames:applyNamePaste, extraMsg:unnamedMsg,
+  ready:()=>!!S.res, notReady:"尚未完成因素分析",
+  tables:()=>({1:{cap:FA_CAP, html:faTableHTML(true), widths:[1800,3200,1000,1000,2000]}}) });
+DocxReport.bind({ textarea:"cfa-reply", button:"btn-docx-cfa", msg:"cfa-reply-msg", toast, filename:"驗證性因素分析報告",
+  title:"驗證性因素分析", ready:()=>!!(S.cfa&&S.cfa.res), notReady:"尚未完成 CFA",
+  tables:()=>({2:{cap:CFA_CAP, html:cfaTableHTML(true), note:cfaNote(), widths:[1500,3900,1600,1000,1000]}}) });
 $("btn-save").addEventListener("click",saveFA);
 $("btn-dl-efa").addEventListener("click",dlEfaResult);
 $("btn-dl-cfa").addEventListener("click",dlCfaResult);

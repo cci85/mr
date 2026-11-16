@@ -294,6 +294,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <div class="fnames" id="snames"></div>
     <div class="table-scroll" id="ca-table"></div>
     <button type="button" id="btn-copy-ca-table">複製表1</button>
+    <h3>AI 回覆與 Word 報告</h3>
+    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：「〔插入表1〕」會換成上方的表1，各群小標題設為粗體；最後一行「建議區隔名稱」不放入檔案，名稱會自動填入上方，表1 同步更新。</p>
+    <textarea id="ca-reply" rows="10" placeholder="貼上 AI 的完整回覆"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button type="button" class="primary" id="btn-docx-ca">下載 Word 報告（.docx）</button>
+      <span class="small" id="ca-reply-msg"></span>
+    </div>
     <div class="savebox">
       <h3>暫存集群分析結果</h3>
       <p class="hint">若要下次上課再繼續，請先下載資料檔並保存。資料檔含各因素分數、集群與區隔名稱欄，保留「因素分析設定」工作表，並記錄採用的群數、區隔名稱與步驟 4、5 的輪廓變數勾選；下次在步驟 1 上傳這個檔案，就會還原到目前的進度，直接接續輪廓分析。完成輪廓分析後，請在步驟 6 下載「市場區隔資料檔」，才會保存顯著水準等後續設定。</p>
@@ -356,6 +363,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h3 class="kit-h">報告用圖表</h3>
     <p class="hint">以下圖表由本工具依分析結果產生，格式與數值不經 AI；欄名採用步驟 3 的區隔名稱，表2、表3 依步驟 4、5 的輪廓分析結果與顯著水準即時更新。表格按「複製」後可直接貼到 Word；若需要圖形，可使用最下方的 AI 繪圖指令。</p>
     <div id="kit"></div>
+    <h3>AI 回覆與 Word 報告</h3>
+    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：「〔插入表1〕」換成步驟 3 的表1，「〔插入表2〕」「〔插入表3〕」換成上方的表2、表3（含註）；節標題與各區隔小標題設為粗體。回覆最後若有「建議區隔名稱」，名稱會自動填入步驟 3，不放入檔案。</p>
+    <textarea id="seg-reply" rows="10" placeholder="貼上 AI 的完整回覆"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button type="button" class="primary" id="btn-docx-seg">下載 Word 報告（.docx）</button>
+      <span class="small" id="seg-reply-msg"></span>
+    </div>
     <div class="savebox" id="pos-box">
       <h3>知覺定位問卷資料</h3>
       <p class="hint">下一步若要製作品牌定位問卷（全體受訪者填答相同的問卷），請複製資料，貼到<a href="../positioning-survey/">知覺定位問卷產生器</a>的「一鍵帶入」欄。資料包含競爭品牌、因素分析結果、各區隔的輪廓特徵（▲）與各區隔描述，產生器會自動填入對應欄位。</p>
@@ -375,6 +389,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../omv-reader.js"></script>
+<script src="../docx-report.js"></script>
 <script>
 /* ===== STATS-BEGIN（純計算函式，可單獨測試） ===== */
 const Stats = (function(){
@@ -2131,6 +2146,19 @@ $("pos-target-name").addEventListener("input",e=>{ e.target.dataset.touched="1";
 $("btn-copy-fa").addEventListener("click",copyFaTable);
 $("btn-copy-ca").addEventListener("click",()=>copyText($("ca-prompt").textContent,"已複製集群分析報告指令"));
 $("btn-copy-ca-table").addEventListener("click",copyCaTable);
+/* AI 回覆 → Word 報告（共用 ../docx-report.js） */
+const segNameFill=l=>{ if (S.seg&&curRun()&&/集群\s*\d+\s*[＝=：:]/.test(l)) applySegPaste(l); };
+const segUnnamedMsg=()=>{ if (!S.seg||!curRun()) return ""; const un=Array.from({length:curRun().k},(_,g)=>g).filter(g=>!(segNames()[g]||"").trim()); return un.length?"；"+un.map(g=>"集群"+(g+1)).join("、")+"尚未命名":""; };
+const caT=()=>{ const K=curRun().k, w=Math.floor(7000/K); return {cap:CA_CAP, html:caTableHTML(true), widths:[2000].concat(Array(K).fill(w))}; };
+DocxReport.bind({ textarea:"ca-reply", button:"btn-docx-ca", msg:"ca-reply-msg", toast, filename:"市場區隔分析報告_未含輪廓",
+  title:"市場區隔分析（未含輪廓）", nameLine:/^建議區隔名稱/, onNames:segNameFill, extraMsg:segUnnamedMsg,
+  ready:()=>!!(S.seg&&curRun()), notReady:"尚未完成集群分析", tables:()=>({1:caT()}) });
+DocxReport.bind({ textarea:"seg-reply", button:"btn-docx-seg", msg:"seg-reply-msg", toast, filename:"市場區隔分析報告",
+  title:"市場區隔分析", nameLine:/^建議區隔名稱/, onNames:segNameFill, extraMsg:segUnnamedMsg,
+  ready:()=>!!(S.seg&&curRun()&&S.prof&&S.prof.K===curRun().k), notReady:"尚未完成輪廓分析",
+  tables:()=>{ const T={1:caT(), 3:{cap:KIT_T3_CAP, html:kitT3HTML(true), note:KIT_T3_NOTE(), sz:20}};
+    if (kitSig().length||kitNumSig().length) T[2]={cap:KIT_T2_CAP, html:kitT2HTML(true), note:KIT_T2_NOTE(), sz:20};
+    return T; } });
 $("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製群數決定指令"));
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製因素分析報告指令"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
