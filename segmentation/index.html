@@ -213,7 +213,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <div class="legend">
       <span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>主導變數</span>
       <span><i style="background:var(--warn)"></i>交叉負荷量（另一因素也達門檻值）</span>
-      <span><i style="background:var(--danger)"></i>強烈負負荷</span>
+      <span>負向：主導變數的負荷量為負值，代表與因素方向相反</span>
       <span>獨特性大於 .45 以橘色標示</span>
     </div>
     <div id="load-msg"></div>
@@ -826,8 +826,8 @@ function compute(){
   const cut=r.cut.v;
   r.items=r.cols.map((c,i)=>{
     const row=sol.loadings[i];
-    let best=0; row.forEach((x,j)=>{ if (x>row[best]) best=j; });
-    const dom=row[best]>=cut;
+    let best=0; row.forEach((x,j)=>{ if (Math.abs(x)>Math.abs(row[best])) best=j; }); /* 依絕對值歸屬，負號代表方向相反 */
+    const dom=Math.abs(row[best])>=cut;
     const cross=dom?row.map((x,j)=>j!==best&&Math.abs(x)>=cut?j:-1).filter(j=>j>=0):[];
     const neg=row.map((x,j)=>x<=-cut?j:-1).filter(j=>j>=0);
     return {c,i,row,best,dom,cross,neg,mean:r.means[i],comm:sol.comm[i],uniq:sol.uniq[i],msa:r.adq.msa?r.adq.msa[i]:null};
@@ -835,7 +835,7 @@ function compute(){
   r.order=r.items.slice().sort((a,b)=>{
     if (a.dom!==b.dom) return a.dom?-1:1;
     if (a.best!==b.best) return a.best-b.best;
-    return b.row[b.best]-a.row[a.best];
+    return Math.abs(b.row[b.best])-Math.abs(a.row[a.best]);
   });
   renderLoadings(); renderPrompt(); renderNames(); $("sec-dl").hidden=false; runSeg();
 }
@@ -894,7 +894,7 @@ function renderLoadings(){
   for (let j=0;j<k;j++) t+='<th>因素'+(j+1)+'</th>';
   t+='<th>共同性</th><th>獨特性</th></tr></thead><tbody>';
   r.order.forEach(it=>{
-    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?(it.cross.length?' <span class="tag">交叉負荷量</span>':''):' <span class="tag">'+(it.neg.length?"負負荷":"主要負荷量未達門檻值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
+    t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?((it.row[it.best]<0?' <span class="tag">負向</span>':'')+(it.cross.length?' <span class="tag">交叉負荷量</span>':'')):' <span class="tag">'+(it.neg.length?"負負荷":"主要負荷量未達門檻值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
     it.row.forEach((x,j)=>{
       let cls="", show=true;
       if (it.dom&&j===it.best) cls="dom";
@@ -920,20 +920,20 @@ function renderLoadings(){
   renderCand();
 }
 function candInfo(it){
-  const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
-  return {it, reason:it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值", loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+(Math.abs(it.row[j])<.005?0:it.row[j]).toFixed(2)).join("、")};
+  const idx=it.row.map((x,j)=>j).sort((a,b)=>Math.abs(it.row[b])-Math.abs(it.row[a]));
+  return {it, reason:(it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值")+"（"+fcut(S.res.cut.v)+"）", loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+(Math.abs(it.row[j])<.005?0:it.row[j]).toFixed(2)).join("、")};
 }
 function keptItems(){ const r=S.res; if (!r||!r.items) return []; return r.items.filter(it=>it.dom&&it.cross.length&&S.kept.has(it.c.ci)).map(candInfo); }
 function candidates(){
   const r=S.res; if (!r||!r.items) return [];
-  const r2=x=>Math.round(x*100)/100, top=it=>it.row.slice().sort((a,b)=>b-a);
+  const r2=x=>Math.round(x*100)/100, top=it=>it.row.map(Math.abs).sort((a,b)=>b-a);
   return r.items.filter(it=>((!it.dom&&!it.neg.length)||it.cross.length)&&!(it.dom&&S.kept.has(it.c.ci))).sort((a,b)=>{
     const ta=top(a), tb=top(b), pa=r2(ta[0]), pb=r2(tb[0]);
     if (pa!==pb) return pa-pb;                       /* 主要負荷量低者優先 */
     return r2(ta[0]-(ta[1]||0))-r2(tb[0]-(tb[1]||0)); /* 相同時，與次高負荷量差距小者優先 */
   }).map(it=>{
-    const idx=it.row.map((x,j)=>j).sort((a,b)=>it.row[b]-it.row[a]);
-    const reason=it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值";
+    const idx=it.row.map((x,j)=>j).sort((a,b)=>Math.abs(it.row[b])-Math.abs(it.row[a]));
+    const reason=(it.dom?"交叉負荷量達門檻值":"主要負荷量未達門檻值")+"（"+fcut(r.cut.v)+"）";
     return {it, reason, loadTxt:idx.slice(0,2).map(j=>"因素"+(j+1)+" "+(Math.abs(it.row[j])<.005?0:it.row[j]).toFixed(2)).join("、")};
   });
 }
@@ -987,10 +987,10 @@ const RULES_COMMON = (src, tableNote, cutT)=>[
 "- 不得編造"+src+"中沒有的數值或題項。",
 "",
 "三、因素命名規則",
-"- 主導變數是指主要負荷量（正值）達門檻值"+(cutT?" "+cutT:"")+"、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
+"- 主導變數是指主要負荷量（絕對值）達門檻值"+(cutT?" "+cutT:"")+"、且在該因素上的負荷量高於在其他因素上負荷量的題項；每個題項只歸入其主要負荷所在的因素。",
 "- 各因素的命名以負荷量最高的前兩個主導變數為主要依據，其餘主導變數用於檢查名稱是否仍能涵蓋；若前兩個主導變數的方向不同，須找出兩者共同的上位動機命名。",
 "- 因素名稱須直接反映主導變數所代表的消費動機，讓讀者一看名稱就知道這群消費者要的是什麼；中文名稱至多 6 字，例如「日常放鬆動機」「品味象徵動機」。",
-"- 若有題項在某因素上呈現強烈負負荷，不列入主導變數，而是在該因素的說明中另外點出，並解讀其反向意義。",
+"- 負荷量為負值的主導變數（表1 中標示「負向」者）代表該題與因素方向相反：因素命名以正負荷的主導變數為依據，負向主導變數用於說明此動機的反面，並在該因素的說明中解讀其反向意義。",
 "",
 "四、輸出格式",
 "第一行為標題「消費動機因素分析」，接著依序輸出上述三段文字；內文以「如表1所示」引用表1時，在該段之後單獨一行輸出「〔插入表1〕」。表格位置標記必須單獨成一行輸出，不可省略、不可改寫，也不可併入段落文字。",
@@ -1010,8 +1010,9 @@ function faInfo(){
   const r=S.res, k=S.nf;
   const F=Array.from({length:k},(_,j)=>{
     const items=r.order.filter(it=>it.dom&&it.best===j);
-    const m=items.length?items.reduce((a,it)=>a+it.mean,0)/items.length:null;
-    return {j,items,mean:m};
+    const pos=items.filter(it=>it.row[j]>0); /* 負向主導變數與因素方向相反，不列入因素平均 */
+    const m=pos.length?pos.reduce((a,it)=>a+it.mean,0)/pos.length:null;
+    return {j,items,pos,mean:m};
   });
   const rank=F.filter(f=>f.mean!=null).slice().sort((a,b)=>b.mean-a.mean);
   return {F,rank};
@@ -1197,7 +1198,7 @@ function renderNames(){
   const r=S.res, k=S.nf, box=$("fnames");
   let h="";
   for (let j=0;j<k;j++){
-    const dom=r.items.filter(it=>it.dom&&it.best===j).sort((a,b)=>b.row[j]-a.row[j]);
+    const dom=r.items.filter(it=>it.dom&&it.best===j).sort((a,b)=>Math.abs(b.row[j])-Math.abs(a.row[j]));
     const hint=dom.length?dom.slice(0,3).map(it=>it.c.name+"（"+f2(it.row[j])+"）").join("、")+(dom.length>3?"⋯⋯":""):"沒有主導變數";
     h+='<div class="fname"><label for="fn'+j+'"><b>因素'+(j+1)+'</b><span>'+esc(hint)+'</span></label>'
       +'<input type="text" id="fn'+j+'" data-f="'+j+'" placeholder="因素名稱，例：日常作息習慣" value="'+esc(S.fnames[j]||"")+'"></div>';
@@ -1321,7 +1322,7 @@ function renderCaPrompt(){
   L.push("有效樣本數："+G.n+"；原始消費動機題項數："+nAll+"；集群變數："+fl.join("、")+"（標準化因素分數）；K 平均法分為 "+c.k+" 群，集群依人數由多到少編號。");
   L.push("");
   L.push("各因素的主導變數（依負荷量由高到低）：");
-  const FI=faInfo(); FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)).join("、"):"無")));
+  const FI=faInfo(); FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)+(it.row[f.j]<0?"（負向）":"")).join("、"):"無")));
   L.push("");
   L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+" "+x+" 人（"+Math.round(x/G.n*100)+"%）").join("、"));
   L.push(["消費動機"].concat(c.N.map((_,g)=>"集群"+(g+1))).join("｜"));
@@ -1335,7 +1336,7 @@ function renderCaPrompt(){
     const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
     L.push("- 集群"+(g+1)+"：");
     fs.sort((a,b)=>cc[b]-cc[a]).forEach(j=>{
-      const top=FI.F[j].items.slice(0,2);
+      const top=FI.F[j].pos.slice(0,2);
       L.push("  "+fl[j]+"（群中心值 "+f2(cc[j])+(cc[j]<0?"，從反面命名：同意程度明顯較低，代表這群消費者明顯不是因為此動機而消費":"")+"）："+(top.length?top.map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」（負荷量 "+f2(it.row[j])+"）").join("；"):"無主導變數"));
     });
   });
@@ -1686,7 +1687,7 @@ function kitT3Rows(){
   const short=it=>{ const m=String(it.c.name).match(/^[A-Za-z]+\d+\s*(.+)$/); return m?m[1]:(it.c.stem||it.c.name); };
   const rows=[["人數",c.N.map(String)],["百分比",c.N.map(x=>Math.round(x/S.seg.n*100)+"%")]];
   rows.push(["消費動機",c.C.map((cc,g)=>{ const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
-    const neg=fs.every(j=>cc[j]<0); const items=[].concat(...fs.sort((a,b)=>cc[b]-cc[a]).map(j=>FI.F[j].items.slice(0,2).map(short)));
+    const neg=fs.every(j=>cc[j]<0); const items=[].concat(...fs.sort((a,b)=>cc[b]-cc[a]).map(j=>FI.F[j].pos.slice(0,2).map(short)));
     return items.length?(neg?"較不同意："+items.join("、"):items.join("、")):"—"; })]);
   const P=S.prof, ex=P?P.list.filter(x=>x.type==="num"&&x.sig):[];
   if (ex.length) rows.push(["額外動機",c.C.map((_,g)=>{ const a=ex.filter(x=>topG(x)===g).map(x=>{ const m=String(x.pc.name).match(/^[A-Za-z]+\d+\s*(.+)$/); return m?m[1]:x.pc.name; }); return a.length?a.join("、"):"—"; })]);
@@ -1837,7 +1838,7 @@ function renderSegPrompt(){
   L.push("有效樣本數："+G.n+"；K 平均法分為 "+K+" 群，集群依人數由多到少編號。");
   L.push("");
   L.push("各因素的主導變數（依負荷量由高到低）：");
-  FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」").join("、"):"無")));
+  FI.F.forEach(f=>L.push("- "+fl[f.j]+"："+(f.items.length?f.items.map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」"+(it.row[f.j]<0?"（負向）":"")).join("、"):"無")));
   L.push("");
   L.push("各群人數："+c.N.map((x,g)=>"集群"+(g+1)+(named[g]?"（"+named[g]+"）":"")+" "+x+" 人（"+Math.round(x/G.n*100)+"%）").join("、"));
   L.push("群中心值（表1；標準化因素分數的平均數，* 為命名依據）：");
@@ -1847,7 +1848,7 @@ function renderSegPrompt(){
   clusterFeats(c.C,fl).forEach((f,g)=>L.push("- 集群"+(g+1)+(named[g]?"「"+named[g]+"」":"")+"（"+(f.type==="正向"?"分到因素":"沒有分到因素")+"）："+f.basis));
   L.push("各群的主要題項（每個命名因素取負荷量最高的前 2 題）：");
   c.C.forEach((cc,g)=>{ const fs=[]; for (let j=0;j<k;j++) if (mk[g][j]) fs.push(j);
-    fs.sort((a,b)=>cc[b]-cc[a]).forEach(j=>L.push("- 集群"+(g+1)+"・"+fl[j]+"（"+f2(cc[j])+(cc[j]<0?"，同意程度明顯較低，代表這群消費者明顯不是因為此動機而消費":"")+"）："+FI.F[j].items.slice(0,2).map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」").join("；"))); });
+    fs.sort((a,b)=>cc[b]-cc[a]).forEach(j=>L.push("- 集群"+(g+1)+"・"+fl[j]+"（"+f2(cc[j])+(cc[j]<0?"，同意程度明顯較低，代表這群消費者明顯不是因為此動機而消費":"")+"）："+FI.F[j].pos.slice(0,2).map(it=>itemRef(it.c.name)+"「"+stemOf(it)+"」").join("；"))); });
   L.push("");
   L.push("輪廓分析結果（顯著水準 α = "+fp(alpha())+"）：");
   if (!P||!P.list.length) L.push("尚未進行輪廓分析（步驟 9 沒有勾選輪廓變數）。");
@@ -1873,7 +1874,7 @@ function loadingSheets(wb){
   const r=S.res, k=S.nf, p=r.cols.length, sol=r.sol;
   const fh=Array.from({length:k},(_,j)=>flabel(j));
   const a1=[["題項","題目內容","平均數"].concat(fh).concat(["共同性","獨特性","主要負荷因素"])];
-  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.dom?flabel(it.best):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"主要負荷量未達門檻值")])));
+  r.order.forEach(it=>a1.push([it.c.name,it.c.stem||"",round(it.mean,3)].concat(it.row.map(x=>round(x,3))).concat([round(it.comm,3),round(it.uniq,3),it.dom?flabel(it.best)+(it.row[it.best]<0?"（負向）":""):(it.neg.length?"負負荷（"+it.neg.map(j=>flabel(j)).join("、")+"）":"主要負荷量未達門檻值")])));
   let cum=0;
   a1.push([]); a1.push(["轉軸後解釋變異量 (%)","",""].concat(sol.ss.map(v=>round(v/p*100,2))));
   a1.push(["累積解釋變異量 (%)","",""].concat(sol.ss.map(v=>{ cum+=v/p; return round(cum*100,2); })));
