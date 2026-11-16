@@ -86,6 +86,7 @@ th.l,td.l{text-align:left;white-space:normal;min-width:120px}
 td.stemcell{color:var(--ink-soft);font-size:12.5px;max-width:340px}
 tr.kept td{background:var(--accent-soft)}
 td.dom{font-weight:700;color:var(--accent-strong);background:var(--accent-soft)}
+td.dom.negdom{color:var(--neg)}
 td.cross{font-weight:700;color:var(--warn)}
 td.neg{font-weight:700;color:var(--danger)}
 td.low{color:var(--ink-faint)}
@@ -900,7 +901,7 @@ function renderLoadings(){
     t+='<tr><td class="l">'+esc(it.c.name)+(it.dom?((it.row[it.best]<0?' <span class="tag">負向</span>':'')+(it.cross.length?' <span class="tag">交叉負荷量</span>':'')):' <span class="tag">'+(it.neg.length?"負負荷":"主要負荷量未達門檻值")+'</span>')+'</td><td class="l stemcell">'+esc(it.c.stem||"")+'</td><td>'+it.mean.toFixed(2)+'</td>';
     it.row.forEach((x,j)=>{
       let cls="", show=true;
-      if (it.dom&&j===it.best) cls="dom";
+      if (it.dom&&j===it.best) cls=x<0?"dom negdom":"dom";
       else if (it.cross.includes(j)) cls="cross";
       else if (x<=-cut) cls="neg";
       else if (Math.abs(x)<cut){ cls="low"; if (hide) show=false; }
