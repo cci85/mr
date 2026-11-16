@@ -136,7 +136,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <main>
   <p class="eyebrow">行銷研究方法 · 資料整理</p>
   <h1>練習資料擴充</h1>
-  <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人，因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。下載的檔案格式與 Google 表單匯出相同，可直接送進問卷資料整理器。</p>
+  <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人（量表題可再加入少量隨機微調，增加變異），因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。下載的檔案格式與 Google 表單匯出相同，可直接送進問卷資料整理器。</p>
   <div class="notice warn"><b>模擬資料僅供課堂練習。</b>擴充後的資料不是真實受訪者的回答，不得作為研究結果、報告數據或論文資料；檔案最後一欄「資料來源」會標明每一列是原始或模擬。</div>
 
   <!-- 1 上傳 -->
@@ -157,7 +157,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 2 欄位 -->
   <section class="panel" id="sec-cols" aria-labelledby="h2s" hidden>
     <h2 id="h2s"><span class="step">2</span>確認各欄的處理方式</h2>
-    <p class="hint">工具已依內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄，不產生原本不存在的答案。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（如李克特量表）依分數差距計算，類別欄（單選、開放題）依答案是否相同計算，複選題依選項重疊的程度計算，且整題一起照錄，選項組合不會被拆開；「時間」欄在原始資料的時間範圍內隨機產生；「留白」用於學號、姓名等個人資料，模擬列一律空白。</p>
+    <p class="hint">工具已依內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄；只有量表題會依步驟 3 的設定，以少量機率上下調 1 分。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（如李克特量表）依分數差距計算，類別欄（單選、開放題）依答案是否相同計算，複選題依選項重疊的程度計算，且整題一起照錄，選項組合不會被拆開；「時間」欄在原始資料的時間範圍內隨機產生；「留白」用於學號、姓名等個人資料，模擬列一律空白。</p>
     <div class="table-scroll" id="cols-table"></div>
   </section>
 
@@ -168,8 +168,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <label class="inline">目標總份數（含原始） <input type="number" id="target" min="2" max="5000" step="10" value="200"></label>
       <label class="inline">近鄰數 <input type="number" id="knn" min="1" max="20" step="1" value="5"></label>
       <label class="inline">亂數種子 <input type="number" id="seed" step="1" value="20261028"></label>
+    </div>
+    <div class="row">
+      <label class="inline">量表題隨機微調 <input type="number" id="jit" min="0" max="30" step="5" value="10"> %</label>
+      <label class="inline">量表範圍 <input type="number" id="jit-lo" step="1" style="width:4.5em"> ～ <input type="number" id="jit-hi" step="1" style="width:4.5em"></label>
       <button type="button" class="primary" id="btn-gen">產生模擬資料</button>
     </div>
+    <p class="hint small">隨機微調：每一題量表題（整數、落在量表範圍內的數值欄）有此機率上下調 1 分，不會超出量表範圍，讓原始份數很少、某些題目幾乎所有人答案相同時，模擬資料仍有足夠變異可進行因素分析；設為 0 即不微調。比例愈高，變異愈大，但題目之間的相關會略為降低，建議 5%～15%。量表範圍依上傳資料中所有量表題的最小值與最大值自動判斷，若原始作答未用到最高或最低分（例如 5 點量表沒有人選 1），請自行修正。</p>
     <p class="hint small">近鄰數愈小，模擬資料愈貼近個別受訪者；愈大，混合的範圍愈廣。亂數種子相同時，同一份資料每次產生的結果相同；改變種子可得到另一組模擬資料。</p>
     <div id="gen-msg"></div>
   </section>
@@ -234,7 +239,8 @@ const Sim=(function(){
     }
     return out;
   }
-  function generate(rows,cols,m,k,seed){
+  /* jit：{p:量表題微調機率, lo, hi}；量表題（整數且落在 lo～hi 內）以機率 p 上下調 1 分，超出範圍時改往另一方向 */
+  function generate(rows,cols,m,k,seed,jit){
     const rand=rng(seed), P=prepare(rows,cols), NB=neighbors(P,k), n=rows.length;
     const out=[];
     for (let t=0;t<m;t++){
@@ -248,8 +254,12 @@ const Sim=(function(){
         if (c.type==="keep") return blank(x)?"":x;
         if (blank(x)) return "";
         if (c.type==="num"){
-          if (blank(y)) return x;
-          return rand()<u?y:x;
+          let v=blank(y)?x:(rand()<u?y:x);
+          if (jit&&jit.p>0&&c.int&&c.min>=jit.lo&&c.max<=jit.hi&&rand()<jit.p){
+            let d=rand()<.5?-1:1; if (v+d<jit.lo||v+d>jit.hi) d=-d;
+            if (v+d>=jit.lo&&v+d<=jit.hi) v+=d;
+          }
+          return v;
         }
         if (blank(y)) return x;
         return rand()<u?y:x;
@@ -306,6 +316,8 @@ function loadSheet(name){
   if (srcIdx>=0){ const before=S.rows.length; S.rows=S.rows.filter(r=>String(r[srcIdx])!=="模擬"); S.headers.splice(srcIdx,1); S.rows.forEach(r=>r.splice(srcIdx,1)); note="此檔已含「資料來源」欄，已排除先前產生的 "+(before-S.rows.length)+" 筆模擬資料，只以原始資料重新模擬。"; }
   $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 份）";
   S.cols=S.headers.map((h,j)=>detect(h,j));
+  { const sc=S.cols.filter(c=>c.type==="num"&&c.int&&c.min>=0&&c.max-c.min<=10); /* 量表範圍：所有量表題的最小值～最大值 */
+    $("jit-lo").value=sc.length?Math.min(...sc.map(c=>c.min)):""; $("jit-hi").value=sc.length?Math.max(...sc.map(c=>c.max)):""; }
   let m="";
   if (note) m+='<div class="notice warn">'+esc(note)+'</div>';
   if (S.rows.length<10) m+='<div class="notice bad">原始資料只有 '+S.rows.length+' 份，至少需要 10 份才能模擬。</div>';
@@ -361,8 +373,11 @@ function generate(){
   const cols=S.cols.map(c=>Object.assign({},c));
   const rows=S.rows.map(r=>r.map((v,j)=>cols[j].type==="num"&&!blank(v)?+v:v));
   const t0=performance.now();
-  const res=Sim.generate(rows,cols,target-n,Math.max(1,Math.min(k,n-1)),seed);
-  S.sim={rows:res.rows,orig:rows,cols,seed,k,target,fallback:res.fallback};
+  const jp=Math.max(0,Math.min(30,parseFloat($("jit").value)||0)), lo=parseFloat($("jit-lo").value), hi=parseFloat($("jit-hi").value);
+  if (jp>0&&!(isFinite(lo)&&isFinite(hi)&&hi>lo)){ $("gen-msg").innerHTML='<div class="notice warn">請填寫量表範圍（最小值須小於最大值），或把隨機微調設為 0。</div>'; return; }
+  const jit=jp>0?{p:jp/100,lo,hi}:null;
+  const res=Sim.generate(rows,cols,target-n,Math.max(1,Math.min(k,n-1)),seed,jit);
+  S.sim={rows:res.rows,orig:rows,cols,seed,k,target,fallback:res.fallback,jit};
   let m='<div class="notice ok">已產生 '+res.rows.length+' 份模擬資料，連同原始 '+n+' 份，共 '+target+' 份（'+Math.round(performance.now()-t0)+' 毫秒）。</div>';
   if (res.fallback) m+='<div class="notice warn">有 '+res.fallback+' 位原始受訪者的空白題目組合是獨一無二的，以這些人為基礎的模擬資料，改由全體中最相近者配對，空白位置沿用該受訪者。</div>';
   $("gen-msg").innerHTML=m;
@@ -432,7 +447,7 @@ function download(){
     ["用途","課堂練習用模擬資料，不得作為研究結果、報告數據或論文資料"],
     ["原始檔案",S.fileName+"（工作表："+S.sheet+"）"],
     ["原始份數",S.rows.length],["模擬份數",G.rows.length],["總份數",S.rows.length+G.rows.length],
-    ["模擬方法","近鄰合成：隨機選取一位原始受訪者，再從空白題目相同、作答最相近的 "+G.k+" 位中選取一位；每一題依 0.2～0.8 之間的隨機比例從兩人中擇一照錄（數值欄不內插，以免墊高題目之間的相關），空白位置沿用第一位受訪者"],
+    ["模擬方法","近鄰合成：隨機選取一位原始受訪者，再從空白題目相同、作答最相近的 "+G.k+" 位中選取一位；每一題依 0.2～0.8 之間的隨機比例從兩人中擇一照錄（數值欄不內插，以免墊高題目之間的相關），空白位置沿用第一位受訪者"+(G.jit?"；量表題（"+G.jit.lo+"～"+G.jit.hi+" 的整數）另以 "+Math.round(G.jit.p*100)+"% 的機率上下調 1 分，不超出量表範圍":"")],
     ["距離計算","Gower 距離：數值欄以全距標準化後的差距，單選與開放題以是否相同，複選題以 Jaccard 距離"],
     ["亂數種子",G.seed],
     ["產生日期",new Date().toLocaleString("zh-TW")],
