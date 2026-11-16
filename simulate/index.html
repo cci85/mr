@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>練習資料擴充</title>
+<title>練習資料擴充（原始回覆）</title>
 <meta name="description" content="以小樣本問卷為基礎，在瀏覽器中以近鄰合成模擬產生更多份練習用問卷資料。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,14 +135,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
 <main>
   <p class="eyebrow">行銷研究方法 · 資料整理</p>
-  <h1>練習資料擴充</h1>
+  <h1>練習資料擴充（原始回覆）</h1>
   <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人（量表題可再加入少量隨機微調，增加變異），因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。下載的檔案格式與 Google 表單匯出相同，可直接送進問卷資料整理器。</p>
   <div class="notice warn"><b>模擬資料僅供課堂練習。</b>擴充後的資料不是真實受訪者的回答，不得作為研究結果、報告數據或論文資料；檔案最後一欄「資料來源」會標明每一列是原始或模擬。</div>
 
   <!-- 1 上傳 -->
   <section class="panel" aria-labelledby="h1s">
     <h2 id="h1s"><span class="step">1</span>上傳原始問卷資料</h2>
-    <p class="hint">本工具僅適用 Google 表單的原始回覆：請上傳回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。請勿上傳問卷資料整理器產出的檔案，因為複選題已拆成 0／1 欄，擴充時選項組合會被打散，「欄名對照表」與「題組」工作表也不會保留；請先擴充原始回覆，再將擴充後的檔案送進問卷資料整理器。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
+    <p class="hint">本工具僅適用 Google 表單的原始回覆：請上傳回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。若手上是問卷資料整理器產出的檔案，請改用<a href="../simulate-clean/">練習資料擴充（已整理資料）</a>，該工具會把複選題的 0／1 欄合成一題處理，並保留「欄名對照表」與「題組」工作表。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
     <label class="dropzone" id="dropzone">
       <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
@@ -201,76 +201,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="../omv-reader.js"></script>
+<script src="../sim-core.js"></script>
 <script>
-/* ===== SIM-BEGIN（純計算函式，可單獨測試） ===== */
-const Sim=(function(){
-  function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }
-  const blank=v=>v===""||v===null||v===undefined;
-  function splitMulti(s){ return String(s).split(/,\s*/).map(x=>x.trim()).filter(Boolean); }
-  /* cols: [{type:"num"|"cat"|"multi"|"time"|"clear", min,max,int}]；rows：原始資料 */
-  function prepare(rows,cols){
-    const n=rows.length;
-    const use=cols.map((c,j)=>c.type==="num"||c.type==="cat"||c.type==="multi"?j:-1).filter(j=>j>=0);
-    const sets=rows.map(r=>cols.map((c,j)=>c.type==="multi"&&!blank(r[j])?new Set(splitMulti(r[j])):null));
-    const pat=rows.map(r=>use.map(j=>blank(r[j])?"0":"1").join(""));
-    function dist(a,b){
-      let d=0, m=0;
-      for (const j of use){
-        const x=rows[a][j], y=rows[b][j], bx=blank(x), by=blank(y);
-        m++;
-        if (bx||by){ d+=bx&&by?0:1; continue; }
-        const c=cols[j];
-        if (c.type==="num") d+=c.max>c.min?Math.abs(x-y)/(c.max-c.min):0;
-        else if (c.type==="multi"){ const A=sets[a][j], B=sets[b][j]; let inter=0; A.forEach(v=>{ if (B.has(v)) inter++; }); const uni=A.size+B.size-inter; d+=uni?1-inter/uni:0; }
-        else d+=String(x).trim()===String(y).trim()?0:1;
-      }
-      return m?d/m:0;
-    }
-    return {n,use,pat,dist};
-  }
-  function neighbors(P,k){
-    const {n,pat,dist}=P, out=new Array(n);
-    for (let i=0;i<n;i++){
-      let cand=[]; for (let j=0;j<n;j++) if (j!==i&&pat[j]===pat[i]) cand.push(j);
-      let fallback=false;
-      if (!cand.length){ fallback=true; for (let j=0;j<n;j++) if (j!==i) cand.push(j); }
-      const ds=cand.map(j=>[j,dist(i,j)]).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
-      out[i]={nb:ds.slice(0,k).map(x=>x[0]),fallback};
-    }
-    return out;
-  }
-  /* jit：{p:量表題微調機率, lo, hi}；量表題（整數且落在 lo～hi 內）以機率 p 上下調 1 分，超出範圍時改往另一方向 */
-  function generate(rows,cols,m,k,seed,jit){
-    const rand=rng(seed), P=prepare(rows,cols), NB=neighbors(P,k), n=rows.length;
-    const out=[];
-    for (let t=0;t<m;t++){
-      const a=Math.floor(rand()*n), nb=NB[a].nb;
-      const b=nb.length?nb[Math.floor(rand()*nb.length)]:a;
-      const u=.2+.6*rand(), A=rows[a], B=rows[b]; /* 混合比例限制在 0.2～0.8，避免整列複製其中一人 */
-      const row=cols.map((c,j)=>{
-        const x=A[j], y=B[j];
-        if (c.type==="clear") return "";
-        if (c.type==="time"){ if (c.min==null) return blank(x)?"":x; return new Date(c.min+rand()*(c.max-c.min)); }
-        if (c.type==="keep") return blank(x)?"":x;
-        if (blank(x)) return "";
-        if (c.type==="num"){
-          let v=blank(y)?x:(rand()<u?y:x);
-          if (jit&&jit.p>0&&c.int&&c.min>=jit.lo&&c.max<=jit.hi&&rand()<jit.p){
-            let d=rand()<.5?-1:1; if (v+d<jit.lo||v+d>jit.hi) d=-d;
-            if (v+d>=jit.lo&&v+d<=jit.hi) v+=d;
-          }
-          return v;
-        }
-        if (blank(y)) return x;
-        return rand()<u?y:x;
-      });
-      out.push(row);
-    }
-    return {rows:out, fallback:NB.filter(x=>x.fallback).length};
-  }
-  return {generate, rng, splitMulti};
-})();
-/* ===== SIM-END ===== */
 
 (function(){
 "use strict";
@@ -292,7 +224,6 @@ function readFile(file){
       const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string",cellDates:true}):XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:true}));
       if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
       S.wb=wb; S.fileName=file.name;
-      if (wb.SheetNames.includes("欄名對照表")) toast("這是問卷資料整理器產出的檔案；本工具僅適用 Google 表單原始回覆，請改上傳原始回覆");
       $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
       $("sheet-row").hidden=false; $("sheet").value=wb.SheetNames[0]; loadSheet(wb.SheetNames[0]);
     }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案":"無法解析此檔案，請確認格式"); }
@@ -316,9 +247,10 @@ function loadSheet(name){
   if (srcIdx>=0){ const before=S.rows.length; S.rows=S.rows.filter(r=>String(r[srcIdx])!=="模擬"); S.headers.splice(srcIdx,1); S.rows.forEach(r=>r.splice(srcIdx,1)); note="此檔已含「資料來源」欄，已排除先前產生的 "+(before-S.rows.length)+" 筆模擬資料，只以原始資料重新模擬。"; }
   $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 份）";
   S.cols=S.headers.map((h,j)=>detect(h,j));
-  { const sc=S.cols.filter(c=>c.type==="num"&&c.int&&c.min>=0&&c.max-c.min<=10); /* 量表範圍：所有量表題的最小值～最大值 */
+  { const sc=S.cols.filter(c=>c.type==="num"&&c.int&&c.min>=0&&c.max<=10&&c.max-c.min>1); /* 量表範圍：所有量表題的最小值～最大值 */
     $("jit-lo").value=sc.length?Math.min(...sc.map(c=>c.min)):""; $("jit-hi").value=sc.length?Math.max(...sc.map(c=>c.max)):""; }
   let m="";
+  if (S.wb.SheetNames.includes("欄名對照表")) m+='<div class="notice bad">這是問卷資料整理器產出的檔案，請改用<a href="../simulate-clean/">練習資料擴充（已整理資料）</a>。</div>';
   if (note) m+='<div class="notice warn">'+esc(note)+'</div>';
   if (S.rows.length<10) m+='<div class="notice bad">原始資料只有 '+S.rows.length+' 份，至少需要 10 份才能模擬。</div>';
   else if (S.rows.length<30) m+='<div class="notice warn">原始資料只有 '+S.rows.length+' 份，模擬資料會與原始資料高度相似，練習時請留意。</div>';
