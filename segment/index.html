@@ -104,6 +104,8 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .fa1 td,.fa1 th{border:1px solid var(--border-strong)}
 .fa1 td.l{white-space:normal;min-width:260px}
 .fa1 td.wrap{white-space:normal;min-width:8em;max-width:16em}
+.replybox{margin:10px 0;padding:10px 13px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+.replybox textarea{display:block;margin:8px 0 4px;min-height:96px}
 .namepaste textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0 4px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--warn);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}
 .namepaste textarea:focus{outline:2px solid var(--warn);outline-offset:1px}
 .savebox{margin-top:18px;padding:12px 14px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface-2)}
@@ -291,16 +293,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h3>市場區隔結果表</h3>
     <p class="hint">表格由本工具依分群結果產生，格式與數值不經 AI；命名依據的群中心值以粗體底線標示：每列最高值，以及沒有分到因素的群的最大負值。欄名採用下方的區隔名稱；按「複製表1」後可直接貼到 Word。</p>
     <div id="sn-msg"></div>
+    <div class="replybox">
+      <b>貼上 AI 回覆</b>　把 AI 的完整回覆貼在下方：最後一行的建議區隔名稱會自動填入下方，表1 同步更新；按「下載 Word 報告」即可取得含表1 的 .docx 檔（建議區隔名稱不放入檔案）。
+      <textarea id="ca-reply" rows="4" placeholder="貼上 AI 的完整回覆"></textarea>
+      <div class="row"><button type="button" class="primary" id="btn-docx-ca">下載 Word 報告（.docx）</button><span class="small" id="ca-reply-msg"></span></div>
+    </div>
     <div class="fnames" id="snames"></div>
     <div class="table-scroll" id="ca-table"></div>
     <button type="button" id="btn-copy-ca-table">複製表1</button>
-    <h3>AI 回覆與 Word 報告</h3>
-    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：「〔插入表1〕」會換成上方的表1，各群小標題設為粗體；最後一行「建議區隔名稱」不放入檔案，名稱會自動填入上方，表1 同步更新。</p>
-    <textarea id="ca-reply" rows="10" placeholder="貼上 AI 的完整回覆"></textarea>
-    <div class="row" style="margin-top:8px">
-      <button type="button" class="primary" id="btn-docx-ca">下載 Word 報告（.docx）</button>
-      <span class="small" id="ca-reply-msg"></span>
-    </div>
     <div class="savebox">
       <h3>暫存集群分析結果</h3>
       <p class="hint">若要下次上課再繼續，請先下載資料檔並保存。資料檔含各因素分數、集群與區隔名稱欄，保留「因素分析設定」工作表，並記錄採用的群數、區隔名稱與步驟 4、5 的輪廓變數勾選；下次在步驟 1 上傳這個檔案，就會還原到目前的進度，直接接續輪廓分析。完成輪廓分析後，請在步驟 6 下載「市場區隔資料檔」，才會保存顯著水準等後續設定。</p>
@@ -1410,17 +1410,14 @@ function renderCaTable(){
   const c=curRun(); if (!c) return;
   const un=Array.from({length:c.k},(_,g)=>g).filter(g=>!(segNames()[g]||"").trim());
   let m="";
-  if (un.length) m='<div class="notice warn namepaste"><b>'+un.map(g=>"集群"+(g+1)).join("、")+'尚未命名。</b>請把 AI 回覆最後一行「建議區隔名稱：……（填回市場區隔工具頁）」整行貼在下方，區隔名稱會自動填入，表格同步更新。'
-    +'<textarea id="seg-paste" rows="2" placeholder="例：建議區隔名稱：集群1＝嫌貴嫌甜群；集群2＝挑選嘗試群；集群3＝搭配聊天群（填回市場區隔工具頁）"></textarea><span class="small" id="seg-paste-msg"></span></div>';
   $("sn-msg").innerHTML=m;
-  const sp=$("seg-paste"); if (sp) sp.addEventListener("input",()=>applySegPaste(sp.value));
   $("ca-table").innerHTML='<p class="fa-cap">'+CA_CAP+'</p>'+caTableHTML(false);
   renderKit();
 }
 function applySegPaste(txt){
   const c=curRun(), re=/集群\s*(\d+)\s*[＝=：:]\s*([^；;，,、（(\n\r]+)/g; let m, got=0;
   while ((m=re.exec(txt))){ const g=+m[1]-1, v=m[2].trim().replace(/[。」』]+$/,""); if (g>=0&&g<c.k&&v){ segNames()[g]=v; got++; } }
-  if (!got){ $("seg-paste-msg").textContent="找不到「集群1＝名稱」的格式，請確認貼上的是 AI 回覆的最後一行"; return; }
+  if (!got){ toast("找不到「集群1＝名稱」的格式，請確認 AI 回覆最後一行的建議區隔名稱"); return; }
   renderSegNames(); renderSegPrompt(); toast("已填入 "+got+" 個區隔名稱");
 }
 const CA_CAP="表1　市場區隔之群中心值與人數";
