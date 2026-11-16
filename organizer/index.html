@@ -1379,11 +1379,11 @@
     if (!hasId) out.unshift({ name: 'id', c: null, kind: 'id' });
     return out;
   }
-  /* 分析工具會讀到的題組：複選題依代碼；是非題或 0／1 欄依「字母＋序號＋名稱」的開頭字母 */
+  /* 分析工具會讀到的題組：複選題依代碼；量表題、是非題或 0／1 欄依「字母＋序號＋名稱」的開頭字母 */
   function letterGroups(){
     const map = {};
     outputColumns().forEach(o => {
-      if (o.kind !== 'yn' && o.kind !== 'bin') return;
+      if (o.kind !== 'yn' && o.kind !== 'bin' && o.kind !== 'num') return;
       const m = /^([A-Za-z]+)([0-9]+)(.+)$/.exec(o.name);
       if (!m || o.name.indexOf('_') !== -1) return;
       (map[m[1]] = map[m[1]] || []).push(o);
@@ -1403,7 +1403,7 @@
     letterGroups().forEach(g => {
       if (seen.has(g.code)) return;
       seen.add(g.code);
-      out.push({ code: g.code, name: (state.lgname[g.code] || '').trim(), desc: '是非題：' + g.cols.map(o => o.name).join('、'), n: g.cols.length, letter: true });
+      out.push({ code: g.code, name: (state.lgname[g.code] || '').trim(), desc: (g.cols.every(o => o.kind === 'num') ? '量表：' : '是非題：') + g.cols.map(o => o.name).join('、'), n: g.cols.length, letter: true });
     });
     return out;
   }
@@ -1454,7 +1454,7 @@
           '<td class="nm-gen">' + gen + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     const lg = letterGroups();
-    document.getElementById('lgroup-table').innerHTML = lg.length ? '<p>是非題題組（欄名同為「字母＋序號＋名稱」的是非題，分析工具會合成一個題組）：</p><div class="table-scroll"><table class="short-tbl"><thead><tr><th>代碼</th><th>包含的欄位</th><th>題組名稱</th></tr></thead><tbody>' +
+    document.getElementById('lgroup-table').innerHTML = lg.length ? '<p>量表題組與是非題題組（欄名同為「字母＋序號＋名稱」的量表題或是非題，例如 M1口渴解渴、M2提振精神，分析工具會合成一個題組，並以題組名稱顯示，例如「消費動機」）：</p><div class="table-scroll"><table class="short-tbl"><thead><tr><th>代碼</th><th>包含的欄位</th><th>題組名稱</th></tr></thead><tbody>' +
       lg.map((g, i) => '<tr><td class="nm-gen">' + escapeHtml(g.code) + '</td><td class="sn-full">' + escapeHtml(g.cols.map(o => o.name).join('、')) + '</td>' +
         '<td><input type="text" class="sn-input" id="lgname-' + i + '" data-code="' + escapeHtml(g.code) + '" value="' + escapeHtml(state.lgname[g.code] || '') + '" placeholder="至多 6 個字" aria-label="題組 ' + escapeHtml(g.code) + ' 的名稱"></td></tr>').join('') +
       '</tbody></table></div>' : '';
@@ -1513,7 +1513,7 @@
       '3. 與特定品牌有關的題目，依品牌在問卷中出現的順序，以 B1、B2⋯⋯作為代碼。詢問是否曾使用、購買或喝過該品牌的是非題，欄名為「代碼＋品牌名稱」，例如 B1原萃、B2純喫茶；該品牌的其他單題，欄名為「代碼＋簡稱」，例如 B1滿意度、B1再購率。\n' +
       '4. 其他單選題、數值題、文字題：只用簡稱，不加代碼，例如 飲用頻率、性別。\n' +
       '5. 類型為「複選題」的欄只輸出代碼，不含選項：由英文字母開頭、至多 4 個字元的英數字組成，並取自題意的英文縮寫，讓人看得出是哪一題（例如購買通路用 CH、購買時機用 T、社群網站用 SN、休閒活動用 L）；與品牌有關的複選題直接使用該品牌的 B 碼，例如 B1，產生的欄名為 B1_低熱量。複選題代碼不可彼此重複，也不可與其他欄名相同。工具會自動把選項接在代碼後面，形成「代碼_選項簡稱」，例如 CH_超商。複選題請輸出「欄號｜代碼｜題組名稱」，題組名稱為至多 6 個字的中文簡稱，例如「欄4｜CH｜購買通路」。\n' +
-      '6. 欄名同為「字母＋序號＋名稱」的是非題（例如 B1原萃、B2純喫茶），分析時會合成一個以該字母為代碼的題組，請另外輸出一行「題組字母｜題組名稱」，例如「題組B｜曾喝過品牌」，題組名稱至多 6 個字。\n\n' +
+      '6. 欄名同為「字母＋序號＋名稱」的量表題組（例如 M1口渴解渴、M2提振精神）與是非題（例如 B1原萃、B2純喫茶），分析時會合成一個以該字母為代碼的題組，請為每個題組另外輸出一行「題組字母｜題組名稱」，例如「題組M｜消費動機」「題組B｜曾喝過品牌」，題組名稱為能說明該量表所衡量構念的中文名稱，至多 6 個字。\n\n' +
       cols.map(colLine).join('\n') + '\n\n' +
       '【第二部分：選項簡稱】將下列選項縮寫成至多 6 個字的簡稱（英文字母算半字）：保留原意，讓人一看就知道是哪個選項；同一題的選項簡稱不可重複；原本已在 6 個字以內的選項照抄原文。選項有大小順序的單選題（例如飲用頻率、年齡、所得、教育程度、滿意程度），在簡稱前加上序號，頻率類依「由多到少」編號，其他依「由低到高」編號，序號後一律加一個半形句點，例如 1.每天都喝、2.每週2至3次、3.每週1次、1.未滿20歲、2.20至29歲；序號不計入字數，同一題的序號必須連續且不重複。簡稱中的數字一律使用阿拉伯數字，不可使用一、二、兩、三等中文數字，也不可混用。每個選項輸出一行「原始選項｜簡稱」，原始選項必須與下列文字完全相同。\n' +
       pool.join('\n') + '\n\n' +

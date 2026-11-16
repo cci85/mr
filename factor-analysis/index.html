@@ -108,6 +108,7 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 .replybox textarea{display:block;margin:8px 0 4px;min-height:96px}
 .namepaste textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0 4px;font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--warn);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}
 .namepaste textarea:focus{outline:2px solid var(--warn);outline-offset:1px}
+.grp-head .gname{width:11em;padding:3px 8px;font:inherit;font-size:14px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink)}
 .savebox{margin-top:18px;padding:12px 14px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--surface-2)}
 .savebox h3{margin-top:0}
 .kit-h{margin-top:22px}
@@ -660,6 +661,15 @@ function readGroups(wb){
   XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}).slice(1).forEach(r=>{ const c=String(r[0]||"").trim(), n=String(r[1]||"").trim(); if (c&&n) out[c]=n; });
   return out;
 }
+/* 題組工作表：保留原有內容，套用本頁修改或新增的題組名稱 */
+function groupSheet(){
+  const ws=S.wb.Sheets["題組"];
+  const aoa=ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false}):[["代碼","題組名稱","題目或說明","欄數"]];
+  const seen=new Set();
+  aoa.slice(1).forEach(r=>{ const c=String(r[0]||"").trim(); if (!c) return; seen.add(c); if (S.groupNames[c]!==undefined) r[1]=S.groupNames[c]; else if (String(r[1]||"").trim()) r[1]=""; });
+  Object.keys(S.groupNames).forEach(c=>{ if (!seen.has(c)) aoa.push([c,S.groupNames[c],"",S.numCols.filter(x=>x.prefix===c).length||""]); });
+  return aoa.length>1?XLSX.utils.aoa_to_sheet(aoa):null;
+}
 function loadSheet(name){
   const aoa=XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
   S.headers=(aoa[0]||[]).map(h=>String(h).trim());
@@ -744,12 +754,17 @@ function renderGroups(){
   for (const [key,cols] of groups){
     const title=key==="__other"?"其他數值欄位":(S.groupNames[key]?S.groupNames[key]+"（"+key+"）":"代碼 "+key);
     const kind=cols.every(c=>c.binary)?"0／1 二元":(cols.some(c=>c.binary)?"混合":"連續數值");
-    html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong><span class="tag">'+cols.length+' 欄 · '+kind+'</span>'
+    html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong>'+(key==="__other"?'':'<input type="text" class="gname" data-g="'+esc(key)+'" value="'+esc(S.groupNames[key]||"")+'" placeholder="題組名稱，例：消費動機" maxlength="12" aria-label="代碼 '+esc(key)+' 的題組名稱">')+'<span class="tag">'+cols.length+' 欄 · '+kind+'</span>'
       +'<button type="button" class="ghost" data-all="'+esc(key)+'">全選</button><button type="button" class="ghost" data-none="'+esc(key)+'">全不選</button></div><div class="items">';
     cols.forEach(c=>{ html+='<label title="'+esc(c.stem)+'"><input type="checkbox" data-ci="'+c.ci+'"'+(S.selected.has(c.ci)?" checked":"")+'><span>'+esc(c.name)+(S.excluded.has(c.ci)?' <span class="tag">已剔除</span>':'')+(c.stem&&c.stem!==c.name?'<br><span class="stem">'+esc(c.stem.length>40?c.stem.slice(0,40)+"…":c.stem)+'</span>':'')+'</span></label>'; });
     html+='</div></div>';
   }
   box.innerHTML=html;
+  box.querySelectorAll("input.gname").forEach(i=>i.addEventListener("change",()=>{
+    const v=i.value.trim(); if (v) S.groupNames[i.dataset.g]=v; else delete S.groupNames[i.dataset.g];
+    renderGroups(); if (S.res) renderPrompt(); if (S.cfa) renderCfaSetup();
+    toast(v?"已將代碼 "+i.dataset.g+" 命名為「"+v+"」，下載資料檔時會一併儲存":"已清除代碼 "+i.dataset.g+" 的題組名稱");
+  }));
   box.querySelectorAll("button[data-all],button[data-none]").forEach(b=>b.addEventListener("click",()=>{
     const key=b.dataset.all||b.dataset.none, on=!!b.dataset.all;
     S.numCols.filter(c=>(c.prefix||"__other")===key&&!(on&&S.excluded.has(c.ci))).forEach(c=>on?S.selected.add(c.ci):S.selected.delete(c.ci));
@@ -1923,7 +1938,8 @@ function dlData(suffix){
   });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"資料");
-  ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
+  if (S.wb.Sheets["欄名對照表"]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets["欄名對照表"],"欄名對照表");
+  const gs=groupSheet(); if (gs) XLSX.utils.book_append_sheet(wb,gs,"題組");
   const cfg={v:1, items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})),
     nf:k, userNf:S.userNf, cut:r.cut.v, fnames:Array.from({length:k},(_,j)=>(S.fnames[j]||"").trim()), K:c?c.k:null,
     topic:$("topic").value, alpha:$("alpha").value, segNames:S.segNames||{}, kept:S.numCols.filter(c=>S.kept.has(c.ci)).map(c=>c.name), prof:S.profCols.filter(pc=>S.profSel.has(pc.ci)).map(pc=>pc.name), added:fh.concat(c&&ki<0?["集群"]:[]).concat(hasNm&&ni<0?["區隔名稱"]:[])};
@@ -2180,7 +2196,8 @@ function saveFA(){
     aoa.push(base.concat(e).concat(c)); });
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"資料");
-  ["欄名對照表","題組"].forEach(n=>{ if (S.wb.Sheets[n]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets[n],n); });
+  if (S.wb.Sheets["欄名對照表"]) XLSX.utils.book_append_sheet(wb,S.wb.Sheets["欄名對照表"],"欄名對照表");
+  const gs=groupSheet(); if (gs) XLSX.utils.book_append_sheet(wb,gs,"題組");
   const cfg={v:1, kind:"fa", added:add};
   if (hasE){ const r=S.res, FI=faInfo();
     Object.assign(cfg,{items:r.cols.map(c=>c.name), exHist:S.exHist.map(x=>({name:x.name,stem:x.stem,reason:x.reason,loadTxt:x.loadTxt,nf:x.nf,mean:x.mean})), nf:S.nf, userNf:S.userNf, cut:r.cut.v,
