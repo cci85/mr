@@ -647,8 +647,12 @@ function readStems(wb){
   const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:false});
   const hi=aoa.findIndex(r=>r.some(x=>String(x).trim()==="新欄名")&&r.some(x=>String(x).trim()==="原題目"));
   if (hi<0) return out;
-  const h=aoa[hi].map(x=>String(x).trim()), ci=h.indexOf("新欄名"), qi=h.indexOf("原題目");
-  aoa.slice(hi+1).forEach(r=>{ const k=String(r[ci]||"").trim(), q=String(r[qi]||"").trim(); if (k&&q) out[k]=q; });
+  const h=aoa[hi].map(x=>String(x).trim()), ci=h.indexOf("新欄名"), qi=h.indexOf("原題目"), ti=h.indexOf("類型"), oi=h.indexOf("原始選項"), si=h.indexOf("簡稱");
+  const cell=(r,i)=>i<0?"":String(r[i]||"").trim();
+  aoa.slice(hi+1).forEach(r=>{ const k=cell(r,ci); if (!k) return;
+    /* 複選題選項：題目內容取該選項的簡稱（缺簡稱時取欄名去掉代碼的部分），不用整題題目 */
+    if (cell(r,ti)==="複選題選項"){ const s=cell(r,si)||k.replace(/^[A-Za-z]+\d*_/,"")||cell(r,oi); if (s) out[k]=s; return; }
+    const q=cell(r,qi); if (q) out[k]=q; });
   return out;
 }
 function readGroups(wb){
