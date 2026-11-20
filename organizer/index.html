@@ -544,6 +544,10 @@
   .map-cell figcaption span{ font-family:var(--font-mono); font-size:12px; color:var(--ink-faint); }
   .map-cell .map-wrap{ margin:0; }
   .seg-details{ display:flex; flex-direction:column; gap:8px; }
+  .cfg-backup{ margin-top:10px; border:1px solid var(--border); border-radius:10px; background:var(--surface); padding:0 14px; }
+  .cfg-backup summary{ cursor:pointer; padding:10px 0; font-weight:600; font-size:14px; color:var(--ink-soft, var(--ink)); }
+  .cfg-backup[open]{ padding-bottom:10px; }
+  .cfg-backup .hint{ margin-top:0; }
   .seg-details details{ border:1px solid var(--border); border-radius:10px; background:var(--surface); }
   .seg-details summary{ cursor:pointer; padding:10px 14px; font-weight:600; font-size:14px; color:var(--ink); display:flex; gap:10px; align-items:baseline; }
   .seg-details summary span{ font-family:var(--font-mono); font-weight:400; font-size:12px; color:var(--ink-faint); }
@@ -700,14 +704,20 @@
       <button class="btn btn-primary" id="btn-download-xlsx" type="button">下載整理後的資料（Excel）</button>
     </div>
     <div class="row-actions">
-      <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
-      <label class="btn btn-text file-btn">
-        匯入設定（JSON）
-        <input type="file" id="input-import-config" accept="application/json" hidden>
-      </label>
       <button class="btn btn-text danger" id="btn-clear-config" type="button">重設全部設定</button>
     </div>
     <p class="hint small">欄位類型、選項清單、欄名與簡稱會自動保存在此瀏覽器，同一份問卷下次上傳時直接套用，也可匯出存檔。</p>
+    <details class="cfg-backup">
+      <summary>設定備份（進階）</summary>
+      <p class="hint small">同一台電腦、同一個瀏覽器不必使用。換電腦或換瀏覽器、清除過瀏覽資料，或要把設定給別人沿用時，才需要匯出或匯入設定。</p>
+      <div class="row-actions">
+        <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
+        <label class="btn btn-text file-btn">
+          匯入設定（JSON）
+          <input type="file" id="input-import-config" accept="application/json" hidden>
+        </label>
+      </div>
+    </details>
   </section>
 
   <footer class="foot">
