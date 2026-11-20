@@ -75,6 +75,9 @@
   let dir = null;           // 資料夾
   let dirOK = false;        // 是否已取得讀寫權限
   let ready = false;        // 是否可存檔（已選資料夾，或瀏覽器不支援資料夾而改存在瀏覽器內）
+  let loading = true;       // 尚在讀取資料夾設定（先顯示「讀取中」，避免卡片空白）
+  let listing = false, listFail = false;   // 正在列出／無法列出資料夾檔案
+  const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
 
   async function loadFolder() {
     try { dir = (await kvGet("folder")) || null; } catch (e) { dir = null; }
@@ -86,6 +89,7 @@
         if (p) { dir = p.dir; await kvSet("folder", dir); }
       } catch (e) {}
     }
+    if (dir && (typeof dir.queryPermission !== "function" || dir.kind !== "directory")) dir = null;   // 舊設定若不是有效的資料夾就略過
     if (!HAS_FS) dir = null;
   }
 
@@ -267,6 +271,10 @@
 
   async function renderBar() {
     let html = HOME ? "<b class=\"mrs-title\">資料夾</b>" : "<b>資料夾</b> ";
+    if (loading) {
+      bar.innerHTML = html + "<span class=\"soft\">讀取中…</span>";
+      return;
+    }
     if (!HAS_FS) {
       html += "<span>檔案存在這個瀏覽器內</span> <span class=\"soft\">（此瀏覽器不支援選擇電腦資料夾，請用 Chrome 或 Edge）</span>";
     } else if (!dir) {
@@ -277,7 +285,7 @@
     } else {
       html += "「" + esc(dir.name) + "」 <button type=\"button\" class=\"mrs-pick\" title=\"改用另一個資料夾；原資料夾裡的檔案不會移動或刪除\">更換資料夾</button>";
     }
-    if (ready && (!dir || dirOK)) html += " <span class=\"soft\">｜</span> <button type=\"button\" class=\"mrs-files\">資料夾檔案（" + files.length + "）" + (panel.hidden ? "▾" : "▴") + "</button>";
+    if (ready && (!dir || dirOK)) html += " <span class=\"soft\">｜</span> <button type=\"button\" class=\"mrs-files\">資料夾檔案（" + (listing ? "讀取中…" : listFail ? "無法讀取" : files.length) + "）" + (panel.hidden ? "▾" : "▴") + "</button>";
     if (HOME) {
       html += "<p class=\"soft mrs-note\">" + (!HAS_FS ? "各工具上傳與下載的檔案會存在這個瀏覽器內，分析頁會自動帶入；清除瀏覽資料或換電腦就會消失。"
         : !dir ? "選一個電腦上的資料夾（例如 Google 雲端硬碟裡的資料夾）。之後各工具上傳與下載的檔案都會自動存進去，分析頁會依檔名自動帶入，不必再手動上傳。"
@@ -350,7 +358,9 @@
   }
 
   async function refresh() {
-    try { files = ready ? await listCur() : []; } catch (e) { files = []; }
+    listing = true; listFail = false; await renderBar();
+    try { files = ready ? await timeout(listCur(), 20000) : []; } catch (e) { files = []; listFail = true; }
+    listing = false;
     files.sort((a, b) => b.mtime - a.mtime);
     await renderBar(); await renderPanel(); renderAuto();
   }
@@ -416,8 +426,11 @@
 
   const start = async () => {
     mountBar();
-    await loadFolder();
-    await checkPermission();
+    await renderBar();                      // 先顯示卡片（讀取中），之後的步驟即使卡住也不會空白
+    try { await timeout(loadFolder(), 5000); } catch (e) {}
+    try { await timeout(checkPermission(), 5000); } catch (e) { dirOK = false; ready = !!dir || !HAS_FS; }
+    loading = false;
+    await renderBar();
     loadedName = null;
     await refresh();
     autoLoad();
