@@ -124,6 +124,27 @@
     return { title, blocks: out, note: notes.filter(Boolean).join("\n\n").replace(/\n\s*\n(\s*\n)+/g, "\n\n").trim() };
   }
 
+  /* ---------- 依序重新編號 ----------
+     每個「部份」內重新起算；保留題號樣式：純數字（1、2…）、英文字首（S1、Q1…，各字首分開計數）、
+     子題（1.1、1.2…：原本同一個主號的子題放在一起，主號與純數字共用同一個計數）。沒有題號的題目不編號。 */
+  function renumber(doc) {
+    let c = 0, pre = {}, lastMajor = null, major = 0, sub = 0, changed = 0;
+    doc.blocks.forEach(b => {
+      if (b.t === "part") { c = 0; pre = {}; lastMajor = null; return; }
+      if ((b.t !== "q" && b.t !== "lk") || !String(b.no || "").trim()) return;
+      const no = String(b.no).trim();
+      let m, nw = no;
+      if ((m = no.match(/^([A-Za-z]+)(\d+)$/))) { const k = m[1].toUpperCase(); pre[k] = (pre[k] || 0) + 1; nw = m[1] + pre[k]; lastMajor = null; }
+      else if ((m = no.match(/^(\d+)\.(\d+)$/))) {
+        if (m[1] !== lastMajor) { lastMajor = m[1]; major = ++c; sub = 0; }
+        nw = major + "." + (++sub);
+      }
+      else if (/^\d+$/.test(no)) { nw = String(++c); lastMajor = null; }
+      if (nw !== no) { b.no = nw; changed++; }
+    });
+    return changed;
+  }
+
   /* ---------- 輸出：純文字 ---------- */
   const filled = a => a.filter(x => String(x).trim());
   const qLabel = no => !no ? "" : /\./.test(no) ? no + " " : no + ". ";
@@ -337,7 +358,7 @@
     function render() {
       const d = st.doc;
       if (!d) { main.innerHTML = ""; return; }
-      let h = '<div class="sve-row" style="margin-top:14px"><button type="button" class="pri sve-word">下載 Word 問卷</button><button type="button" class="sve-copy">複製純文字</button>'
+      let h = '<div class="sve-row" style="margin-top:14px"><button type="button" class="pri sve-word">下載 Word 問卷</button><button type="button" class="sve-copy">複製純文字</button><button type="button" class="sve-renum" title="各部份內依序重新編號；保留原本的題號樣式（1.、S1、Q1、1.1）">依序重新編號</button>'
         + '<span class="sve-msg">' + esc(summary(d)) + '</span><span style="flex:1"></span><button type="button" class="warn sve-clear">' + (armed === "clear" ? "確定清除貼上的回覆與編輯內容？" : "清除") + '</button>'
         + (armed === "clear" ? '<button type="button" class="sve-clear-no">取消</button>' : '') + '</div>'
         + '<div class="sve-tabs"><button type="button" data-m="edit" aria-pressed="' + (mode === "edit") + '">逐題編輯</button><button type="button" data-m="view" aria-pressed="' + (mode === "view") + '">問卷預覽</button></div>';
@@ -420,6 +441,7 @@
       if (t.dataset.m) { mode = t.dataset.m; render(); return; }
       if (t.classList.contains("sve-word")) return downloadWord();
       if (t.classList.contains("sve-copy")) return copyText();
+      if (t.classList.contains("sve-renum")) { const n = renumber(d); save(); render(); toast(n ? "已重新編號 " + n + " 題" : "題號都已依序，不需更動"); return; }
       if (t.classList.contains("sve-clear")) {
         if (armed !== "clear") { armed = "clear"; render(); return; }
         armed = null; st = { raw: "", doc: null }; raw.value = ""; pmsg.textContent = ""; pbtn.textContent = "解析回覆";

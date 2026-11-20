@@ -106,8 +106,8 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
     <div class="field">
       <label for="outMode">問卷輸出方式</label>
       <select id="outMode">
-        <option value="word" selected>純文字預覽，確認後產生 Word 檔</option>
-        <option value="text">只要純文字（不產生檔案）</option>
+        <option value="word">純文字預覽，確認後產生 Word 檔</option>
+        <option value="text" selected>只要純文字（不產生檔案）</option>
       </select>
       <p class="help">兩種方式都會先在 AI 對話中輸出純文字預覽，供您檢查與修改。</p>
     </div>
@@ -198,7 +198,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   <h2 id="gas-h"><span class="gas-step">4</span>建立 Google 表單</h2>
   <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
   <ol>
-    <li>用上方的指令請 AI 產生問卷並確認內容；選擇產生 Word 檔者，請下載 Word 檔。</li>
+    <li>用第 3 步檢查、編輯問卷後，下載 Word 問卷。</li>
     <li>在同一個 AI 對話中接著貼上「建立 Google 表單指令」（若有 Word 檔，請先上傳），AI 會產生完整的程式碼。</li>
     <li>到 <a href="https://script.google.com/home" target="_blank" rel="noopener">https://script.google.com/home</a> 按「新專案」，清除原先預設內容後，貼上程式碼，先按儲存，再按「執行」，依畫面完成 Google 帳號授權。</li>
     <li>執行完成後，在下方「執行紀錄」複製表單的填答網址與編輯網址。</li>
@@ -639,7 +639,7 @@ el.outMode.addEventListener("change", build);
 
 $("btnClear").addEventListener("click", () => {
   F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
-  el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="word"; industryManual=false; autoIndustry(); build(); toast("已清除");
+  el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="text"; industryManual=false; autoIndustry(); build(); toast("已清除");
 });
 $("btnCopy").addEventListener("click", async () => {
   const text=$("out").textContent;
@@ -653,7 +653,7 @@ $("btnCopy").addEventListener("click", async () => {
 });
 
 F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
-el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="word";
+el.industry.value="retail"; el.freqType.value="consume"; el.chanMode.value="auto"; el.outMode.value="text";
 autoIndustry();
 build();
 })();
