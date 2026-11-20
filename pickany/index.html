@@ -480,13 +480,15 @@
     <div class="right-col">
     <section class="card" aria-labelledby="step2-h">
       <h2 id="step2-h"><span class="step">2</span> 產生給 AI 的指令</h2>
-      <p class="hint">把下面這段文字整段複製，貼到 Claude、ChatGPT 等 AI 對話視窗，就會產生完整問卷。</p>
+      <p class="hint">按「複製指令」，貼到 Claude、ChatGPT 等 AI 對話視窗，就會產生完整問卷；再把 AI 的回覆貼到下方第 3 步。</p>
 
+      <style>.prompt-details{margin-top:10px}.prompt-details>summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64));margin-bottom:6px}</style><details class="prompt-details"><summary>檢視指令內容</summary>
       <div class="output-head">
         <span class="live">即時預覽 · 隨左側設定自動更新</span>
         <span class="live" id="charcount">0 字</span>
       </div>
       <div class="output-box" id="output" aria-live="polite"></div>
+      </details>
 
       <div class="actions">
         <button class="copy" id="copyBtn" type="button">複製指令</button>
@@ -509,7 +511,7 @@
     .gas-card summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64))}
     .gas-card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--code-border,var(--line,#dcdfd8));border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:360px;overflow:auto}
   </style>
-  <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
+  <h2 id="gas-h"><span class="gas-step">4</span>建立 Google 表單</h2>
   <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
   <ol>
     <li>用上方的指令請 AI 產生問卷，確認無誤後把問卷文字貼到 Word 存檔。</li>
@@ -916,6 +918,7 @@ S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
 
   function selectOutputText(){
     try{
+      var det = output.closest('details'); if(det) det.open = true;
       var range = document.createRange();
       range.selectNodeContents(output);
       var sel = window.getSelection();
@@ -949,7 +952,9 @@ S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
 </script>
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
 <nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>
+<script src="../survey-editor.js"></script>
+<script>SurveyEditor.mount({ before: document.querySelector(".gas-card"), key: "pickany", step: 3, fileName: function(){ var t = document.getElementById("topic"); return "Pick-any問卷_" + ((t && t.value.trim()) || "未命名"); } });</script>
 <script src="../store.js"></script>
-<script src="../newver.js" data-note="（畫面上的資料與分析結果會清空，需要重新上傳或貼上）"></script>
+<script src="../newver.js" data-note="（貼上的 AI 回覆與編輯中的問卷會保留；其他設定會清空）"></script>
 </body>
 </html>

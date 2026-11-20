@@ -164,7 +164,8 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </div>
   <div id="warn" class="warnbox" hidden></div>
   <p class="status" id="status"></p>
-  <pre id="out"></pre>
+  <style>.prompt-details{margin-top:10px}.prompt-details>summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64));margin-bottom:6px}</style><details class="prompt-details"><summary>檢視指令內容</summary><pre id="out"></pre></details>
+  <p class="status">複製指令貼到 AI 對話視窗後，把 AI 的回覆貼到下方第 3 步。</p>
 </section>
 
 <section class="gas-card" aria-labelledby="gas-h">
@@ -182,7 +183,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
     .gas-card summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64))}
     .gas-card pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--code-border,var(--line,#dcdfd8));border-radius:8px;padding:12px 14px;margin:8px 0 0;max-height:360px;overflow:auto}
   </style>
-  <h2 id="gas-h"><span class="gas-step">3</span>建立 Google 表單</h2>
+  <h2 id="gas-h"><span class="gas-step">4</span>建立 Google 表單</h2>
   <p class="gas-lead">問卷定稿後，可以用下面這段指令請 AI 撰寫 Google Apps Script 程式碼，執行後自動建立對應的 Google 表單。</p>
   <ol>
     <li>用上方的指令請 AI 產生問卷並確認內容；選擇產生 Word 檔者，請下載 Word 檔。</li>
@@ -525,7 +526,9 @@ build();
 </script>
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
 <nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>
+<script src="../survey-editor.js"></script>
+<script>SurveyEditor.mount({ before: document.querySelector(".gas-card"), key: "positioning-survey", step: 3, fileName: function(){ var t = document.getElementById("target"); return "知覺定位問卷_" + ((t && t.value.trim()) || "未命名"); } });</script>
 <script src="../store.js"></script>
-<script src="../newver.js" data-note="（研究對象會保留；其他輸入與分析結果會清空，需要重新上傳或貼上）"></script>
+<script src="../newver.js" data-note="（研究對象、貼上的 AI 回覆與編輯中的問卷會保留；其他輸入會清空）"></script>
 </body>
 </html>
