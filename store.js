@@ -1,8 +1,8 @@
-// 專案資料夾：工具箱各頁共用的檔案存放處。
-// 1. 專案可自行命名（隨時可重新命名），每個專案綁一個自己的資料夾。Chrome／Edge 可選電腦上的資料夾
-//    （例如 Google 雲端硬碟裡的某個研究資料夾），檔案直接存在該資料夾內；其他瀏覽器改存在這個瀏覽器內。
-// 2. 各頁下載的檔案（Excel、Word 報告、圖、CSV、設定檔）照常下載，同時存進目前專案；
-//    使用者上傳的檔案也會存一份，下次不必再上傳。尚未建立專案時只照常下載。
+// 資料夾：工具箱各頁共用的檔案存放處（整個工具箱只用一個資料夾，在首頁或各頁頂端設定）。
+// 1. Chrome／Edge 可選電腦上的資料夾（例如 Google 雲端硬碟裡的資料夾），檔案直接存在該資料夾內；
+//    其他瀏覽器改存在這個瀏覽器內。
+// 2. 各頁下載的檔案（Excel、Word 報告、圖、CSV、設定檔）照常下載，同時存進資料夾；
+//    使用者上傳的檔案也會存一份，下次不必再上傳。尚未選資料夾時只照常下載。
 // 3. 進入分析頁時，依檔名元素（clean_、sim_clean_、fa_、seg_ 等前綴與關鍵字）自動載入最適合、最新的檔案，可改選。
 // 用法：<script src="../store.js"></script>，放在頁面程式之後、newver.js 之前。
 (() => {
@@ -67,27 +67,39 @@
   const kvDel = k => tx("kv", "readwrite", s => s.delete(k));
 
 
-  /* ---------- 專案：每個專案一個名稱、綁一個資料夾 ---------- */
-  // 專案清單存在 IndexedDB（kv「projects2」）：[{ id, name, dir }]
-  //   dir：電腦資料夾（FileSystemDirectoryHandle）；null 表示存在這個瀏覽器內（不支援選資料夾的瀏覽器）
-  // 專案名稱只是網站上的顯示名稱，可隨時重新命名，不影響資料夾本身。
+  /* ---------- 資料夾：整個工具箱只用一個資料夾 ---------- */
+  // 資料夾（FileSystemDirectoryHandle）存在 IndexedDB（kv「folder」）。
+  // 不支援選資料夾的瀏覽器（或尚未選資料夾時上傳的檔案）改存在這個瀏覽器內。
+  // 舊版「專案」設定：第一次載入時沿用原本目前專案的資料夾。
   const HAS_FS = typeof window.showDirectoryPicker === "function";
-  const cleanName = s => String(s || "").replace(/[\\/:*?"<>|]/g, "").trim().slice(0, 60);
-  let projects = [];        // 全部專案
-  let cur = null;           // 目前專案
-  let curOK = false;        // 目前專案的資料夾是否已取得讀寫權限
-  const CUR_KEY = "mr.currentProject";
+  let dir = null;           // 資料夾
+  let dirOK = false;        // 是否已取得讀寫權限
+  let ready = false;        // 是否可存檔（已選資料夾，或瀏覽器不支援資料夾而改存在瀏覽器內）
 
-  const loadProjects = async () => { try { projects = (await kvGet("projects2")) || []; } catch (e) { projects = []; } };
-  const saveProjects = () => kvSet("projects2", projects);
+  async function loadFolder() {
+    try { dir = (await kvGet("folder")) || null; } catch (e) { dir = null; }
+    if (!dir) {
+      try {
+        const old = (await kvGet("projects2")) || [];
+        const want = localStorage.getItem("mr.currentProject");
+        const p = old.find(x => x.id === want && x.dir) || old.find(x => x.dir);
+        if (p) { dir = p.dir; await kvSet("folder", dir); }
+      } catch (e) {}
+    }
+    if (!HAS_FS) dir = null;
+  }
 
   const IDB = {
-    async list(id) {
-      const all = await tx("files", "readonly", s => s.index("project").getAll(id));
-      return all.map(f => ({ name: f.name, mtime: f.mtime, size: f.blob.size, get: async () => new File([f.blob], f.name, { type: f.blob.type, lastModified: f.mtime }) }));
+    async list() {
+      const all = await tx("files", "readonly", s => s.getAll());
+      return all.map(f => ({ name: f.name, mtime: f.mtime, size: f.blob.size, key: f.id, get: async () => new File([f.blob], f.name, { type: f.blob.type, lastModified: f.mtime }) }));
     },
-    async write(id, name, blob) { await tx("files", "readwrite", s => s.put({ id: id + "/" + name, project: id, name, blob, mtime: Date.now() })); },
-    async remove(id, name) { await tx("files", "readwrite", s => s.delete(id + "/" + name)); }
+    async write(name, blob) {
+      const old = (await IDB.list()).filter(f => f.name === name);
+      for (const f of old) await tx("files", "readwrite", s => s.delete(f.key));
+      await tx("files", "readwrite", s => s.put({ id: "main/" + name, project: "main", name, blob, mtime: Date.now() }));
+    },
+    async remove(name) { for (const f of (await IDB.list()).filter(f => f.name === name)) await tx("files", "readwrite", s => s.delete(f.key)); }
   };
 
   const FS = {
@@ -106,48 +118,47 @@
     },
     async remove(d, name) { await d.removeEntry(name); }
   };
-  const useFS = () => !!(cur && cur.dir && curOK);
-  const listCur = () => !cur ? Promise.resolve([]) : useFS() ? FS.list(cur.dir) : cur.dir ? Promise.resolve([]) : IDB.list(cur.id);
-  const writeCur = (name, blob) => useFS() ? FS.write(cur.dir, name, blob) : IDB.write(cur.id, name, blob);
-  const removeCur = name => useFS() ? FS.remove(cur.dir, name) : IDB.remove(cur.id, name);
+  const useFS = () => !!(dir && dirOK);
+  const listCur = () => useFS() ? FS.list(dir) : dir ? Promise.resolve([]) : IDB.list();
+  const writeCur = (name, blob) => useFS() ? FS.write(dir, name, blob) : IDB.write(name, blob);
+  const removeCur = name => useFS() ? FS.remove(dir, name) : IDB.remove(name);
 
   async function checkPermission() {
-    curOK = false;
-    if (cur && cur.dir) { try { curOK = (await cur.dir.queryPermission({ mode: "readwrite" })) === "granted"; } catch (e) { curOK = false; } }
+    dirOK = false;
+    if (dir) { try { dirOK = (await dir.queryPermission({ mode: "readwrite" })) === "granted"; } catch (e) { dirOK = false; } }
+    ready = !!dir || !HAS_FS;
   }
   async function askPermission() {          // 須在使用者點擊時呼叫
-    if (!cur || !cur.dir) return false;
-    try { curOK = (await cur.dir.requestPermission({ mode: "readwrite" })) === "granted"; } catch (e) { curOK = false; }
-    return curOK;
+    if (!dir) return false;
+    try { dirOK = (await dir.requestPermission({ mode: "readwrite" })) === "granted"; } catch (e) { dirOK = false; }
+    return dirOK;
   }
-  // 選資料夾；已被其他專案使用的資料夾不接受（一個資料夾只對應一個專案）
-  async function pickDir(exceptId) {
+  async function pickDir() {
     let h;
-    try { h = await window.showDirectoryPicker({ id: "mr-project", mode: "readwrite" }); } catch (e) { return null; }
-    for (const p of projects) {
-      if (p.id === exceptId || !p.dir) continue;
-      try { if (await p.dir.isSameEntry(h)) { toast("資料夾「" + h.name + "」已是專案「" + p.name + "」的資料夾", true); return null; } } catch (e) {}
-    }
-    return h;
+    try { h = await window.showDirectoryPicker({ id: "mr-project", mode: "readwrite" }); } catch (e) { return; }
+    dir = h; dirOK = true; ready = true;
+    await kvSet("folder", h);
+    toast("已設定資料夾「" + h.name + "」");
+    loadedName = null;
+    await refresh(); autoLoad();
   }
-  const nameTaken = (n, exceptId) => projects.some(p => p.id !== exceptId && p.name === n);
 
   /* ---------- 存檔 ---------- */
   async function save(name, blob, why) {
-    if (!name || !blob || !cur) return;     // 尚未建立專案時只照常下載
-    if (cur.dir && !curOK) await askPermission();
+    if (!name || !blob || !ready) return;   // 尚未選資料夾時只照常下載
+    if (dir && !dirOK) await askPermission();
     try {
-      if (cur.dir && !curOK) throw new Error("no permission");
+      if (dir && !dirOK) throw new Error("no permission");
       await writeCur(name, blob);
-      toast("已存入專案「" + cur.name + "」：" + name);
+      toast((dir ? "已存入資料夾「" + dir.name + "」：" : "已存在這個瀏覽器內：") + name);
     } catch (e) {
-      try { await IDB.write(cur.id, name, blob); toast("無法寫入資料夾，已暫存在瀏覽器內：" + name, true); }
-      catch (e2) { toast("存入專案失敗：" + name, true); }
+      try { await IDB.write(name, blob); toast("無法寫入資料夾，已暫存在瀏覽器內：" + name, true); }
+      catch (e2) { toast("存檔失敗：" + name, true); }
     }
     refresh();
   }
 
-  // 攔截各頁的下載：記住 blob 網址對應的內容，下載時同時存進專案
+  // 攔截各頁的下載：記住 blob 網址對應的內容，下載時同時存進資料夾
   const blobs = new Map();
   const origCreate = URL.createObjectURL;
   URL.createObjectURL = function (o) {
@@ -172,7 +183,7 @@
   async function keepUploads(files) {
     if (!files || !files.length) return;
     let have = [];
-    if (!cur) return;
+    if (!ready) return;
     try { have = await listCur(); } catch (e) {}
     for (const f of files) {
       if (have.some(h => h.name === f.name && h.size === f.size)) continue;
@@ -213,6 +224,11 @@
 .mrs-tag{display:inline-block;padding:0 6px;border-radius:4px;border:1px solid var(--b);font-size:12px;color:var(--soft);white-space:nowrap}
 .mrs-auto{margin:8px 0 10px;padding:8px 12px;border:1px dashed var(--a);border-radius:8px;background:var(--bg)}
 .mrs-auto select{max-width:100%}
+.mrs-home{margin:-8px 0 28px;border:1px solid var(--b);border-radius:12px;overflow:hidden;background:var(--bg)}
+.mrs-home .mrs-bar{padding:12px 16px;border-bottom:0}
+.mrs-home .mrs-title{font-size:16px;margin-right:4px}
+.mrs-home .mrs-note{flex-basis:100%;margin:2px 0 0}
+.mrs-home .mrs-panel{border-top:1px solid var(--b);border-bottom:0}
 .mrs-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:10000;max-width:90vw;padding:8px 16px;border-radius:8px;background:#28594f;color:#fff;font:14px/1.5 "Noto Sans TC","Microsoft JhengHei",sans-serif;opacity:0;transition:opacity .25s;pointer-events:none}
 .mrs-toast.err{background:#9a5b00}
 .mrs-toast.show{opacity:1}`;
@@ -236,99 +252,61 @@
   const panel = el("div", { className: "mrs-panel", hidden: true });
   wrap.append(bar, panel);
 
+  const HOME = !PAGE;
   function mountBar() {
+    if (HOME) {                             // 首頁：資料夾卡片放在說明文字下方
+      wrap.classList.add("mrs-home");
+      const lede = document.querySelector("main .lede");
+      if (lede) { lede.after(wrap); return; }
+    }
     const nav = document.querySelector("nav.toolbox-back:not(.bottom)");
     if (nav) nav.after(wrap); else document.body.insertBefore(wrap, document.body.firstChild);
   }
 
   let files = [];
-  let mode = "";            // ""、"add"（新增專案）、"rename"（重新命名）
 
   async function renderBar() {
-    const sorted = projects.slice().sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
-    let html = "<b>專案</b> ";
-    if (mode === "add") {
-      html += "<input type=\"text\" class=\"mrs-name\" placeholder=\"" + (HAS_FS ? "專案名稱（空白則用資料夾名稱）" : "專案名稱") + "\"> " +
-        "<button type=\"button\" class=\"mrs-ok pri\">" + (HAS_FS ? "選擇資料夾並建立" : "建立") + "</button> <button type=\"button\" class=\"mrs-cancel\">取消</button>" +
-        (HAS_FS ? " <span class=\"soft\">一個專案對應一個資料夾，例如 Google 雲端硬碟裡的某個研究資料夾。</span>" : "");
-    } else if (mode === "rename") {
-      html += "<input type=\"text\" class=\"mrs-name\" value=\"" + esc(cur.name) + "\"> <button type=\"button\" class=\"mrs-ok pri\">確定</button> <button type=\"button\" class=\"mrs-cancel\">取消</button>" +
-        " <span class=\"soft\">只改網站上的專案名稱，資料夾名稱不變。</span>";
-    } else if (!cur) {
-      html += "<span class=\"soft\">尚未建立專案。</span> <button type=\"button\" class=\"mrs-add pri\">＋新增專案</button>" +
-        " <span class=\"soft\">建立後，各工具下載與上傳的檔案會自動存進專案" + (HAS_FS ? "資料夾" : "") + "，下次直接帶入。</span>";
+    let html = HOME ? "<b class=\"mrs-title\">資料夾</b>" : "<b>資料夾</b> ";
+    if (!HAS_FS) {
+      html += "<span>檔案存在這個瀏覽器內</span> <span class=\"soft\">（此瀏覽器不支援選擇電腦資料夾，請用 Chrome 或 Edge）</span>";
+    } else if (!dir) {
+      html += "<span class=\"soft\">尚未設定。</span> <button type=\"button\" class=\"mrs-pick pri\">選擇資料夾</button>";
+    } else if (!dirOK) {
+      html += "<span class=\"warn\">「" + esc(dir.name) + "」尚未連線</span> <button type=\"button\" class=\"mrs-grant pri\">連線資料夾</button>" +
+        " <button type=\"button\" class=\"mrs-pick\">更換資料夾</button>";
     } else {
-      html += "<select class=\"mrs-p\">" + sorted.map(p => "<option value=\"" + esc(p.id) + "\"" + (p.id === cur.id ? " selected" : "") + ">" + esc(p.name) + "</option>").join("") + "</select>" +
-        " <button type=\"button\" class=\"mrs-ren\">重新命名</button> <button type=\"button\" class=\"mrs-add\">＋新增專案</button> <span class=\"soft\">｜</span> ";
-      if (cur.dir && curOK) html += "資料夾：「" + esc(cur.dir.name) + "」";
-      else if (cur.dir) html += "<span class=\"warn\">資料夾「" + esc(cur.dir.name) + "」尚未授權</span> <button type=\"button\" class=\"mrs-grant pri\">連線資料夾</button>";
-      else html += "存在這個瀏覽器內" + (HAS_FS ? "" : "<span class=\"soft\">（此瀏覽器不支援選擇電腦資料夾，請用 Chrome 或 Edge）</span>");
-      if (HAS_FS) html += " <button type=\"button\" class=\"mrs-pick\" title=\"改用另一個資料夾作為這個專案的資料夾；原資料夾裡的檔案不會移動或刪除\">" + (cur.dir ? "更換資料夾" : "選擇資料夾") + "</button>";
-      html += " <span class=\"soft\">｜</span> <button type=\"button\" class=\"mrs-files\">專案檔案（" + files.length + "）" + (panel.hidden ? "▾" : "▴") + "</button>";
+      html += "「" + esc(dir.name) + "」 <button type=\"button\" class=\"mrs-pick\" title=\"改用另一個資料夾；原資料夾裡的檔案不會移動或刪除\">更換資料夾</button>";
+    }
+    if (ready && (!dir || dirOK)) html += " <span class=\"soft\">｜</span> <button type=\"button\" class=\"mrs-files\">資料夾檔案（" + files.length + "）" + (panel.hidden ? "▾" : "▴") + "</button>";
+    if (HOME) {
+      html += "<p class=\"soft mrs-note\">" + (!HAS_FS ? "各工具上傳與下載的檔案會存在這個瀏覽器內，分析頁會自動帶入；清除瀏覽資料或換電腦就會消失。"
+        : !dir ? "選一個電腦上的資料夾（例如 Google 雲端硬碟裡的資料夾）。之後各工具上傳與下載的檔案都會自動存進去，分析頁會依檔名自動帶入，不必再手動上傳。"
+        : !dirOK ? "瀏覽器重新開啟後，需要按一次「連線資料夾」，才能讀寫資料夾。"
+        : "各工具上傳與下載的檔案會自動存進這個資料夾，分析頁會依檔名自動帶入最新、最適合的檔案；自行放進資料夾的檔案也讀得到。") + "</p>";
     }
     bar.innerHTML = html;
     const q = s => bar.querySelector(s);
-    if (q(".mrs-p")) q(".mrs-p").onchange = e => setProject(e.target.value);
-    if (q(".mrs-add")) q(".mrs-add").onclick = () => { mode = "add"; renderBar().then(() => q(".mrs-name") && q(".mrs-name").focus()); };
-    if (q(".mrs-ren")) q(".mrs-ren").onclick = () => { mode = "rename"; renderBar().then(() => { const i = q(".mrs-name"); if (i) { i.focus(); i.select(); } }); };
-    if (q(".mrs-cancel")) q(".mrs-cancel").onclick = () => { mode = ""; renderBar(); };
-    if (q(".mrs-ok")) {
-      const ok = mode === "add" ? addProject : renameProject;
-      q(".mrs-ok").onclick = ok;
-      q(".mrs-name").onkeydown = e => { if (e.key === "Enter") ok(); if (e.key === "Escape") { mode = ""; renderBar(); } };
-    }
     if (q(".mrs-grant")) q(".mrs-grant").onclick = async () => { if (await askPermission()) { await refresh(); autoLoad(); } };
-    if (q(".mrs-pick")) q(".mrs-pick").onclick = changeDir;
+    if (q(".mrs-pick")) q(".mrs-pick").onclick = pickDir;
     if (q(".mrs-files")) q(".mrs-files").onclick = () => { panel.hidden = !panel.hidden; renderBar(); renderPanel(); };
-  }
-
-  async function addProject() {
-    let n = cleanName(bar.querySelector(".mrs-name").value), dir = null;
-    if (HAS_FS) {
-      dir = await pickDir(null);            // 必須直接在點擊中開啟選擇視窗
-      if (!dir) return;
-      if (!n) n = cleanName(dir.name) || "未命名專案";
-    } else if (!n) { toast("請輸入專案名稱", true); return; }
-    if (nameTaken(n)) { toast("已有名為「" + n + "」的專案，請換一個名稱", true); return; }
-    const p = { id: "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: n, dir };
-    projects.push(p); await saveProjects();
-    mode = "";
-    toast("已建立專案「" + n + "」" + (dir ? "，資料夾「" + dir.name + "」" : ""));
-    await setProject(p.id);
-  }
-  async function renameProject() {
-    const n = cleanName(bar.querySelector(".mrs-name").value);
-    if (!n) { toast("請輸入專案名稱", true); return; }
-    if (nameTaken(n, cur.id)) { toast("已有名為「" + n + "」的專案，請換一個名稱", true); return; }
-    cur.name = n; await saveProjects();
-    mode = ""; toast("專案已改名為「" + n + "」");
-    await refresh();
-  }
-  async function changeDir() {
-    const h = await pickDir(cur.id);
-    if (!h) return;
-    cur.dir = h; curOK = true; await saveProjects();
-    toast("專案「" + cur.name + "」改用資料夾「" + h.name + "」");
-    loadedName = null;
-    await refresh(); autoLoad();
   }
 
   let armed = null;   // 刪除前需再按一次
   async function renderPanel() {
-    if (panel.hidden || !cur) return;
+    if (panel.hidden || !ready) return;
     let html = "";
     if (useFS()) {
-      const n = (await IDB.list(cur.id).catch(() => [])).length;
-      if (n) html += "<p class=\"warn\">這個專案還有 " + n + " 個檔案暫存在瀏覽器內。<button type=\"button\" class=\"mrs-move\">搬到資料夾「" + esc(cur.dir.name) + "」</button></p>";
+      const n = (await IDB.list().catch(() => [])).length;
+      if (n) html += "<p class=\"warn\">還有 " + n + " 個檔案暫存在瀏覽器內。<button type=\"button\" class=\"mrs-move\">搬到資料夾「" + esc(dir.name) + "」</button></p>";
     }
     if (!files.length) {
-      html += "<p class=\"soft\">專案「" + esc(cur.name) + "」目前沒有檔案。在各工具下載的檔案與上傳的檔案，都會自動存到這裡。</p>";
+      html += "<p class=\"soft\">目前沒有檔案。在各工具下載的檔案與上傳的檔案，都會自動存到這裡。</p>";
     } else {
       html += "<table><thead><tr><th>檔名</th><th>類型</th><th>時間</th><th>大小</th><th></th></tr></thead><tbody>" +
         files.map((f, i) => "<tr><td class=\"n\">" + esc(f.name) + "</td><td><span class=\"mrs-tag\">" + kindOf(f.name)[2] + "</span></td><td>" + when(f.mtime) + "</td><td>" + kb(f.size) +
           "</td><td style=\"white-space:nowrap\"><button type=\"button\" data-dl=\"" + i + "\">下載</button> <button type=\"button\" data-rm=\"" + i + "\">" + (armed === f.name ? "確定刪除？" : "刪除") + "</button>" + (armed === f.name ? " <button type=\"button\" data-cancel>取消</button>" : "") + "</td></tr>").join("") +
         "</tbody></table>";
-      if (!cur.dir) html += "<p class=\"soft\">檔案存在這個瀏覽器內；清除瀏覽資料或換電腦就會消失。<button type=\"button\" class=\"mrs-zip\">全部下載（zip）</button></p>";
+      if (!dir) html += "<p class=\"soft\">檔案存在這個瀏覽器內；清除瀏覽資料或換電腦就會消失。<button type=\"button\" class=\"mrs-zip\">全部下載（zip）</button></p>";
     }
     panel.innerHTML = html;
     panel.querySelectorAll("[data-dl]").forEach(b => b.onclick = async () => {
@@ -352,10 +330,10 @@
 
   async function moveToFolder() {
     let n = 0;
-    for (const f of await IDB.list(cur.id)) {
-      try { await FS.write(cur.dir, f.name, await f.get()); await IDB.remove(cur.id, f.name); n++; } catch (e) {}
+    for (const f of await IDB.list()) {
+      try { await FS.write(dir, f.name, await f.get()); await tx("files", "readwrite", s => s.delete(f.key)); n++; } catch (e) {}
     }
-    toast("已搬移 " + n + " 個檔案到「" + cur.dir.name + "」");
+    toast("已搬移 " + n + " 個檔案到「" + dir.name + "」");
     refresh();
   }
 
@@ -366,24 +344,15 @@
       const z = new JSZip();
       for (const f of files) z.file(f.name, await f.get());
       const blob = await z.generateAsync({ type: "blob" });
-      const a = document.createElement("a"); a.href = origCreate.call(URL, blob); a.download = cur.name + ".zip";
+      const a = document.createElement("a"); a.href = origCreate.call(URL, blob); a.download = "行銷研究工具箱檔案.zip";
       document.body.appendChild(a); origClick.call(a); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 3000);
     } catch (e) { toast("壓縮失敗，請改為逐一下載", true); }
   }
 
   async function refresh() {
-    try { files = await listCur(); } catch (e) { files = []; }
+    try { files = ready ? await listCur() : []; } catch (e) { files = []; }
     files.sort((a, b) => b.mtime - a.mtime);
     await renderBar(); await renderPanel(); renderAuto();
-  }
-
-  async function setProject(id) {
-    cur = projects.find(p => p.id === id) || null;
-    if (cur) localStorage.setItem(CUR_KEY, cur.id); else localStorage.removeItem(CUR_KEY);
-    await checkPermission();
-    loadedName = null;
-    await refresh();
-    autoLoad();
   }
 
   /* ---------- 自動載入 ---------- */
@@ -408,13 +377,13 @@
       anchor.parentNode.insertBefore(autoBox, anchor);
     }
     const c = candidates();
-    if (!cur) { autoBox.innerHTML = "<span class=\"soft\">建立專案（上方「＋新增專案」）後，上傳與下載的檔案會自動存進專案，下次直接帶入。</span>"; return; }
-    if (cur.dir && !curOK) { autoBox.innerHTML = "<span class=\"warn\">專案資料夾尚未授權，請按上方「連線資料夾」，即可自動帶入專案中的檔案。</span>"; return; }
+    if (!ready) { autoBox.innerHTML = "<span class=\"soft\">按上方「選擇資料夾」設定資料夾後，上傳與下載的檔案會自動存進資料夾，下次直接帶入。</span>"; return; }
+    if (dir && !dirOK) { autoBox.innerHTML = "<span class=\"warn\">資料夾尚未連線，請按上方「連線資料夾」，即可自動帶入資料夾中的檔案。</span>"; return; }
     if (!c.length) {
-      autoBox.innerHTML = "<span class=\"soft\">專案「" + esc(cur.name) + "」中還沒有適合本頁的檔案，請在下方上傳；上傳的檔案會自動存進專案，下次直接帶入。</span>";
+      autoBox.innerHTML = "<span class=\"soft\">資料夾中還沒有適合本頁的檔案，請在下方上傳；上傳的檔案會自動存進資料夾，下次直接帶入。</span>";
       return;
     }
-    autoBox.innerHTML = (loadedName ? "已從專案帶入：" : "專案中的檔案：") +
+    autoBox.innerHTML = (loadedName ? "已從資料夾帶入：" : "資料夾中的檔案：") +
       " <select>" + c.map((f, i) => "<option value=\"" + i + "\"" + (f.name === loadedName ? " selected" : "") + ">" + esc(f.name) + "（" + kindOf(f.name)[2] + "，" + when(f.mtime) + "）</option>").join("") + "</select>" +
       " <button type=\"button\" class=\"pri\">" + (loadedName ? "改用這個檔案" : "載入") + "</button>";
     const sel = autoBox.querySelector("select");
@@ -443,15 +412,15 @@
   }
 
 
-  window.MRStore = { save, kindOf, get project() { return cur ? cur.name : ""; } };
+  window.MRStore = { save, kindOf, get folder() { return dir ? dir.name : ""; } };
 
   const start = async () => {
     mountBar();
-    await loadProjects();
-    if (!HAS_FS) projects = projects.filter(p => !p.dir);   // 無法使用資料夾的瀏覽器只列瀏覽器內的專案
-    const want = localStorage.getItem(CUR_KEY);
-    const first = projects.find(p => p.id === want) || projects[0];
-    await setProject(first ? first.id : null);
+    await loadFolder();
+    await checkPermission();
+    loadedName = null;
+    await refresh();
+    autoLoad();
   };
   if (document.readyState === "complete") start(); else window.addEventListener("load", start);
 })();
