@@ -4,6 +4,7 @@
 // 2. 各頁下載的檔案（Excel、Word 報告、圖、CSV、設定檔）照常下載，同時存進資料夾；
 //    使用者上傳的檔案也會存一份，下次不必再上傳。尚未選資料夾時只照常下載。
 // 3. 進入分析頁時，依檔名元素（clean_、sim_clean_、fa_、seg_ 等前綴與關鍵字）自動載入最適合、最新的檔案，可改選。
+// 4. 各分析頁的填寫內容與貼上的 AI 回覆，依資料檔存成「頁面紀錄_頁面_資料檔.json」；下次載入同一資料檔時自動填回並套用。
 // 用法：<script src="../store.js"></script>，放在頁面程式之後、newver.js 之前。
 (() => {
   if (window.MRStore) return;
@@ -20,6 +21,7 @@
     ["report", /報告.*\.docx$/i, "報告"],
     ["word", /\.docx$/i, "問卷 Word"],
     ["image", /\.(png|svg|jpe?g)$/i, "圖"],
+    ["state", /^頁面紀錄_.*\.json$/i, "頁面紀錄"],
     ["config", /\.json$/i, "設定"],
     ["raw", /\.(xlsx|csv|omv)$/i, "原始回覆"],
     ["other", /./, "其他"]
@@ -421,6 +423,119 @@
     loadInto(c[0]);
   }
 
+
+  /* ---------- 頁面紀錄：填寫內容與貼上的 AI 回覆跟著資料檔存進資料夾 ---------- */
+  // 每個分析頁、每個資料檔各存一份「頁面紀錄_頁面_資料檔.json」（資料檔名去掉 clean_、fa_、seg_ 等前綴，
+  // 同一份研究在整理、因素分析、市場區隔各階段的資料檔共用同一名稱）。
+  // 載入資料檔後自動填回上次的內容並觸發各頁原本的處理（名稱帶入、表格更新），不必重新貼上或重新執行 AI。
+  const stemOf = name => {
+    let b = String(name || "").replace(/\.[^.]+$/, ""), prev;
+    do { prev = b; b = b.replace(/^(?:sim_clean|clean|sim|fa|seg|efa-result|cfa-result|seg-result|seg-cluster)_/i, ""); } while (b !== prev);
+    return b.replace(/_(因素分析資料|因素分數資料|集群資料|市場區隔資料|市場區隔分析結果|EFA分析結果|CFA分析結果)$/, "").replace(/[\\/:*?"<>|]/g, "_");
+  };
+  let stKey = "", stFields = {}, stTimer = null, restoring = false, stGen = 0;
+  const stName = () => "頁面紀錄_" + PAGE + "_" + stKey + ".json";
+  const TEXTY = /^(text|search|number|email|url|tel|date|month|week|time)$/;
+  function stEligible(e) {
+    if (!e || !e.tagName || e.closest(".mrs") || e.hasAttribute("data-nosave") || e.disabled && e.type !== "checkbox") return false;
+    if (e.tagName === "TEXTAREA") return !e.readOnly;
+    if (e.tagName === "SELECT") return true;
+    if (e.tagName === "INPUT") return !e.readOnly && (TEXTY.test(e.type) || e.type === "checkbox" || e.type === "radio");
+    return false;
+  }
+  function stKeyOf(e) {
+    if (e.type === "radio" && e.name) return "r:" + e.name;
+    if (e.id) return "#" + e.id;
+    const ds = [...e.attributes].filter(a => /^data-/.test(a.name));
+    let sel = e.tagName.toLowerCase() + (e.name ? "[name=\"" + CSS.escape(e.name) + "\"]" : "") + ds.map(a => "[" + a.name + "=\"" + CSS.escape(a.value) + "\"]").join("");
+    if (!e.name && !ds.length) return null;
+    const all = [...document.querySelectorAll(sel)];
+    return "s:" + sel + "|" + all.indexOf(e);
+  }
+  function stFind(k) {
+    if (k.startsWith("#")) return [document.getElementById(k.slice(1))].filter(Boolean);
+    if (k.startsWith("r:")) return [...document.getElementsByName(k.slice(2))].filter(e => e.type === "radio");
+    const i = k.lastIndexOf("|"), sel = k.slice(2, i), n = +k.slice(i + 1);
+    try { const e = document.querySelectorAll(sel)[n]; return e ? [e] : []; } catch (err) { return []; }
+  }
+  const stVal = e => e.type === "checkbox" ? e.checked : e.value;
+  function stSnapshot() {
+    const out = Object.assign({}, stFields);
+    document.querySelectorAll("textarea,select,input").forEach(e => {
+      if (!stEligible(e)) return;
+      const k = stKeyOf(e); if (!k) return;
+      if (e.type === "radio") { if (e.checked) out[k] = e.value; return; }
+      out[k] = stVal(e);
+    });
+    return out;
+  }
+  async function stWrite() {
+    clearTimeout(stTimer); stTimer = null;
+    if (!stKey || !ready || restoring || (dir && !dirOK)) return;
+    stFields = stSnapshot();
+    const blob = new Blob([JSON.stringify({ page: PAGE, file: stKey, saved: new Date().toISOString(), fields: stFields }, null, 1)], { type: "application/json" });
+    try { await writeCur(stName(), blob); } catch (e) { try { await IDB.write(stName(), blob); } catch (e2) {} }
+  }
+  const stSchedule = () => { if (!stKey || restoring) return; clearTimeout(stTimer); stTimer = setTimeout(stWrite, 1500); };
+  const settle = (quiet, max) => new Promise(res => {
+    let t, done = false; const end = () => { if (done) return; done = true; mo.disconnect(); clearTimeout(t); clearTimeout(cap); res(); };
+    const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(end, quiet); });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+    t = setTimeout(end, quiet); const cap = setTimeout(end, max);
+  });
+  function stApply(k, v) {
+    const els = stFind(k); if (!els.length) return false;
+    let e = els[0];
+    if (k.startsWith("r:")) { e = els.find(x => x.value === v); if (!e || e.checked) return false; e.checked = true; }
+    else if (e.type === "checkbox") { if (e.checked === !!v) return false; e.checked = !!v; }
+    else { if (e.value === v) return false; e.value = v; if (e.tagName === "SELECT" && e.value !== v) return false; }
+    e.dispatchEvent(new Event("input", { bubbles: true }));
+    e.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+  async function stRestore(gen) {
+    if (!ready || (dir && !dirOK)) return;
+    let f = null;
+    try { f = (await listCur()).find(x => x.name === stName()); } catch (e) {}
+    if (gen !== stGen) return;
+    if (!f) { stFields = {}; return; }
+    let data;
+    try { data = JSON.parse(await (await f.get()).text()); } catch (e) { return; }
+    const fields = data && data.fields || {};
+    restoring = gen;
+    try {
+      await settle(700, 8000);
+      const tries = {}, toggle = k => { if (k.startsWith("r:")) return true; const e = stFind(k)[0]; return !!e && (e.tagName === "SELECT" || e.type === "checkbox"); };
+      const t0 = Date.now(); let idle = 0, n = 0;
+      while (Date.now() - t0 < 20000 && gen === stGen) {
+        const keys = Object.keys(fields).filter(k => (tries[k] || 0) < 3);
+        const tog = keys.filter(toggle), txt = keys.filter(k => !toggle(k));
+        let changed = false;
+        for (const k of tog) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
+        if (!changed) for (const k of txt) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
+        if (changed) { idle = 0; await settle(400, 5000); continue; }
+        if (++idle >= 3) break;
+        await settle(500, 2000);
+      }
+      if (gen === stGen) { stFields = Object.assign({}, fields); if (n) toast("已從資料夾帶回上次的填寫內容與 AI 回覆"); }
+    } finally { if (restoring === gen) restoring = false; }
+  }
+  function stSetFile(name) {
+    if (!CONF || !name) return;
+    const k = stemOf(name);
+    if (stTimer && stKey) stWrite();
+    stKey = k; stFields = {}; const gen = ++stGen;
+    stRestore(gen);
+  }
+  if (CONF) {
+    document.addEventListener("change", e => { const t = e.target; if (t && t.type === "file" && t.id === CONF.input && t.files && t.files[0]) stSetFile(t.files[0].name); }, true);
+    document.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) stSetFile(f.name); }, true);
+    const onEdit = e => { if (!restoring && stEligible(e.target)) stSchedule(); };
+    document.addEventListener("input", onEdit, true);
+    document.addEventListener("change", onEdit, true);
+    window.addEventListener("pagehide", () => { if (stTimer) stWrite(); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && stTimer) stWrite(); });
+  }
 
   window.MRStore = { save, kindOf, get folder() { return dir ? dir.name : ""; } };
 
