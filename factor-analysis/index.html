@@ -256,14 +256,14 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <summary>檢視指令內容</summary>
       <pre class="prompt" id="prompt"></pre>
     </details>
-    <h3>因素分析結果表</h3>
-    <p class="hint">表格由本工具依分析結果產生，格式與數值不經 AI。因素欄採用步驟 5 填入的因素名稱；按「複製表1」後可直接貼到 Word，保留合併儲存格與框線。</p>
-    <div id="fa-msg"></div>
     <div class="replybox">
       <b>貼上 AI 回覆</b>　把 AI 的完整回覆貼在下方：最後一行的建議因素名稱會自動填入步驟 5，表1 同步更新；按「下載 Word 報告」即可取得含表1 的 .docx 檔（報告前的建議與建議因素名稱不放入檔案）。
       <textarea id="ai-reply" rows="4" placeholder="貼上 AI 的完整回覆"></textarea>
       <div class="row"><button type="button" class="primary" id="btn-docx">下載 Word 報告（.docx）</button><span class="small" id="ai-reply-msg"></span></div>
     </div>
+    <h3>因素分析結果表</h3>
+    <p class="hint">表格由本工具依分析結果產生，格式與數值不經 AI。因素欄採用步驟 5 填入的因素名稱；按「複製表1」後可直接貼到 Word，保留合併儲存格與框線。</p>
+    <div id="fa-msg"></div>
     <div class="table-scroll" id="fa-table"></div>
     <button type="button" id="btn-copy-fa">複製表1</button>
     <div class="notice ok" style="margin-top:14px"><b>下一步：</b>若量表中有要建立指標的構念（例如獨立我、相依我），請<a href="#" data-goto="cfa">繼續進行驗證性因素分析（CFA）</a>；若不進行 CFA，請直接<a href="#" data-goto="dl">前往下載結果</a>，下載因素分析資料檔，再上傳至市場區隔分析。</div>
@@ -303,16 +303,16 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint">指令已自動填入配適度、標準化負荷量、CR、AVE 與構念間相關。複製後貼到 AI 對話中，AI 會撰寫驗證性因素分析報告與指標建立方式。</p>
     <div class="row"><button type="button" class="primary" id="btn-copy-cfa">複製驗證性因素分析報告指令</button><span class="small" id="cfa-prompt-len"></span></div>
     <details><summary>檢視指令內容</summary><pre class="prompt" id="cfa-prompt"></pre></details>
-    <h3>驗證性因素分析結果表</h3>
-    <div class="table-scroll" id="cfa-table"></div>
-    <button type="button" id="btn-copy-cfa-table">複製表2</button>
     <h3>AI 回覆與 Word 報告</h3>
-    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：開頭自動加上標題「驗證性因素分析」，「〔插入表2〕」會換成上方的表2（含註）。</p>
+    <p class="hint">把 AI 的完整回覆貼在下方，按「下載 Word 報告」即可取得 .docx 檔：開頭自動加上標題「驗證性因素分析」，「〔插入表2〕」會換成下方的表2（含註）。</p>
     <textarea id="cfa-reply" rows="10" placeholder="貼上 AI 的完整回覆"></textarea>
     <div class="row" style="margin-top:8px">
       <button type="button" class="primary" id="btn-docx-cfa">下載 Word 報告（.docx）</button>
       <span class="small" id="cfa-reply-msg"></span>
     </div>
+    <h3>驗證性因素分析結果表</h3>
+    <div class="table-scroll" id="cfa-table"></div>
+    <button type="button" id="btn-copy-cfa-table">複製表2</button>
     <div class="notice ok" style="margin-top:14px"><b>下一步：</b>完成 CFA 後，請<a href="#" data-goto="dl">前往下載結果</a>，下載因素分析資料檔（含 CFA 建立的指標），再上傳至市場區隔分析。</div>
   </section>
   </div>
