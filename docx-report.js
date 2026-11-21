@@ -109,6 +109,7 @@
       });
     });
     const W = fitWidths(grid, ncol, sz);
+    table.lastWidth = W.reduce((a, b) => a + b, 0);
     const ln = '<w:LINE w:val="single" w:sz="4" w:space="0" w:color="000000"/>';
     const bd = ["top", "left", "bottom", "right", "insideH", "insideV"].map(s => ln.replace("LINE", s)).join("");
     let x = '<w:tbl><w:tblPr><w:tblW w:w="' + W.reduce((a, b) => a + b, 0) + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders>' + bd + '</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="' + PAD + '" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="' + PAD + '" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'
@@ -135,7 +136,7 @@
     o = o || {};
     return '<w:p><w:pPr>' + (o.keepNext ? '<w:keepNext/>' : '')
       + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after || 0) + '" w:line="' + (o.line || 360) + '" w:lineRule="auto"/>'
-      + (o.indent ? '<w:ind w:firstLineChars="200" w:firstLine="480"/>' : '')
+      + (o.indent ? '<w:ind w:firstLineChars="200" w:firstLine="480"/>' : o.side ? '<w:ind w:left="' + o.side + '" w:right="' + o.side + '"/>' : '')
       + '<w:jc w:val="' + (o.jc || "both") + '"/></w:pPr>' + (text ? run(text, { b: o.b, sz: o.sz }) : '') + '</w:p>';
   }
   function bodyXml(blocks, tables) {
@@ -143,9 +144,11 @@
     blocks.forEach(k => {
       if (k.t === "table") {
         const T = tables[k.n]; if (!T) return;
-        b += para(T.cap, { jc: "left", keepNext: true, before: 120, after: 60, line: 240 })
-          + table(T.html, T)
-          + (T.note ? para(T.note, { sz: 20, line: 240, before: 40 }) : '')
+        // 表格置中；表號與註對齊表格左緣（寬度與表格相同）
+        const tx = table(T.html, T), side = Math.max(0, Math.floor((PAGE_W - table.lastWidth) / 2));
+        b += para(T.cap, { jc: "left", keepNext: true, before: 120, after: 60, line: 240, side })
+          + tx
+          + (T.note ? para(T.note, { sz: 20, line: 240, before: 40, side }) : '')
           + para("", { line: 240 });
       }
       else if (k.t === "h0") b += para(k.x, { b: true, sz: 28, jc: "center", after: 240 });
