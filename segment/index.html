@@ -374,8 +374,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     </div>
     <div class="savebox" id="pos-box">
       <h3>知覺定位問卷資料</h3>
-      <p class="hint">下一步若要製作品牌定位問卷（全體受訪者填答相同的問卷），請複製資料，貼到<a href="../positioning-survey/">知覺定位問卷產生器</a>的「一鍵帶入」欄。資料包含競爭品牌、因素分析結果、各區隔的輪廓特徵（▲）與各區隔描述，產生器會自動填入對應欄位。</p>
-      <div class="row"><label class="inline">研究標的 <input type="text" id="pos-target-name" style="width:12em" placeholder="例：包裝綠茶"></label><button type="button" class="primary" id="btn-copy-pos">複製知覺定位問卷資料</button></div>
+      <p class="hint">下一步若要製作品牌定位問卷（全體受訪者填答相同的問卷），這份資料會自動存入研究紀錄 .md；開啟<a href="../positioning-survey/">知覺定位問卷產生器</a>並選同一份研究紀錄，就會自動帶入，不必複製貼上。資料包含研究標的、競爭品牌、因素分析結果、各區隔的輪廓特徵（▲）與各區隔描述。</p>
+      <div class="row"><label class="inline">研究標的 <input type="text" id="pos-target-name" style="width:12em" placeholder="例：包裝綠茶"></label><span class="small" id="pos-rec-msg"></span></div>
       <p class="hint small">研究標的依問卷題目自動判斷，若不正確請直接修改。</p>
       <details><summary>檢視資料內容</summary><pre class="prompt" id="pos-out"></pre></details>
     </div>
@@ -1869,7 +1869,7 @@ function readScreen(wb){
 
 /* ---------- AI 指令：市場區隔分析報告（修正版） ---------- */
 
-/* ---------- 知覺定位問卷資料（貼到知覺定位問卷產生器） ---------- */
+/* ---------- 知覺定位問卷資料（存入研究紀錄 .md，知覺定位問卷產生器自動帶入） ---------- */
 function brandGroup(){
   /* 與品牌有關的複選或是非題組：題組名稱或題目含「品牌」「喝過」「買過」「購買過」「使用過」 */
   const byPf=new Map();
@@ -1890,7 +1890,7 @@ function posText(){
   const K=c.k, k=S.nf, fl=Array.from({length:k},(_,j)=>flabel(j)), FI=faInfo(), r=S.res, ord=["一","二","三","四","五","六","七","八","九","十"];
   const nm=g=>slabel(g), pc=g=>Math.round(c.N[g]/S.seg.n*100)+"%";
   const stem=it=>String(it.c.stem||"").replace(/^\s*\d+\s*[.．、]\s*/,"");
-  const L=["【知覺定位問卷資料】（由市場區隔分析工具產生，請貼到知覺定位問卷產生器的「一鍵帶入」欄）"];
+  const L=["【知覺定位問卷資料】（由市場區隔分析工具產生，存於研究紀錄，知覺定位問卷產生器會自動帶入）"];
   const tn=($("pos-target-name").value||"").trim(); L.push("■研究標的"); L.push(tn||"（請自行填寫）");
   const bg=brandGroup();
   L.push("■競爭品牌"); L.push(bg?bg.list.map(b=>b.name).join("、"):"（輪廓變數中找不到品牌題組，請自行填寫）");
@@ -2160,7 +2160,9 @@ $("only-sig").addEventListener("change",()=>{ if (S.seg) renderProfile(true); })
 $("topic").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
 $("focal-brand").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
 $("btn-copy-seg").addEventListener("click",()=>copyText($("seg-prompt").textContent,"已複製市場區隔分析報告指令"));
-$("btn-copy-pos").addEventListener("click",()=>copyText(posText(),"已複製知覺定位問卷資料"));
+function posRecMsg(r){ const m=$("pos-rec-msg"); if (!m) return; m.textContent=r?"已存入「研究紀錄_"+r+".md」":"選好資料夾並載入資料後，會自動存入研究紀錄 .md"; }
+window.addEventListener("mr-research",e=>posRecMsg(e.detail&&e.detail.research));
+posRecMsg(window.MRStore&&window.MRStore.research);
 /* 研究紀錄（../store.js）：把知覺定位問卷資料寫入研究紀錄 .md，知覺定位問卷產生器據此自動帶入 */
 window.MRRecordExtra=()=>{ try { return S.seg&&curRun()&&S.res?[{title:"知覺定位問卷資料",text:posText()}]:[]; } catch(e){ return []; } };
 $("pos-target-name").addEventListener("input",e=>{ e.target.dataset.touched="1"; $("pos-out").textContent=posText(); });

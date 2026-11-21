@@ -93,12 +93,15 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </div>
 
   <div class="group">
-    <p class="group-title">一鍵帶入市場區隔分析的資料</p>
+    <p class="group-title">從研究紀錄帶入市場區隔分析的資料</p>
     <div class="field">
-      <label for="import">貼上「知覺定位問卷資料」<span class="opt">建議使用</span></label>
-      <textarea id="import" placeholder="在市場區隔分析工具的步驟 7 按「複製知覺定位問卷資料」，貼在這裡後按「帶入」。"></textarea>
-      <div class="toolbar" style="align-items:center"><button type="button" class="primary" id="btnImport">帶入下方各欄</button><span class="note" id="n-import">貼上後會自動帶入；若沒有反應，請按此按鈕。</span></div>
-      <p class="help">會自動填入研究標的、競爭品牌、因素分析結果、區隔剖析結果與市場區隔描述；帶入後仍可在下方逐欄檢查與修改。已設定資料夾時，頁面頂端選定研究紀錄後，會自動帶入該研究在市場區隔分析工具的結果，不必再複製貼上。沒有使用<a href="../segment/">市場區隔分析工具</a>時，請直接填寫下方各欄。</p>
+      <p class="help" id="rec-pos-msg">在頁面頂端的「研究紀錄」選擇研究後，會自動讀入該研究在<a href="../segment/">市場區隔分析工具</a>的結果。</p>
+      <div class="toolbar" style="align-items:center"><button type="button" class="primary" id="btnRecImport">從研究紀錄重新帶入</button><span class="note" id="n-import"></span></div>
+      <p class="help">會自動填入研究標的、競爭品牌、因素分析結果、區隔剖析結果與市場區隔描述；帶入後仍可在下方逐欄檢查與修改。沒有使用市場區隔分析工具時，請直接填寫下方各欄。</p>
+      <details><summary>沒有研究紀錄時：手動貼上「知覺定位問卷資料」</summary>
+        <textarea id="import" placeholder="貼上市場區隔分析工具步驟 7「檢視資料內容」裡的文字，會自動帶入；若沒有反應，請按下方按鈕。"></textarea>
+        <div class="toolbar"><button type="button" id="btnImport">帶入下方各欄</button></div>
+      </details>
     </div>
   </div>
 
@@ -502,6 +505,18 @@ function doImport(silent){
   const g = el.brands.closest(".group"); if (g) g.scrollIntoView({behavior:"smooth", block:"start"});
 }
 $("btnImport").addEventListener("click", () => doImport(false));
+$("btnRecImport").addEventListener("click", async () => {
+  if (!window.MRStore || !window.MRStore.posReload) { toast("研究紀錄尚未就緒"); return; }
+  const r = await window.MRStore.posReload();
+  if (r === "none") toast("請先在頁面頂端選擇研究紀錄");
+  else if (r === "missing") toast("這份研究紀錄還沒有市場區隔分析的結果");
+});
+window.addEventListener("mr-pos", e => {
+  const d = e.detail || {}, m = $("rec-pos-msg");
+  m.textContent = !d.research ? "在頁面頂端的「研究紀錄」選擇研究後，會自動讀入該研究在市場區隔分析工具的結果。"
+    : d.found ? "研究紀錄「" + d.research + "」：已讀入市場區隔分析的結果" + (d.imported ? "。" : "（目前內容已是最新）。")
+    : "研究紀錄「" + d.research + "」還沒有市場區隔分析的結果；請先在市場區隔分析工具完成步驟 7。";
+});
 try{ const saved=localStorage.getItem("mr.researchTarget"); if (saved && !el.target.value){ el.target.value=saved; build(); } }catch(e){}
 $("import").addEventListener("paste", () => setTimeout(() => doImport(true), 0));
 $("btnClear").addEventListener("click", () => {

@@ -276,6 +276,7 @@
   let files = [];
 
   async function renderBar() {
+    window.dispatchEvent(new CustomEvent("mr-research", { detail: { research: typeof research === "string" ? research : "" } }));
     let html = HOME ? "<b class=\"mrs-title\">資料夾</b>" : "<b>資料夾</b> ";
     if (loading) {
       bar.innerHTML = html + "<span class=\"soft\">讀取中…</span>";
@@ -669,26 +670,37 @@
     try {
       await settle(700, 8000);
       if (pd && pd.fields) { n = await applyFields(pd.fields, gen); if (gen === stGen) stFields = Object.assign({}, pd.fields); }
-      if (PAGE === "positioning-survey" && gen === stGen) imported = await posImport(rec, pd);
+      if (PAGE === "positioning-survey" && gen === stGen) imported = rec ? await posImport(rec, pd) : (posEvt({ research, found: false }), false);
     } finally { if (restoring === gen) restoring = false; }
     if (gen !== stGen) return;
     if (n && !imported) toast("已從研究紀錄帶回上次的填寫內容與 AI 回覆");
     lastBody = ""; stSchedule();
   }
   /* 知覺定位問卷產生器：帶入市場區隔分析的結果 */
-  async function posImport(rec, pd) {
+  const posEvt = d => window.dispatchEvent(new CustomEvent("mr-pos", { detail: d }));
+  async function posImport(rec, pd, force) {
     const txt = sectionText(rec, "segment", "知覺定位問卷資料") || sectionText(rec, "segmentation", "知覺定位問卷資料");
     const ta = document.getElementById("import");
-    if (!txt || !ta) return false;
+    if (!ta) return false;
+    if (!txt) { posEvt({ research, found: false }); return false; }
     const segData = rec.data.pages.segment || rec.data.pages.segmentation || {};
-    const newer = !pd || !pd.saved || (segData.saved && segData.saved > pd.saved);
-    if (ta.value.trim() === txt.trim() || !newer) return false;
+    const newer = force || !pd || !pd.saved || (segData.saved && segData.saved > pd.saved);
+    if ((!force && ta.value.trim() === txt.trim()) || !newer) { posEvt({ research, found: true, imported: false }); return false; }
     ta.value = txt;
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta.dispatchEvent(new Event("paste", { bubbles: true }));
     await settle(400, 3000);
     toast("已從研究紀錄「" + research + "」帶入市場區隔分析的結果");
+    posEvt({ research, found: true, imported: true });
     return true;
+  }
+  async function posReload() {
+    if (!research) { posEvt({ research: "" }); return "none"; }
+    const rec = await readRecord(research);
+    if (!rec) { posEvt({ research, found: false }); return "missing"; }
+    const ok = await posImport(rec, null, true);
+    stSchedule();
+    return ok ? "ok" : "missing";
   }
 
   async function setResearch(r, opts) {
@@ -806,7 +818,7 @@
   }
 
 
-  window.MRStore = { save, kindOf, get folder() { return dir ? dir.name : ""; } };
+  window.MRStore = { save, kindOf, posReload, get folder() { return dir ? dir.name : ""; }, get research() { return research; } };
 
   const start = async () => {
     mountBar();
