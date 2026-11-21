@@ -1577,7 +1577,7 @@ function renderProfile(keepPicker){
   if (!keepPicker) renderProfPicker();
   const P=computeProfile(); S.prof=P;
   const onlySig=$("only-sig").checked, K=P.K;
-  const head='<th>'+Array.from({length:K},(_,g)=>"集群"+(g+1)).join('</th><th>')+'</th><th>全體</th>';
+  const head='<th>'+Array.from({length:K},(_,g)=>esc(slabel(g))).join('</th><th>')+'</th><th>全體</th>';
   const headP='<th>'+Array.from({length:K},(_,g)=>esc(slabel(g))).join('</th><th>')+'</th><th>人數</th>';
   let html="", ah="";
   const chiL=P.list.filter(x=>x.type!=="num"), numL=P.list.filter(x=>x.type==="num");
@@ -1597,7 +1597,7 @@ function renderProfile(keepPicker){
     });
     ah+='</tbody></table></div>';
     const ph=L.filter(x=>x.sig);
-    if (ph.length) ah+='<p class="small"><b>事後比較（Games-Howell）：</b>'+ph.map(x=>esc(numLabel(x.pc))+'：'+(x.gh.length?x.gh.map(d=>{ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return "集群"+(hi+1)+" > 集群"+(lo+1); }).join("、"):"整體檢定顯著，但沒有任何兩群的差異達顯著")).join("；")+'</p>';
+    if (ph.length) ah+='<p class="small"><b>事後比較（Games-Howell）：</b>'+ph.map(x=>esc(numLabel(x.pc))+'：'+(x.gh.length?x.gh.map(d=>{ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return esc(slabel(hi))+" > "+esc(slabel(lo)); }).join("、"):"整體檢定顯著，但沒有任何兩群的差異達顯著")).join("；")+'</p>';
   });
   if (numL.length) ah+='<p class="hint small">上方數字為標準化平均數（以參與分群的有效樣本標準化，平均數 0、標準差 1），可與群中心值直接比較；下方灰字為原始平均數（CFA 指標為題項平均數，保留原量表的單位）。標準化不影響 F、p 與 η²。顯著時以粗體標示平均數最高的集群，並以 Games-Howell 法列出平均數差異達顯著（p &lt; '+fp(P.a)+'）的集群配對。</p>';
   $("anova-out").innerHTML=ah;
@@ -1627,10 +1627,10 @@ function renderProfile(keepPicker){
   html+='<p class="hint small">輪廓變數為 X、市場區隔為 Y：每一列的百分比為該類別（或勾選該選項）的受訪者分布在各區隔的比例（以輪廓變數為條件，列合計 100%），請與最上方「全體（各區隔比例）」比較。整體檢定達顯著時，▲／▽表示該格的提升指數（觀察次數 ÷ 期望次數 × 100）≥ '+IDX_HI+' 或 ≤ '+IDX_LO+'，即該類別的受訪者落在該區隔的比例明顯高於或低於全體；提升指數 = 該區隔佔特定輪廓組別的比例 ÷ 該區隔佔全體的比例 × 100。類別人數未達 '+MIN_N+' 人者標示「人數少」，其百分比與指數變動大，僅供參考。</p>';
   $("prof-out").innerHTML=html;
 }
-function ghTxt(d){ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return "集群"+(hi+1)+" > 集群"+(lo+1)+"（"+pTxt(d.p)+"）"; }
+function ghTxt(d){ const hi=d.diff>0?d.i:d.j, lo=d.diff>0?d.j:d.i; return slabel(hi)+" > "+slabel(lo)+"（"+pTxt(d.p)+"）"; }
 function profText(){
   const P=S.prof; if (!P||!P.list.length) return null;
-  const sig=P.list.filter(x=>x.sig), K=P.K, cl=g=>"集群"+(g+1);
+  const sig=P.list.filter(x=>x.sig), K=P.K, cl=slabel;
   const L=["顯著水準 α = "+fp(P.a)+"；共檢定 "+P.list.length+" 個變數，以下列出達顯著者。輪廓變數為 X、市場區隔為 Y：百分比為該類別（或勾選該選項）的受訪者分布在各集群的比例（以輪廓變數為條件），應與「全體」的各集群比例比較；▲／▽表示整體檢定達顯著，且該類別的受訪者落在該群的比例明顯高於／低於全體：提升指數（lift index；該區隔佔特定輪廓組別的比例 ÷ 該區隔佔全體的比例 × 100，等於觀察次數 ÷ 期望次數 × 100）≥ "+IDX_HI+" 為 ▲，≤ "+IDX_LO+" 為 ▽，標示 ▲／▽ 的格子附上指數；類別人數未達 "+MIN_N+" 人者註明「人數少，僅供參考」。量化輪廓變數以單因子變異數分析比較，標準化平均數以參與分群的有效樣本標準化（平均數 0、標準差 1），可與群中心值直接比較；達顯著者以 Games-Howell 法進行事後比較，只列出平均數差異達顯著的集群配對。"];
   if (!sig.length){ L.push("所檢定的變數皆未達顯著水準。"); return L.join("\n"); }
   sig.forEach((x,i)=>{
@@ -2044,7 +2044,7 @@ function loadingSheets(wb){
 function segSheets(wb){
   if (!S.seg||!curRun()) return;
   const G=S.seg, c=curRun(), k=S.nf;
-  const a1=[["構面","因素"].concat(c.N.map((_,g)=>"集群"+(g+1)))];
+  const a1=[["構面","因素"].concat(c.N.map((_,g)=>slabel(g)))];
   for (let j=0;j<k;j++) a1.push([flabel(j),"因素"+(j+1)].concat(c.C.map(cc=>round(cc[j],3))));
   a1.push(["人數",""].concat(c.N)); a1.push(["比例 (%)",""].concat(c.N.map(x=>round(x/G.n*100,1))));
   a1.push([]); a1.push(["K 平均法，"+c.k+" 群；分群變數為標準化因素分數；有效樣本 "+G.n+" 筆"]);
@@ -2054,7 +2054,7 @@ function segSheets(wb){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),"群數比較");
   const P=S.prof;
   if (P&&P.list.length){
-    const K=P.K, cls=Array.from({length:K},(_,g)=>"集群"+(g+1));
+    const K=P.K, cls=Array.from({length:K},(_,g)=>slabel(g));
     const a3=[["變數","檢定","類別／選項"].concat(cls).concat(["全體平均／人數","統計量","df","p","達顯著"])];
     P.list.forEach(x=>{
       const t=x.test, sig=x.sig?"是":"";
