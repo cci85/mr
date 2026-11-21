@@ -1,7 +1,8 @@
 // 問卷編輯器：把貼回來的 AI 回覆解析成問卷（標題、問候語、部份、題目、選項、量表題），
 // 可逐題檢視與編輯，下載 Word 問卷（同時存入資料夾）、複製純文字，並自動保存在這個瀏覽器內。
 // AI 回覆中給教師檢查的附註、程式碼區塊外的說明文字另外收合顯示，不列入問卷。
-// 用法：SurveyEditor.mount({ before: 元素, key: "pickany", step: 3, fileName: () => "Pick-any問卷_手搖飲料" })
+// 用法：SurveyEditor.mount({ before: 元素, key: "pickany", step: 3, fileName: () => "Pick-any問卷_手搖飲料", setup: 步驟 1 區塊, setupSummary: () => "摘要" })
+// 已有問卷內容時，步驟 1 與「貼上 AI 回覆」欄自動收合；before 若為「建立 Google 表單」區塊，預設收合。
 (() => {
   if (window.SurveyEditor) return;
 
@@ -297,11 +298,38 @@
 .sve-note pre{white-space:pre-wrap;word-break:break-word;font-family:inherit;font-size:13px;line-height:1.7;background:var(--code-surface,var(--code-bg,#fbfbf8));border:1px solid var(--border,#dcdfd8);border-radius:8px;padding:10px 12px;margin:8px 0 0;max-height:320px;overflow:auto}
 .sve-toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:10000;max-width:90vw;padding:8px 16px;border-radius:8px;background:#28594f;color:#fff;font:14px/1.5 "Noto Sans TC","Microsoft JhengHei",sans-serif;opacity:0;transition:opacity .25s;pointer-events:none}
 .sve-toast.show{opacity:1}
-@media (prefers-color-scheme:dark){.sve-view{background:#f7f5ef}}`;
+@media (prefers-color-scheme:dark){.sve-view{background:#f7f5ef}}
+.sve-fold>h2,.sve-fold>.out-head>h2{cursor:pointer;flex-wrap:wrap}
+.sve-fold.sve-closed>*:not(h2):not(style){display:none!important}
+button.sve-tog{margin-left:auto!important;font:400 13px/1.5 "Noto Sans TC",sans-serif!important;border:1px solid var(--border,var(--line,#dcdfd8))!important;border-radius:6px!important;background:transparent!important;color:var(--ink-soft,#5f6b64)!important;padding:3px 10px!important;cursor:pointer}
+.sve-sum{flex-basis:100%;font-family:"Noto Sans TC",sans-serif;font-size:13px;font-weight:400;color:var(--ink-soft,var(--muted,#5f6b64));margin-left:36px}
+.sve-sum:empty{display:none}
+.sve-rawbox{margin:4px 0 0}
+.sve-rawbox>summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64));margin-bottom:6px}`;
 
   const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const typeOf = b => b.t === "part" ? "部份標題" : b.t === "lk" ? "量表題" : b.t === "text" ? (b.role === "greet" ? "問候語" : b.role === "inst" ? "作答說明" : b.role === "end" ? "結尾" : "文字")
     : b.scale ? "量表題（單行）" : !b.opts.length ? "填答題" : /複選|最多選|可選/.test(b.x) ? "複選題" : "單選題";
+
+  /* 收合區塊：點標題列或「展開／收合」切換；sum() 回傳收合時標題下方的摘要 */
+  function fold(sec, open, sum) {
+    if (!sec) return null;
+    const h = sec.querySelector(":scope > h2");
+    if (!h) return null;
+    sec.classList.add("sve-fold");
+    const btn = document.createElement("button"); btn.type = "button"; btn.className = "sve-tog";
+    const sp = document.createElement("span"); sp.className = "sve-sum";
+    h.appendChild(btn); h.appendChild(sp);
+    const set = v => {
+      sec.classList.toggle("sve-closed", !v);
+      btn.textContent = v ? "收合" : "展開";
+      btn.setAttribute("aria-expanded", String(v));
+      sp.textContent = v ? "" : (sum ? sum() : "");
+    };
+    h.addEventListener("click", e => { if (e.target.closest("a,input,select,textarea") || (e.target.closest("button") && e.target !== btn)) return; set(sec.classList.contains("sve-closed")); });
+    set(open);
+    return { set, get open() { return !sec.classList.contains("sve-closed"); } };
+  }
 
   function mount(o) {
     if (!document.getElementById("sve-css")) { const s = document.createElement("style"); s.id = "sve-css"; s.textContent = CSS; document.head.appendChild(s); }
@@ -313,14 +341,21 @@
     const card = document.createElement("section");
     card.className = "sve-card";
     card.innerHTML = '<h2><span class="sve-step">' + (o.step || 3) + '</span>貼上 AI 回覆，檢視與編輯問卷</h2>'
+      + '<details class="sve-rawbox"><summary>貼上或更換 AI 回覆</summary>'
       + '<p class="sve-lead">把 AI 回覆的問卷整段貼在下面（含其他說明文字也沒關係），網站會拆成標題、問候語、各題與選項，可逐題修改後下載 Word 問卷。內容會自動保存在這個瀏覽器內。</p>'
       + '<textarea class="sve-raw" placeholder="在這裡貼上 AI 回覆的完整問卷"></textarea>'
-      + '<div class="sve-row"><button type="button" class="pri sve-parse">解析回覆</button><span class="sve-msg sve-pmsg"></span></div>'
+      + '<div class="sve-row"><button type="button" class="pri sve-parse">解析回覆</button></div></details>'
+      + '<p class="sve-msg sve-pmsg"></p>'
       + '<div class="sve-main"></div>';
     o.before.parentNode.insertBefore(card, o.before);
     const $ = s => card.querySelector(s);
-    const raw = $(".sve-raw"), main = $(".sve-main"), pmsg = $(".sve-pmsg"), pbtn = $(".sve-parse");
+    const raw = $(".sve-raw"), main = $(".sve-main"), pmsg = $(".sve-pmsg"), pbtn = $(".sve-parse"), rawBox = $(".sve-rawbox");
     raw.value = st.raw || "";
+    rawBox.open = !st.doc;
+    /* 步驟 1（研究設定）：已有問卷內容時收合；建立 Google 表單：預設收合 */
+    const setup = fold(o.setup, !st.doc, o.setupSummary);
+    if (o.setup && o.setupSummary) o.setup.addEventListener("input", () => { if (setup && !setup.open) setup.set(false); });
+    if (o.before && o.before.classList.contains("gas-card")) fold(o.before, false, () => "問卷定稿後，請 AI 撰寫 Google Apps Script，自動建立 Google 表單。");
 
     let toastEl, toastT;
     const toast = m => {
@@ -343,6 +378,8 @@
       st.doc = d; st.raw = raw.value; save();
       armed = null; pbtn.textContent = "解析回覆";
       pmsg.textContent = "已解析：" + summary(d) + "。請檢查下方內容。";
+      rawBox.open = false;
+      if (setup) setup.set(false);
       render();
     }
     pbtn.onclick = () => {
@@ -444,7 +481,7 @@
       if (t.classList.contains("sve-renum")) { const n = renumber(d); save(); render(); toast(n ? "已重新編號 " + n + " 題" : "題號都已依序，不需更動"); return; }
       if (t.classList.contains("sve-clear")) {
         if (armed !== "clear") { armed = "clear"; render(); return; }
-        armed = null; st = { raw: "", doc: null }; raw.value = ""; pmsg.textContent = ""; pbtn.textContent = "解析回覆";
+        armed = null; st = { raw: "", doc: null }; raw.value = ""; pmsg.textContent = ""; pbtn.textContent = "解析回覆"; rawBox.open = true;
         try { localStorage.removeItem(KEY); } catch (er) {}
         render(); return;
       }

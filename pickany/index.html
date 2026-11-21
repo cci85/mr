@@ -71,7 +71,7 @@
     line-height: 1.65;
   }
   .wrap{
-    max-width: 1180px;
+    max-width: 960px;
     margin: 0 auto;
     padding: 40px 24px 72px;
   }
@@ -110,7 +110,7 @@
 
   .grid{
     display: grid;
-    grid-template-columns: minmax(0,1fr) minmax(0,1.05fr);
+    grid-template-columns: minmax(0,1fr);
     gap: 24px;
     align-items: start;
   }
@@ -353,9 +353,9 @@
   </header>
 
   <div class="grid">
-    <section class="card" aria-labelledby="step1-h">
+    <section class="card" id="sec-setup" aria-labelledby="step1-h">
       <h2 id="step1-h"><span class="step">1</span> 設定你的研究主題</h2>
-      <p class="hint">左側的設定會即時組成右側的 AI 指令，可以隨時調整重來。</p>
+      <p class="hint">這裡的設定會即時組成步驟 2 的 AI 指令，可以隨時調整重來。</p>
 
       <div class="field">
         <label for="topic">研究主題（產品或服務類別）</label>
@@ -480,11 +480,10 @@
     <div class="right-col">
     <section class="card" aria-labelledby="step2-h">
       <h2 id="step2-h"><span class="step">2</span> 產生給 AI 的指令</h2>
+      <style>.prompt-details{margin-top:10px}.prompt-details>summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64));margin-bottom:6px}</style><details class="prompt-details"><summary>說明與指令內容</summary>
       <p class="hint">按「複製指令」，貼到 Claude、ChatGPT 等 AI 對話視窗，就會產生完整問卷；再把 AI 的回覆貼到下方第 3 步。</p>
-
-      <style>.prompt-details{margin-top:10px}.prompt-details>summary{cursor:pointer;font-size:13px;color:var(--ink-soft,var(--muted,#5f6b64));margin-bottom:6px}</style><details class="prompt-details"><summary>檢視指令內容</summary>
       <div class="output-head">
-        <span class="live">即時預覽 · 隨左側設定自動更新</span>
+        <span class="live">即時預覽 · 隨上方設定自動更新</span>
         <span class="live" id="charcount">0 字</span>
       </div>
       <div class="output-box" id="output" aria-live="polite"></div>
@@ -521,7 +520,7 @@
   </ol>
   <div class="gas-actions">
     <button type="button" id="gasCopyBtn">複製建立 Google 表單指令</button>
-    <span class="gas-note" id="gasCopyNote">此指令固定不變，不受左側設定影響。</span>
+    <span class="gas-note" id="gasCopyNote">此指令固定不變，不受上方設定影響。</span>
   </div>
   <details>
     <summary>檢視指令內容</summary>
@@ -877,7 +876,7 @@ S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
     sampleHint.textContent = '留空的話會帶入：「' + industry.samplePlaceholder(topicForHint) + '」';
     var text = buildPrompt();
     if(text === null){
-      output.textContent = '請先在左側「研究主題」填入你想研究的產品或服務類別，指令會自動顯示在這裡。';
+      output.textContent = '請先在上方「研究主題」填入你想研究的產品或服務類別，指令會自動顯示在這裡。';
       output.classList.add('empty');
       charcount.textContent = '0 字';
       copyBtn.disabled = true;
@@ -953,7 +952,7 @@ S4. 您通常在哪些時候會想買包裝綠茶？（可複選）
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
 <nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>
 <script src="../survey-editor.js"></script>
-<script>SurveyEditor.mount({ before: document.querySelector(".gas-card"), key: "pickany", step: 3, fileName: function(){ var t = document.getElementById("topic"); return "Pick-any問卷_" + ((t && t.value.trim()) || "未命名"); } });</script>
+<script>SurveyEditor.mount({ before: document.querySelector(".gas-card"), key: "pickany", step: 3, setup: document.getElementById("sec-setup"), setupSummary: function(){ var t=document.getElementById("topic"); t=t&&t.value.trim(); return t?"研究主題："+t:"尚未填研究主題"; }, fileName: function(){ var t = document.getElementById("topic"); return "Pick-any問卷_" + ((t && t.value.trim()) || "未命名"); } });</script>
 <script src="../store.js"></script>
 <script src="../newver.js" data-note="（貼上的 AI 回覆與編輯中的問卷會保留；其他設定會清空）"></script>
 </body>
