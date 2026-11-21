@@ -46,9 +46,49 @@
     });
     return out;
   }
+  /* ---------- 欄寬：依內容字數計算，緊密為先 ---------- */
+  // 版心寬 = A4 寬 11906 − 左右邊界各 1440；儲存格左右邊距 PAD；中文字寬 = 字級（半點）× 10 twips，英數約 0.55 字
+  const PAGE_W = 11906 - 2880, PAD = 57;
+  function linesOf(td) {
+    const c = td.cloneNode(true);
+    c.querySelectorAll("br").forEach(b => b.replaceWith("\n"));
+    return c.textContent.split("\n").map(t => t.replace(/\s+/g, " ").trim());
+  }
+  const wide = ch => /[\u1100-\u115f\u2e80-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6\u3000-\u303f\u2460-\u24ff\u25a0-\u25ff\u2605\u2606\u203b]/.test(ch);
+  const textW = (t, sz) => { let n = 0; for (const ch of t) n += wide(ch) ? 1 : 0.55; return Math.ceil(n * sz * 10); };
+  // 最小寬度：英數字串不可斷開；中文至少 4 字（內容較短時以內容為準）
+  const minW = (t, sz) => {
+    const words = t.match(/[\x21-\x7e\u00b0-\u024f\u0370-\u03ff]+/g) || [];
+    return Math.max(textW("中中中中", sz), ...words.map(w => textW(w, sz)));
+  };
+  function fitWidths(grid, ncol, sz) {
+    const slack = 2 * PAD + 30, nat = Array(ncol).fill(0), mn = Array(ncol).fill(0);
+    grid.forEach(row => row.forEach((cell, c) => {
+      if (!cell || !cell.lines || cell.cs > 1) return;
+      cell.lines.forEach(t => {
+        const w = textW(t, sz) + slack;
+        nat[c] = Math.max(nat[c], w);
+        mn[c] = Math.max(mn[c], Math.min(w, minW(t, sz) + slack));
+      });
+    }));
+    // 第一欄是列名（例：市場區隔、消費動機），不換行
+    mn[0] = Math.min(nat[0], Math.round(PAGE_W * 0.35));
+    for (let c = 0; c < ncol; c++) { if (!nat[c]) nat[c] = mn[c] = textW("中", sz) + slack; mn[c] = Math.min(mn[c], nat[c]); }
+    // 跨欄儲存格：所跨各欄合計不足時，平均補上
+    grid.forEach(row => row.forEach((cell, c) => {
+      if (!cell || !cell.lines || cell.cs < 2) return;
+      const need = Math.max(...cell.lines.map(t => textW(t, sz))) + slack, have = nat.slice(c, c + cell.cs).reduce((a, b) => a + b, 0);
+      if (need > have) for (let k = c; k < c + cell.cs; k++) nat[k] += Math.ceil((need - have) / cell.cs);
+    }));
+    const sum = a => a.reduce((x, y) => x + y, 0);
+    if (sum(nat) <= PAGE_W) return nat;                      // 內容夠短：縮到剛好
+    const extra = PAGE_W - sum(mn), give = nat.map((n, i) => n - mn[i]), g = sum(give);
+    if (extra <= 0 || !g) return mn;
+    return mn.map((m, i) => m + Math.floor(extra * give[i] / g));
+  }
   function table(html, opt) {
     const tb = new DOMParser().parseFromString(html, "text/html").querySelector("table");
-    const sz = opt.sz || 24, rows = [...tb.rows], grid = rows.map(() => []);
+    const sz = 20, rows = [...tb.rows], grid = rows.map(() => []);   // 表格一律 10 pt
     let ncol = 0;
     rows.forEach((tr, ri) => {
       let c = 0;
@@ -59,26 +99,27 @@
         const al = /text-align:\s*left/.test(st) || /(^|\s|;)l(\s|$)/.test(td.className) ? "left" : "center";
         const b = /font-weight:\s*(bold|[6-9]00)/.test(td.getAttribute("style") || "");
         const runs = cellRuns(td, { sz, b }, []).join("");
+        const lines = linesOf(td);
         for (let r = 0; r < rs; r++) {
           if (!grid[ri + r]) grid[ri + r] = [];
-          grid[ri + r][c] = r === 0 ? { runs, al, cs, rs, head: td.closest("thead") != null } : { cont: true, cs };
+          grid[ri + r][c] = r === 0 ? { runs, al, cs, rs, lines, head: td.closest("thead") != null } : { cont: true, cs };
           for (let k = 1; k < cs; k++) grid[ri + r][c + k] = { skip: true };
         }
         c += cs; ncol = Math.max(ncol, c);
       });
     });
-    const W = opt.widths && opt.widths.length === ncol ? opt.widths : null;
+    const W = fitWidths(grid, ncol, sz);
     const ln = '<w:LINE w:val="single" w:sz="4" w:space="0" w:color="000000"/>';
     const bd = ["top", "left", "bottom", "right", "insideH", "insideV"].map(s => ln.replace("LINE", s)).join("");
-    let x = '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:jc w:val="center"/><w:tblBorders>' + bd + '</w:tblBorders><w:tblLayout w:type="autofit"/><w:tblCellMar><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'
-      + Array.from({ length: ncol }, (_, i) => '<w:gridCol w:w="' + (W ? W[i] : Math.floor(9000 / ncol)) + '"/>').join("") + '</w:tblGrid>';
+    let x = '<w:tbl><w:tblPr><w:tblW w:w="' + W.reduce((a, b) => a + b, 0) + '" w:type="dxa"/><w:jc w:val="center"/><w:tblBorders>' + bd + '</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="' + PAD + '" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="' + PAD + '" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>'
+      + W.map(w => '<w:gridCol w:w="' + w + '"/>').join("") + '</w:tblGrid>';
     grid.forEach(row => {
       x += '<w:tr><w:trPr><w:cantSplit/>' + (row.some(c => c && c.head) ? '<w:tblHeader/>' : '') + '</w:trPr>';
       for (let c = 0; c < ncol; c++) {
         const cell = row[c];
         if (cell && cell.skip) continue;
         const cs = cell && cell.cs || 1;
-        let pr = W ? '<w:tcW w:w="' + W.slice(c, c + cs).reduce((a, b) => a + b, 0) + '" w:type="dxa"/>' : '<w:tcW w:w="0" w:type="auto"/>';
+        let pr = '<w:tcW w:w="' + W.slice(c, c + cs).reduce((a, b) => a + b, 0) + '" w:type="dxa"/>';
         if (cs > 1) pr += '<w:gridSpan w:val="' + cs + '"/>';
         if (cell && cell.cont) pr += '<w:vMerge/>'; else if (cell && cell.rs > 1) pr += '<w:vMerge w:val="restart"/>';
         pr += '<w:vAlign w:val="center"/>';
@@ -150,7 +191,7 @@
   }
 
   /* ---------- 介面綁定 ---------- */
-  // o.tables()：回傳 {1:{cap,html,note,sz,widths}, 2:…}；html 用各頁「複製表格」的 Word 版 HTML
+  // o.tables()：回傳 {1:{cap,html,note}, 2:…}；html 用各頁「複製表格」的 Word 版 HTML（表格一律 10 pt、欄寬依內容自動計算，舊的 sz／widths 不再使用）
   function bind(o) {
     const ta = document.getElementById(o.textarea), btn = document.getElementById(o.button), msg = document.getElementById(o.msg);
     if (!ta || !btn) return;
