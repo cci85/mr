@@ -23,7 +23,7 @@
     ["word", /\.docx$/i, "問卷 Word"],
     ["image", /\.(png|svg|jpe?g)$/i, "圖"],
     ["record", /^研究紀錄_.*\.md$/i, "研究紀錄"],
-    ["state", /^頁面紀錄_.*\.json$/i, "頁面紀錄"],
+    ["state", /^頁面紀錄_.*\.json$/i, "舊版頁面紀錄"],
     ["config", /\.json$/i, "設定"],
     ["raw", /\.(xlsx|csv|omv)$/i, "原始回覆"],
     ["other", /./, "其他"]
@@ -148,7 +148,9 @@
     await kvSet("folder", h);
     toast("已設定資料夾「" + h.name + "」");
     loadedName = null;
-    await refresh(); autoLoad();
+    await refresh();
+    try { await migrateOldState(); } catch (e) {}
+    autoLoad();
   }
 
   /* ---------- 存檔 ---------- */
@@ -300,7 +302,7 @@
     bar.innerHTML = html;
     bindResearch();
     const q = s => bar.querySelector(s);
-    if (q(".mrs-grant")) q(".mrs-grant").onclick = async () => { if (await askPermission()) { await refresh(); autoLoad(); } };
+    if (q(".mrs-grant")) q(".mrs-grant").onclick = async () => { if (await askPermission()) { await refresh(); try { await migrateOldState(); } catch (e) {} autoLoad(); } };
     if (q(".mrs-pick")) q(".mrs-pick").onclick = pickDir;
     if (q(".mrs-files")) q(".mrs-files").onclick = () => { panel.hidden = !panel.hidden; renderBar(); renderPanel(); };
   }
@@ -662,9 +664,6 @@
     const rec = await readRecord(research);
     if (gen !== stGen) return;
     let pd = rec && rec.data.pages && rec.data.pages[PAGE];
-    if (!pd && stem) {                       // 舊版「頁面紀錄」json
-      try { const f = (await listCur()).find(x => x.name === "頁面紀錄_" + PAGE + "_" + stem + ".json"); if (f) pd = JSON.parse(await (await f.get()).text()); } catch (e) {}
-    }
     restoring = gen;
     let n = 0, imported = false;
     try {
@@ -758,6 +757,43 @@
     window.addEventListener("pagehide", () => { if (stTimer || mutTimer) recWrite(); });
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && (stTimer || mutTimer)) recWrite(); });
   }
+  /* 舊版「頁面紀錄_頁面_資料檔.json」：內容併入對應的研究紀錄 .md 後刪除，資料夾裡只留 .md */
+  async function migrateOldState() {
+    if (!ready || (dir && !dirOK)) return;
+    let L = [];
+    try { L = await listCur(); } catch (e) { return; }
+    const olds = L.filter(f => /^頁面紀錄_.+\.json$/i.test(f.name));
+    if (!olds.length) return;
+    let moved = 0;
+    for (const f of olds) {
+      const m = /^頁面紀錄_([a-z0-9-]+)_(.+)\.json$/i.exec(f.name);
+      if (!m) continue;
+      const page = m[1], st = m[2];
+      let pd = null;
+      try { pd = JSON.parse(await (await f.get()).text()); } catch (e) { continue; }
+      if (!pd || !pd.fields) continue;
+      const recs = await listRecords();
+      let r = "";
+      for (const x of recs) {
+        try { const { data } = parseRecord(await (await x.get()).text()); if ((data.files || []).includes(st)) { r = x.name.slice(5, -3); break; } } catch (e) {}
+      }
+      if (!r) r = st;
+      const rec = (await readRecord(r)) || { data: { research: r, files: [], pages: {} }, secs: {} };
+      rec.data.research = r;
+      rec.data.files = rec.data.files || [];
+      if (!rec.data.files.includes(st)) rec.data.files.push(st);
+      rec.data.pages = rec.data.pages || {};
+      const cur = rec.data.pages[page];
+      if (!cur || !cur.saved || (pd.saved && pd.saved > cur.saved))
+        rec.data.pages[page] = { saved: pd.saved || new Date(f.mtime).toISOString(), file: pd.file || "", fields: pd.fields };
+      try {
+        await writeCur(recName(r), new Blob([composeRecord(r, rec)], { type: "text/markdown" }));
+        await removeCur(f.name);
+        moved++;
+      } catch (e) {}
+    }
+    if (moved) { toast("已把 " + moved + " 個舊版頁面紀錄（.json）併入研究紀錄（.md）"); await refresh(); }
+  }
   let genTried = false;
   async function recInit() {               // 載入頁面時：問卷產生器沿用最近使用的研究
     if (!REC_ON || !ready || (dir && !dirOK)) return;
@@ -781,6 +817,7 @@
     await renderBar();
     loadedName = null;
     await refresh();
+    try { await migrateOldState(); } catch (e) {}
     autoLoad();
   };
   if (document.readyState === "complete") start(); else window.addEventListener("load", start);
