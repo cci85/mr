@@ -4,7 +4,8 @@
 // 2. 各頁下載的檔案（Excel、Word 報告、圖、CSV、設定檔）照常下載，同時存進資料夾；
 //    使用者上傳的檔案也會存一份，下次不必再上傳。尚未選資料夾時只照常下載。
 // 3. 進入分析頁時，依檔名元素（clean_、sim_clean_、fa_、seg_ 等前綴與關鍵字）自動載入最適合、最新的檔案，可改選。
-// 4. 各分析頁的填寫內容與貼上的 AI 回覆，依資料檔存成「頁面紀錄_頁面_資料檔.json」；下次載入同一資料檔時自動填回並套用。
+// 4. 各工具的主要結果表格、命名與設定、AI 回覆合併寫入「研究紀錄_研究名稱.md」（一份研究一個檔，每個工具一節）；
+//    檔尾資料區塊存各頁填寫內容，載入同一份研究時自動填回並套用；知覺定位問卷產生器自動帶入市場區隔分析的結果。
 // 用法：<script src="../store.js"></script>，放在頁面程式之後、newver.js 之前。
 (() => {
   if (window.MRStore) return;
@@ -21,6 +22,7 @@
     ["report", /報告.*\.docx$/i, "報告"],
     ["word", /\.docx$/i, "問卷 Word"],
     ["image", /\.(png|svg|jpe?g)$/i, "圖"],
+    ["record", /^研究紀錄_.*\.md$/i, "研究紀錄"],
     ["state", /^頁面紀錄_.*\.json$/i, "頁面紀錄"],
     ["config", /\.json$/i, "設定"],
     ["raw", /\.(xlsx|csv|omv)$/i, "原始回覆"],
@@ -294,7 +296,9 @@
         : !dirOK ? "瀏覽器重新開啟後，需要按一次「連線資料夾」，才能讀寫資料夾。"
         : "各工具上傳與下載的檔案會自動存進這個資料夾，分析頁會依檔名自動帶入最新、最適合的檔案；自行放進資料夾的檔案也讀得到。") + "</p>";
     }
+    html += researchHtml();
     bar.innerHTML = html;
+    bindResearch();
     const q = s => bar.querySelector(s);
     if (q(".mrs-grant")) q(".mrs-grant").onclick = async () => { if (await askPermission()) { await refresh(); autoLoad(); } };
     if (q(".mrs-pick")) q(".mrs-pick").onclick = pickDir;
@@ -364,6 +368,12 @@
     try { files = ready ? await timeout(listCur(), 20000) : []; } catch (e) { files = []; listFail = true; }
     listing = false;
     files.sort((a, b) => b.mtime - a.mtime);
+    recNames = files.filter(f => /^研究紀錄_.+\.md$/.test(f.name)).map(f => f.name.slice(5, -3));
+    if (GEN && !research && !genTried && ready && (!dir || dirOK)) {
+      genTried = true;
+      const cur = localStorage.getItem(LS_R);
+      if (cur && recNames.includes(cur)) setResearch(cur);
+    }
     await renderBar(); await renderPanel(); renderAuto();
   }
 
@@ -424,20 +434,68 @@
   }
 
 
-  /* ---------- 頁面紀錄：填寫內容與貼上的 AI 回覆跟著資料檔存進資料夾 ---------- */
-  // 每個分析頁、每個資料檔各存一份「頁面紀錄_頁面_資料檔.json」（資料檔名去掉 clean_、fa_、seg_ 等前綴，
-  // 同一份研究在整理、因素分析、市場區隔各階段的資料檔共用同一名稱）。
-  // 載入資料檔後自動填回上次的內容並觸發各頁原本的處理（名稱帶入、表格更新），不必重新貼上或重新執行 AI。
+  /* ---------- 研究紀錄：各工具的結果、命名與設定、AI 回覆合併成一份 .md ---------- */
+  // 一份研究一個「研究紀錄_研究名稱.md」：每個工具一節（重新執行只更新自己那一節），
+  // 檔尾的資料區塊（<!-- mr-data … -->）存各頁的填寫內容，載入同一份研究時自動填回並套用。
+  // 分析頁依資料檔名對應研究（clean_、fa_、seg_ 等前綴去掉後相同者為同一份研究）；
+  // 沒有資料檔的問卷產生器在資料夾列選研究。知覺定位問卷產生器自動帶入市場區隔分析的結果。
+  const GEN = ["pickany", "segment-survey", "positioning-survey"].includes(PAGE);
+  const REC_ON = !!CONF || GEN;
+  const ORDER = ["pickany", "organizer", "simulate", "simulate-clean", "group-pca", "chisq", "sample", "segment-survey",
+    "factor-analysis", "segment", "segmentation", "positioning-survey", "positioning", "google-form"];
   const stemOf = name => {
     let b = String(name || "").replace(/\.[^.]+$/, ""), prev;
     do { prev = b; b = b.replace(/^(?:sim_clean|clean|sim|fa|seg|efa-result|cfa-result|seg-result|seg-cluster)_/i, ""); } while (b !== prev);
-    return b.replace(/_(因素分析資料|因素分數資料|集群資料|市場區隔資料|市場區隔分析結果|EFA分析結果|CFA分析結果)$/, "").replace(/[\\/:*?"<>|]/g, "_");
+    return b.replace(/_(因素分析資料|因素分數資料|集群資料|市場區隔資料|市場區隔分析結果|EFA分析結果|CFA分析結果)$/, "").replace(/[\\/:*?"<>|]/g, "_").trim();
   };
-  let stKey = "", stFields = {}, stTimer = null, restoring = false, stGen = 0;
-  const stName = () => "頁面紀錄_" + PAGE + "_" + stKey + ".json";
+  const recName = r => "研究紀錄_" + r + ".md";
+  const LS_R = "mr.research";
+  let research = "", dataFile = "", stem = "", stFields = {}, stTimer = null, mutTimer = null, restoring = false, stGen = 0, lastBody = "", attachedNote = "";
+
+  /* 讀寫研究紀錄 */
+  const DATA_RE = /\n?<!-- mr-data\n([\s\S]*?)\n-->\s*$/;
+  async function listRecords() {
+    let L = [];
+    try { L = await listCur(); } catch (e) {}
+    return L.filter(f => /^研究紀錄_.+\.md$/.test(f.name)).sort((a, b) => b.mtime - a.mtime);
+  }
+  function parseRecord(text) {
+    let data = { research: "", files: [], pages: {} };
+    const m = DATA_RE.exec(text || "");
+    if (m) { try { data = Object.assign(data, JSON.parse(m[1])); } catch (e) {} }
+    const body = m ? text.slice(0, m.index) : (text || "");
+    const secs = {};
+    body.replace(/<!-- mr-section:([\w-]+) -->\n([\s\S]*?)<!-- \/mr-section:\1 -->/g, (all, p) => { secs[p] = all; return ""; });
+    return { data, secs };
+  }
+  async function readRecord(r) {
+    const f = (await listRecords()).find(x => x.name === recName(r));
+    if (!f) return null;
+    try { const text = await (await f.get()).text(); return Object.assign(parseRecord(text), { text, mtime: f.mtime }); } catch (e) { return null; }
+  }
+  function composeRecord(r, rec) {
+    const keys = Object.keys(rec.secs).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+    return "# 研究紀錄：" + r + "\n\n最後更新：" + new Date().toLocaleString("zh-TW", { hour12: false }) +
+      "\n\n本檔由行銷研究工具箱自動產生：每個工具一節，重新執行時只更新該節。檔尾的資料區塊供工具箱自動帶回填寫內容，請勿修改。\n\n" +
+      keys.map(k => rec.secs[k].trim()).join("\n\n") + "\n\n<!-- mr-data\n" + JSON.stringify(rec.data) + "\n-->\n";
+  }
+
+  /* 依資料檔決定研究 */
+  async function resolveResearch(st) {
+    const recs = await listRecords();
+    for (const f of recs) {
+      try { const { data } = parseRecord(await (await f.get()).text()); if ((data.files || []).includes(st)) return { r: f.name.slice(5, -3), how: "map" }; } catch (e) {}
+    }
+    if (recs.some(f => f.name === recName(st))) return { r: st, how: "same" };
+    const cur = localStorage.getItem(LS_R);
+    if (cur && recs.some(f => f.name === recName(cur))) return { r: cur, how: "attach" };
+    return { r: st, how: "new" };
+  }
+
+  /* 表單欄位 */
   const TEXTY = /^(text|search|number|email|url|tel|date|month|week|time)$/;
   function stEligible(e) {
-    if (!e || !e.tagName || e.closest(".mrs") || e.hasAttribute("data-nosave") || e.disabled && e.type !== "checkbox") return false;
+    if (!e || !e.tagName || e.closest(".mrs") || e.hasAttribute("data-nosave") || (e.disabled && e.type !== "checkbox")) return false;
     if (e.tagName === "TEXTAREA") return !e.readOnly;
     if (e.tagName === "SELECT") return true;
     if (e.tagName === "INPUT") return !e.readOnly && (TEXTY.test(e.type) || e.type === "checkbox" || e.type === "radio");
@@ -447,10 +505,9 @@
     if (e.type === "radio" && e.name) return "r:" + e.name;
     if (e.id) return "#" + e.id;
     const ds = [...e.attributes].filter(a => /^data-/.test(a.name));
-    let sel = e.tagName.toLowerCase() + (e.name ? "[name=\"" + CSS.escape(e.name) + "\"]" : "") + ds.map(a => "[" + a.name + "=\"" + CSS.escape(a.value) + "\"]").join("");
     if (!e.name && !ds.length) return null;
-    const all = [...document.querySelectorAll(sel)];
-    return "s:" + sel + "|" + all.indexOf(e);
+    const sel = e.tagName.toLowerCase() + (e.name ? "[name=\"" + CSS.escape(e.name) + "\"]" : "") + ds.map(a => "[" + a.name + "=\"" + CSS.escape(a.value) + "\"]").join("");
+    return "s:" + sel + "|" + [...document.querySelectorAll(sel)].indexOf(e);
   }
   function stFind(k) {
     if (k.startsWith("#")) return [document.getElementById(k.slice(1))].filter(Boolean);
@@ -458,27 +515,120 @@
     const i = k.lastIndexOf("|"), sel = k.slice(2, i), n = +k.slice(i + 1);
     try { const e = document.querySelectorAll(sel)[n]; return e ? [e] : []; } catch (err) { return []; }
   }
-  const stVal = e => e.type === "checkbox" ? e.checked : e.value;
+  const fieldEls = () => [...document.querySelectorAll("textarea,select,input")].filter(stEligible);
   function stSnapshot() {
     const out = Object.assign({}, stFields);
-    document.querySelectorAll("textarea,select,input").forEach(e => {
-      if (!stEligible(e)) return;
+    fieldEls().forEach(e => {
       const k = stKeyOf(e); if (!k) return;
       if (e.type === "radio") { if (e.checked) out[k] = e.value; return; }
-      out[k] = stVal(e);
+      out[k] = e.type === "checkbox" ? e.checked : e.value;
     });
     return out;
   }
-  async function stWrite() {
-    clearTimeout(stTimer); stTimer = null;
-    if (!stKey || !ready || restoring || (dir && !dirOK)) return;
-    stFields = stSnapshot();
-    const blob = new Blob([JSON.stringify({ page: PAGE, file: stKey, saved: new Date().toISOString(), fields: stFields }, null, 1)], { type: "application/json" });
-    try { await writeCur(stName(), blob); } catch (e) { try { await IDB.write(stName(), blob); } catch (e2) {} }
+
+  /* 本頁那一節的內容 */
+  const isReply = e => e.tagName === "TEXTAREA" && (/reply|paste|import/i.test(e.id) || /AI/.test(e.placeholder || ""));
+  const clean = s => String(s || "").replace(/\s+/g, " ").trim();
+  function labelOf(e) {
+    let t = "";
+    if (e.id) { const l = document.querySelector("label[for=\"" + CSS.escape(e.id) + "\"]"); if (l) t = l.textContent; }
+    if (!t) { const l = e.closest("label"); if (l) t = l.textContent; }
+    if (!t && e.tagName === "TEXTAREA") t = capOf(e);
+    if (!t && e.type === "radio") { const fs = e.closest("fieldset"); const lg = fs && fs.querySelector("legend"); t = lg ? lg.textContent : e.name; }
+    t = clean(t || e.getAttribute("aria-label") || e.placeholder || e.name || e.id);
+    return t.length > 40 ? t.slice(0, 40) + "…" : t;
   }
-  const stSchedule = () => { if (!stKey || restoring) return; clearTimeout(stTimer); stTimer = setTimeout(stWrite, 1500); };
+  function capOf(t) {
+    let n = t;
+    for (let up = 0; n && n !== document.body && up < 6; up++, n = n.parentElement) {
+      let s = n.previousElementSibling;
+      for (let i = 0; s && i < 4; i++, s = s.previousElementSibling) {
+        if (/^H[1-5]$/.test(s.tagName) || s.classList.contains("fa-cap") || s.classList.contains("cap")) return clean(s.textContent);
+        const h = s.querySelector && s.querySelector("h1,h2,h3,h4,h5,.fa-cap");
+        if (h) return clean(h.textContent);
+      }
+    }
+    return "";
+  }
+  const cellTxt = c => clean(c.innerText || c.textContent).replace(/\|/g, "｜");
+  function tableMd(t) {
+    const rows = [...t.rows], grid = rows.map(() => []);
+    let w = 0;
+    rows.forEach((tr, ri) => {
+      let c = 0;
+      [...tr.cells].forEach(td => {
+        while (grid[ri][c] != null) c++;
+        const rs = td.rowSpan || 1, cs = td.colSpan || 1, tx = cellTxt(td);
+        for (let a = 0; a < rs; a++) for (let b = 0; b < cs; b++) if (grid[ri + a]) grid[ri + a][c + b] = a === 0 && b === 0 ? tx : "";
+        c += cs; w = Math.max(w, c);
+      });
+    });
+    if (rows.length < 2 || !w) return "";
+    const line = r => "| " + Array.from({ length: w }, (_, i) => r[i] == null ? "" : r[i]).join(" | ") + " |";
+    const MAX = 80, body = grid.slice(1);
+    return [line(grid[0]), "|" + " --- |".repeat(w)].concat(body.slice(0, MAX).map(line)).join("\n") +
+      (body.length > MAX ? "\n\n（共 " + body.length + " 列，僅列出前 " + MAX + " 列）" : "");
+  }
+  const fence = s => "~~~~text\n" + String(s).replace(/~~~~/g, "～～～～").trim() + "\n~~~~";
+  function buildSection() {
+    const title = clean((document.querySelector("h1") || {}).textContent || document.title);
+    const L = ["<!-- mr-section:" + PAGE + " -->", "## " + title, "", "__TIME__" + (dataFile ? "｜資料檔：" + dataFile : "")];
+    const els = fieldEls(), set = [], rep = [];
+    els.forEach(e => {
+      if (isReply(e)) { if (e.value.trim()) rep.push(e); return; }
+      if (e.type === "radio") { if (!e.checked) return; }
+      let v = e.type === "checkbox" ? (e.checked ? "是" : "否") : e.tagName === "SELECT" ? clean((e.selectedOptions[0] || {}).textContent || e.value) : e.type === "radio" ? clean((e.closest("label") || {}).textContent || e.value) : e.value;
+      if (v == null || String(v).trim() === "") return;
+      v = String(v).trim();
+      const lab = e.type === "radio" ? clean((e.closest("fieldset") && e.closest("fieldset").querySelector("legend") || {}).textContent || "選項") : labelOf(e);
+      set.push(/\n/.test(v) ? "- " + lab + "：\n" + v.split("\n").map(x => "  " + x).join("\n") : "- " + lab + "：" + v);
+    });
+    if (set.length) L.push("", "### 命名與設定", "", ...set);
+    const tabs = [...document.querySelectorAll("table")].filter(t => {
+      if (t.closest(".mrs") || t.querySelector("input,select,textarea,button")) return false;
+      const h = t.closest("[hidden]"); if (h && !/^tab-/.test(h.id || "")) return false;
+      return t.rows.length > 1;
+    });
+    const tmd = tabs.map(t => { const md = tableMd(t); if (!md) return ""; const c = capOf(t); return (c ? "#### " + c + "\n\n" : "") + md; }).filter(Boolean);
+    if (tmd.length) L.push("", "### 主要結果", "", tmd.join("\n\n"));
+    rep.forEach(e => L.push("", "### AI 回覆：" + labelOf(e), "", fence(e.value)));
+    let extra = [];
+    try { extra = typeof window.MRRecordExtra === "function" ? window.MRRecordExtra() || [] : []; } catch (e) { extra = []; }
+    extra.forEach(x => { if (x && x.text) L.push("", "### " + x.title, "", fence(x.text)); });
+    L.push("<!-- /mr-section:" + PAGE + " -->");
+    return L.join("\n");
+  }
+  function sectionText(rec, page, title) {
+    const s = rec && rec.secs[page]; if (!s) return "";
+    const re = new RegExp("### " + title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\n\\n~~~~text\\n([\\s\\S]*?)\\n~~~~");
+    const m = re.exec(s); return m ? m[1] : "";
+  }
+
+  /* 寫入 */
+  async function recWrite(force) {
+    clearTimeout(stTimer); stTimer = null; clearTimeout(mutTimer); mutTimer = null;
+    if (!research || !ready || restoring || (dir && !dirOK)) return;
+    const body = buildSection();
+    if (!force && body === lastBody) return;
+    stFields = stSnapshot();
+    const rec = (await readRecord(research)) || { data: { research, files: [], pages: {} }, secs: {} };
+    rec.data.research = research;
+    if (stem && !(rec.data.files || []).includes(stem)) rec.data.files = (rec.data.files || []).concat(stem);
+    rec.data.pages = rec.data.pages || {};
+    const now = new Date();
+    rec.data.pages[PAGE] = { saved: now.toISOString(), file: dataFile, fields: stFields };
+    rec.secs[PAGE] = body.replace("__TIME__", "更新：" + now.toLocaleString("zh-TW", { hour12: false }));
+    const blob = new Blob([composeRecord(research, rec)], { type: "text/markdown" });
+    try { await writeCur(recName(research), blob); } catch (e) { try { await IDB.write(recName(research), blob); } catch (e2) { return; } }
+    lastBody = body;
+    if (!files.some(f => f.name === recName(research))) refresh();
+  }
+  const stSchedule = () => { if (!research || restoring) return; clearTimeout(stTimer); stTimer = setTimeout(() => recWrite(), 1500); };
+
+  /* 還原 */
   const settle = (quiet, max) => new Promise(res => {
-    let t, done = false; const end = () => { if (done) return; done = true; mo.disconnect(); clearTimeout(t); clearTimeout(cap); res(); };
+    let t, done = false;
+    const end = () => { if (done) return; done = true; mo.disconnect(); clearTimeout(t); clearTimeout(cap); res(); };
     const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(end, quiet); });
     mo.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
     t = setTimeout(end, quiet); const cap = setTimeout(end, max);
@@ -493,49 +643,132 @@
     e.dispatchEvent(new Event("change", { bubbles: true }));
     return true;
   }
-  async function stRestore(gen) {
-    if (!ready || (dir && !dirOK)) return;
-    let f = null;
-    try { f = (await listCur()).find(x => x.name === stName()); } catch (e) {}
+  async function applyFields(fields, gen) {
+    const tries = {}, toggle = k => { if (k.startsWith("r:")) return true; const e = stFind(k)[0]; return !!e && (e.tagName === "SELECT" || e.type === "checkbox"); };
+    const t0 = Date.now(); let idle = 0, n = 0;
+    while (Date.now() - t0 < 20000 && gen === stGen) {
+      const keys = Object.keys(fields).filter(k => (tries[k] || 0) < 3);
+      let changed = false;
+      for (const k of keys.filter(toggle)) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
+      if (!changed) for (const k of keys.filter(k => !toggle(k))) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
+      if (changed) { idle = 0; await settle(400, 5000); continue; }
+      if (++idle >= 3) break;
+      await settle(500, 2000);
+    }
+    return n;
+  }
+  async function recRestore(gen) {
+    if (!ready || (dir && !dirOK) || !research) return;
+    const rec = await readRecord(research);
     if (gen !== stGen) return;
-    if (!f) { stFields = {}; return; }
-    let data;
-    try { data = JSON.parse(await (await f.get()).text()); } catch (e) { return; }
-    const fields = data && data.fields || {};
+    let pd = rec && rec.data.pages && rec.data.pages[PAGE];
+    if (!pd && stem) {                       // 舊版「頁面紀錄」json
+      try { const f = (await listCur()).find(x => x.name === "頁面紀錄_" + PAGE + "_" + stem + ".json"); if (f) pd = JSON.parse(await (await f.get()).text()); } catch (e) {}
+    }
     restoring = gen;
+    let n = 0, imported = false;
     try {
       await settle(700, 8000);
-      const tries = {}, toggle = k => { if (k.startsWith("r:")) return true; const e = stFind(k)[0]; return !!e && (e.tagName === "SELECT" || e.type === "checkbox"); };
-      const t0 = Date.now(); let idle = 0, n = 0;
-      while (Date.now() - t0 < 20000 && gen === stGen) {
-        const keys = Object.keys(fields).filter(k => (tries[k] || 0) < 3);
-        const tog = keys.filter(toggle), txt = keys.filter(k => !toggle(k));
-        let changed = false;
-        for (const k of tog) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
-        if (!changed) for (const k of txt) if (stApply(k, fields[k])) { tries[k] = (tries[k] || 0) + 1; changed = true; n++; }
-        if (changed) { idle = 0; await settle(400, 5000); continue; }
-        if (++idle >= 3) break;
-        await settle(500, 2000);
-      }
-      if (gen === stGen) { stFields = Object.assign({}, fields); if (n) toast("已從資料夾帶回上次的填寫內容與 AI 回覆"); }
+      if (pd && pd.fields) { n = await applyFields(pd.fields, gen); if (gen === stGen) stFields = Object.assign({}, pd.fields); }
+      if (PAGE === "positioning-survey" && gen === stGen) imported = await posImport(rec, pd);
     } finally { if (restoring === gen) restoring = false; }
+    if (gen !== stGen) return;
+    if (n && !imported) toast("已從研究紀錄帶回上次的填寫內容與 AI 回覆");
+    lastBody = ""; stSchedule();
   }
-  function stSetFile(name) {
+  /* 知覺定位問卷產生器：帶入市場區隔分析的結果 */
+  async function posImport(rec, pd) {
+    const txt = sectionText(rec, "segment", "知覺定位問卷資料") || sectionText(rec, "segmentation", "知覺定位問卷資料");
+    const ta = document.getElementById("import");
+    if (!txt || !ta) return false;
+    const segData = rec.data.pages.segment || rec.data.pages.segmentation || {};
+    const newer = !pd || !pd.saved || (segData.saved && segData.saved > pd.saved);
+    if (ta.value.trim() === txt.trim() || !newer) return false;
+    ta.value = txt;
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    ta.dispatchEvent(new Event("paste", { bubbles: true }));
+    await settle(400, 3000);
+    toast("已從研究紀錄「" + research + "」帶入市場區隔分析的結果");
+    return true;
+  }
+
+  async function setResearch(r, opts) {
+    if (stTimer || mutTimer) await recWrite();
+    research = r; lastBody = ""; stFields = {};
+    if (r) { try { localStorage.setItem(LS_R, r); } catch (e) {} }
+    renderBar();
+    const gen = ++stGen;
+    if (!opts || opts.restore !== false) await recRestore(gen);
+    else if (r) recWrite(true);
+  }
+  async function stSetFile(name) {
     if (!CONF || !name) return;
-    const k = stemOf(name);
-    if (stTimer && stKey) stWrite();
-    stKey = k; stFields = {}; const gen = ++stGen;
-    stRestore(gen);
+    if ((stTimer || mutTimer) && research) await recWrite();
+    dataFile = name; stem = stemOf(name);
+    const gen = ++stGen;
+    if (!ready || (dir && !dirOK)) return;
+    const { r, how } = await resolveResearch(stem);
+    if (gen !== stGen) return;
+    attachedNote = how === "attach" ? stem : "";
+    research = r; lastBody = ""; stFields = {};
+    try { localStorage.setItem(LS_R, r); } catch (e) {}
+    renderBar();
+    await recRestore(gen);
   }
-  if (CONF) {
-    document.addEventListener("change", e => { const t = e.target; if (t && t.type === "file" && t.id === CONF.input && t.files && t.files[0]) stSetFile(t.files[0].name); }, true);
-    document.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) stSetFile(f.name); }, true);
+
+  /* 資料夾列上的研究選單 */
+  let recNames = [];
+  function researchHtml() {
+    if (!REC_ON || !ready || (dir && !dirOK)) return "";
+    const names = recNames.slice(); if (research && !names.includes(research)) names.unshift(research);
+    return " <span class=\"soft\">｜</span> 研究紀錄：<select class=\"mrs-research\">" + (research ? "" : "<option value=\"\" selected>（未選擇）</option>") +
+      names.map(n => "<option value=\"" + esc(n) + "\"" + (n === research ? " selected" : "") + ">" + esc(n) + "</option>").join("") +
+      "<option value=\"__new\">＋ 新研究…</option></select>" +
+      (attachedNote ? " <span class=\"soft\">資料檔「" + esc(attachedNote) + "」已歸入此研究</span> <button type=\"button\" class=\"mrs-split\">改為獨立研究</button>" : "");
+  }
+  function bindResearch() {
+    const s = bar.querySelector(".mrs-research");
+    if (s) s.onchange = async () => {
+      let v = s.value;
+      if (v === "__new") {
+        v = (prompt("新研究的名稱（會用於檔名「研究紀錄_名稱.md」）", stem || "") || "").trim().replace(/[\\/:*?"<>|]/g, "_");
+        if (!v) { renderBar(); return; }
+      }
+      attachedNote = "";
+      // 分析頁：把目前的資料檔歸入選定的研究，並寫入本頁那一節；問卷產生器：帶回該研究的內容
+      if (CONF && stem) await setResearch(v, { restore: false }); else await setResearch(v);
+    };
+    const sp = bar.querySelector(".mrs-split");
+    if (sp) sp.onclick = () => { attachedNote = ""; setResearch(stem, { restore: false }); };
+  }
+
+  if (REC_ON) {
+    if (CONF) {
+      document.addEventListener("change", e => { const t = e.target; if (t && t.type === "file" && t.id === CONF.input && t.files && t.files[0]) stSetFile(t.files[0].name); }, true);
+      document.addEventListener("drop", e => { const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f) stSetFile(f.name); }, true);
+    }
     const onEdit = e => { if (!restoring && stEligible(e.target)) stSchedule(); };
     document.addEventListener("input", onEdit, true);
     document.addEventListener("change", onEdit, true);
-    window.addEventListener("pagehide", () => { if (stTimer) stWrite(); });
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && stTimer) stWrite(); });
+    new MutationObserver(ms => {
+      if (!research || restoring) return;
+      if (ms.every(m => { const n = m.target.nodeType === 1 ? m.target : m.target.parentElement; return !n || n.closest(".mrs, .mrs-toast"); })) return;
+      clearTimeout(mutTimer); mutTimer = setTimeout(() => recWrite(), 3000);
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    window.addEventListener("pagehide", () => { if (stTimer || mutTimer) recWrite(); });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && (stTimer || mutTimer)) recWrite(); });
   }
+  let genTried = false;
+  async function recInit() {               // 載入頁面時：問卷產生器沿用最近使用的研究
+    if (!REC_ON || !ready || (dir && !dirOK)) return;
+    recNames = (await listRecords()).map(f => f.name.slice(5, -3));
+    if (GEN && !research) {
+      const cur = localStorage.getItem(LS_R);
+      if (cur && recNames.includes(cur)) await setResearch(cur);
+    }
+    renderBar();
+  }
+
 
   window.MRStore = { save, kindOf, get folder() { return dir ? dir.name : ""; } };
 

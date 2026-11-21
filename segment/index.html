@@ -2161,6 +2161,8 @@ $("topic").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
 $("focal-brand").addEventListener("input",()=>{ if (S.seg) renderSegPrompt(); });
 $("btn-copy-seg").addEventListener("click",()=>copyText($("seg-prompt").textContent,"已複製市場區隔分析報告指令"));
 $("btn-copy-pos").addEventListener("click",()=>copyText(posText(),"已複製知覺定位問卷資料"));
+/* 研究紀錄（../store.js）：把知覺定位問卷資料寫入研究紀錄 .md，知覺定位問卷產生器據此自動帶入 */
+window.MRRecordExtra=()=>{ try { return S.seg&&curRun()&&S.res?[{title:"知覺定位問卷資料",text:posText()}]:[]; } catch(e){ return []; } };
 $("pos-target-name").addEventListener("input",e=>{ e.target.dataset.touched="1"; $("pos-out").textContent=posText(); });
 $("btn-copy-fa").addEventListener("click",copyFaTable);
 $("btn-copy-ca").addEventListener("click",()=>copyText($("ca-prompt").textContent,"已複製集群分析報告指令"));
