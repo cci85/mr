@@ -51,6 +51,8 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 textarea.tall{min-height:200px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.row3 label{display:flex;flex-direction:column;gap:4px;font-weight:600}
+@media (max-width:560px){.row3{grid-template-columns:1fr}}
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
 .meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:6px;font-size:13px}
 .count{background:var(--accent-soft);color:var(--ok);border-radius:999px;padding:1px 10px;font-weight:500}
@@ -109,7 +111,15 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
     <div class="field">
       <label for="target">研究標的<span class="req">必填</span></label>
       <input type="text" id="target" placeholder="例：即飲包裝綠茶">
-      <p class="help">應與市場區隔問卷的研究標的相同。簡稱由 AI 判斷。</p>
+      <p class="help">應與市場區隔問卷的研究標的相同。</p>
+    </div>
+    <div class="field">
+      <div class="row3">
+        <label>簡稱<input type="text" id="abbr" placeholder="例：綠茶"></label>
+        <label>經驗動詞<input type="text" id="expVerb" placeholder="例：喝過"></label>
+        <label>購買動詞<input type="text" id="buyVerb" placeholder="例：購買"></label>
+      </div>
+      <p class="help" id="verbHint">用於問卷中的「請問您曾經〔經驗動詞〕〔簡稱〕嗎？」「最近一次〔購買動詞〕的〔簡稱〕」等題目。會自動帶入，可自行修改；留白時由 AI 決定。</p>
     </div>
     <div class="field">
       <label for="org">研究單位<span class="opt">選填，未填時署名「本研究團隊」</span></label>
@@ -263,7 +273,7 @@ const NONE_EXCL = "□ 以上皆非";
 
 /* ---------- 元素 ---------- */
 const $ = id => document.getElementById(id);
-const F = ["target","org","outMode","brands","factors","chisq","segs"];
+const F = ["target","org","outMode","brands","factors","chisq","segs","abbr","expVerb","buyVerb"];
 const el = {}; F.forEach(k => el[k] = $(k));
 
 /* ---------- 批次解析（同市場區隔問卷產生器） ---------- */
@@ -325,14 +335,15 @@ function build(){
   if (B.items.length>8) cautions.push("競爭品牌超過 8 個，每個品牌都要重複一組題目，受訪者負擔較重，建議只保留各區隔主要購買或考慮的品牌。");
 
   const T = target || PENDING("研究標的");
+  const ABBR = el.abbr.value.trim(), EV = el.expVerb.value.trim(), BV = el.buyVerb.value.trim();
   const brands = B.items.length ? B.items : ["〔品牌一〕","〔品牌二〕","〔品牌三〕"];
   const brandsTxt = brands.join("、");
 
   /* ---- 作答規則 ---- */
   const rules = [];
   rules.push("【問卷內容】中的品牌名稱與順序已由研究者決定，請逐字照錄，不得增加、刪減、改寫或調整順序。其餘題目、選項與說明文字為固定內容，亦請逐字照錄。只有標示「〔　〕」之處，須依下列規則由你填入。");
-  rules.push("〔簡稱〕：研究標的為「"+T+"」。若此名稱已相當簡短，請以原名稱取代所有〔簡稱〕，並刪除問候語中的「（以下簡稱〔簡稱〕）」；若名稱較長，請訂定一個簡短且不失原意的簡稱，取代所有〔簡稱〕。");
-  rules.push("〔經驗動詞〕與〔購買動詞〕：請依研究標的選擇消費者最自然的說法。〔經驗動詞〕用於「是否曾經……」，例如包裝綠茶用「喝過」、手機用「使用過」、餐廳用「去過」；〔購買動詞〕用於購買或消費行為，例如包裝綠茶用「購買」、餐廳用「消費」。全份問卷同一個動詞須一致。");
+  if (!ABBR) rules.push("〔簡稱〕：研究標的為「"+T+"」。若此名稱已相當簡短，請以原名稱取代所有〔簡稱〕，並刪除問候語中的「（以下簡稱〔簡稱〕）」；若名稱較長，請訂定一個簡短且不失原意的簡稱，取代所有〔簡稱〕。");
+  if (!EV || !BV) rules.push("〔經驗動詞〕與〔購買動詞〕：請依研究標的選擇消費者最自然的說法。〔經驗動詞〕用於「是否曾經……」，例如包裝綠茶用「喝過」、手機用「使用過」、餐廳用「去過」；〔購買動詞〕用於購買或消費行為，例如包裝綠茶用「購買」、餐廳用「消費」。全份問卷同一個動詞須一致。");
   rules.push("〔品牌聯想選項〕：這份清單是本問卷的定位基礎，也就是消費者比較品牌時所依據的屬性或利益，請依【市場區隔分析的結果】與下列步驟生成。\n"
     + "（1）來源：以因素分析的需求因素為主要來源。每個需求因素都要轉出 1～3 個選項，不可只挑部分因素，因為知覺圖須呈現整個市場。每個因素優先採用因素負荷量最高、語意最清楚的主導變數；研究者註明交叉負荷、獨特性偏高或歸屬不明的變數，不轉為選項。\n"
     + "（2）轉換方式：需求以消費者為主詞，描述消費者想要什麼；品牌聯想選項以品牌為對象，描述品牌被認為具備什麼。請針對每個入選的主導變數自問：「品牌要具備什麼，才算回應了這個需求？」再把答案寫成選項。例如需求「包裝綠茶是相對健康的飲品選擇」轉為「健康的選擇」；需求「我會選擇外觀設計精美的包裝」轉為「包裝有質感」。若某個需求描述的是消費者的習慣或狀態（例如已成為日常生活的一部分），品牌能回應的是讓習慣容易延續的條件，應轉為「隨處買得到」「口味穩定」「適合每天喝」這類選項，而不是重述習慣本身。\n"
@@ -467,7 +478,12 @@ function build(){
   if (hasSeg) L.push("（7）第三部份的選項數等於區隔數，各段描述為 20～35 字的一句話，只寫核心消費動機，不含頻率、通路、休閒活動等輪廓特徵，也不含區隔名稱、構面名稱、統計數值或品牌名稱，長度與語氣相近，且沒有「以上皆非」選項；");
   L.push("（"+(hasSeg?"8":"7")+"）全文已無殘留「〔　〕」符號。");
 
-  const text = L.join("\n");
+  /* 已指定的簡稱與動詞直接寫入，AI 不必再決定 */
+  let text = L.join("\n");
+  if (ABBR && EV && BV) text = text.replace("（a）你填入的〔簡稱〕、〔經驗動詞〕、〔購買動詞〕", "（a）本問卷使用的簡稱與動詞（研究者已指定，請照錄）");
+  if (ABBR){ if (ABBR === target) text = text.split("（以下簡稱〔簡稱〕）").join(""); text = text.split("〔簡稱〕").join(ABBR); }
+  if (EV) text = text.split("〔經驗動詞〕").join(EV);
+  if (BV) text = text.split("〔購買動詞〕").join(BV);
   $("out").textContent = text;
   $("status").textContent = "即時預覽 · 隨上方設定自動更新 · 共 "+text.length.toLocaleString()+" 字";
 
@@ -499,7 +515,7 @@ function doImport(silent){
   put("segs", sec["市場區隔描述"]);
   const n = ["研究標的","競爭品牌","因素分析結果","區隔剖析結果（卡方檢定）","市場區隔描述"].filter(k => sec[k] && !/^（請自行填寫|^（輪廓變數中找不到/.test(sec[k])).length;
   $("n-import").textContent = "已帶入 " + n + " 個欄位" + (el.target.value ? "" : "；研究標的請自行填寫") + "。";
-  build(); toast("已帶入市場區隔分析的資料");
+  build(); autoWords(); toast("已帶入市場區隔分析的資料");
   const g = el.brands.closest(".group"); if (g) g.scrollIntoView({behavior:"smooth", block:"start"});
 }
 $("btnImport").addEventListener("click", () => doImport(false));
@@ -534,7 +550,54 @@ $("btnCopy").addEventListener("click", async () => {
 
 F.forEach(k => { if (el[k].tagName!=="SELECT") el[k].value=""; });
 el.outMode.value="text";
+
+/* ---------- 簡稱與動詞：先沿用市場區隔問卷，沒有再依研究標的判斷 ---------- */
+const VERB_RULES = [
+  [/飲|茶|咖啡|酒|奶|乳|果汁|汽水|可樂|水$/, "喝過", "購買"],
+  [/餐廳|速食|餐飲|早餐|火鍋|燒肉|小吃|咖啡廳|甜點店|麵店/, "去過", "消費"],
+  [/零食|餅|糖|麵|食品|冰|麵包|蛋糕|巧克力|洋芋片/, "吃過", "購買"],
+  [/App|APP|app|平台|串流|訂閱|外送|社群|遊戲|軟體/, "使用過", "使用"],
+  [/飯店|民宿|旅館|景點|樂園|旅遊|旅行/, "去過", "消費"],
+  [/健身|美容|美髮|補習|課程|診所|醫美/, "去過", "消費"],
+  [/手機|電腦|筆電|家電|汽車|機車|耳機|相機|平板|手錶|鞋|服飾|衣|包|化妝|保養|美妝|香水|洗髮/, "使用過", "購買"]
+];
+function segSurveyWords(){
+  try {
+    const st = JSON.parse(localStorage.getItem("mr.survey.segment-survey") || "{}"), d = st.doc;
+    if (!d) return null;
+    const out = {};
+    const m = /^(.+?)(消費行為)?調查問卷$/.exec(String(d.title || "").trim()); if (m) out.abbr = m[1].trim();
+    (d.blocks || []).forEach(b => {
+      const x = String(b.x || "");
+      let q = /請問您曾經(.+?)嗎/.exec(x);
+      if (q && !out.ev){ let v = q[1]; if (out.abbr && v.endsWith(out.abbr)) v = v.slice(0, -out.abbr.length); if (v && v.length <= 6) out.ev = v; }
+      q = /請問您最常(.+?)以下哪些/.exec(x);
+      if (q && !out.bv && q[1].length <= 6) out.bv = q[1];
+    });
+    return (out.abbr || out.ev || out.bv) ? out : null;
+  } catch (e) { return null; }
+}
+const touched = {};
+["abbr","expVerb","buyVerb"].forEach(k => el[k].addEventListener("input", e => { if (e.isTrusted) touched[k] = true; }));
+function autoWords(){
+  const t = el.target.value.trim(), seg = segSurveyWords(), src = [];
+  let abbr = "", ev = "", bv = "";
+  if (seg){ abbr = seg.abbr || ""; ev = seg.ev || ""; bv = seg.bv || ""; if (abbr || ev || bv) src.push("市場區隔問卷"); }
+  if (!abbr && t) abbr = t;
+  if ((!ev || !bv) && t){
+    const r = VERB_RULES.find(x => x[0].test(t));
+    if (r){ ev = ev || r[1]; bv = bv || r[2]; src.push("研究標的"); }
+  }
+  const put = (k, v) => { if (!touched[k] && v && el[k].value !== v){ el[k].value = v; return true; } return false; };
+  const ch = [put("abbr", abbr), put("expVerb", ev), put("buyVerb", bv)].some(Boolean);
+  $("verbHint").textContent = "用於問卷中的「請問您曾經〔經驗動詞〕〔簡稱〕嗎？」「最近一次〔購買動詞〕的〔簡稱〕」等題目。"
+    + (src.length ? "已依" + src.join("與") + "自動帶入，" : "") + "可自行修改；留白時由 AI 決定。";
+  if (ch) build();
+}
+el.target.addEventListener("input", autoWords);
+el.target.addEventListener("change", autoWords);
 build();
+autoWords();
 })();
 </script>
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
