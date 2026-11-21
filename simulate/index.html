@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>練習資料擴充（原始回覆）</title>
-<meta name="description" content="以小樣本問卷為基礎，在瀏覽器中以近鄰合成模擬產生更多份練習用問卷資料。">
+<title>練習資料擴充</title>
+<meta name="description" content="以小樣本問卷（Google 表單原始回覆或問卷資料整理器整理後的檔案）為基礎，在瀏覽器中以近鄰合成模擬產生更多份練習用問卷資料。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
@@ -135,20 +135,21 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <nav class="toolbox-back"><a href="../">← 回行銷研究工具箱</a></nav>
 <main>
   <p class="eyebrow">行銷研究方法 · 資料整理</p>
-  <h1>練習資料擴充（原始回覆）</h1>
-  <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人（量表題可再加入少量隨機微調，增加變異），因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。下載的檔案格式與 Google 表單匯出相同，可直接送進問卷資料整理器。</p>
-  <div class="notice warn"><b>模擬資料僅供課堂練習。</b>擴充後的資料不是真實受訪者的回答，不得作為研究結果、報告數據或論文資料；檔案最後一欄「資料來源」會標明每一列是原始或模擬。</div>
+  <h1>練習資料擴充</h1>
+  <p class="lede">課堂練習的問卷往往只回收數十份，不足以進行因素分析或市場區隔。本工具以小樣本為基礎，在瀏覽器中模擬產生更多份問卷：每一筆模擬資料由兩位作答相近的真實受訪者混合而成，每一題的答案都取自其中一人（量表題可再加入少量隨機微調，增加變異），複選題整題一起照錄，選項組合不會被拆開，因此題目之間的相關、受訪者的分群結構，以及動機與基本資料的關聯都能大致保留。Google 表單的原始回覆與問卷資料整理器整理後的檔案都可以上傳，工具會自動判斷：原始回覆擴充後的檔案格式與 Google 表單匯出相同，請再送進<a href="../organizer/">問卷資料整理器</a>；已整理資料擴充後保留「欄名對照表」與「題組」工作表並更新樣本份數，可直接送進各項分析工具。</p>
+  <div class="notice warn"><b>模擬資料僅供課堂練習。</b>擴充後的資料不是真實受訪者的回答，不得作為研究結果、報告數據或論文資料；「資料來源」欄會標明每一列是原始或模擬，已整理資料的「欄名對照表」也會記錄模擬資料筆數。</div>
 
   <!-- 1 上傳 -->
   <section class="panel" aria-labelledby="h1s">
-    <h2 id="h1s"><span class="step">1</span>上傳原始問卷資料</h2>
-    <p class="hint">本工具僅適用 Google 表單的原始回覆：請上傳回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8），也支援 jamovi 資料檔 (.omv)。若手上是問卷資料整理器產出的檔案，請改用<a href="../simulate-clean/">練習資料擴充（已整理資料）</a>，該工具會把複選題的 0／1 欄合成一題處理，並保留「欄名對照表」與「題組」工作表。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
+    <h2 id="h1s"><span class="step">1</span>上傳問卷資料</h2>
+    <p class="hint">可上傳兩種資料：（1）Google 表單的原始回覆，即回覆試算表匯出的 Excel (.xlsx) 或 CSV（UTF-8）；（2）<a href="../organizer/">問卷資料整理器</a>下載的 Excel 檔，工具會讀取「資料」工作表，並依「欄名對照表」判斷每一欄的類型，複選題的選項欄（如 CH_超商、CH_量販店）會合成一題處理。也支援 jamovi 資料檔 (.omv)。上傳後工具會依「欄名對照表」、檔名開頭（clean_）與「時間戳記」欄自動判斷資料類型，判斷錯誤時可在下方修改。建議至少 30 份；份數愈少，模擬資料愈容易與原始資料相似。</p>
     <label class="dropzone" id="dropzone">
       <input type="file" id="file" accept=".xlsx,.csv,.omv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <span id="dz-label">選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡</span>
     </label>
     <div class="row" id="sheet-row" hidden>
-      <label class="inline">工作表 <select id="sheet"></select></label>
+      <label class="inline">資料類型 <select id="mode" data-nosave><option value="raw">Google 表單原始回覆</option><option value="clean">問卷資料整理器整理後的資料</option></select></label>
+      <label class="inline">資料工作表 <select id="sheet"></select></label>
       <button type="button" class="ghost" id="btn-remove">移除檔案</button>
     </div>
     <div id="load-msg"></div>
@@ -156,8 +157,8 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 
   <!-- 2 欄位 -->
   <section class="panel" id="sec-cols" aria-labelledby="h2s" hidden>
-    <h2 id="h2s"><span class="step">2</span>確認各欄的處理方式</h2>
-    <p class="hint">工具已依內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄；只有量表題會依步驟 3 的設定，以少量機率上下調 1 分。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（如李克特量表）依分數差距計算，類別欄（單選、開放題）依答案是否相同計算，複選題依選項重疊的程度計算，且整題一起照錄，選項組合不會被拆開；「時間」欄在原始資料的時間範圍內隨機產生；「留白」用於學號、姓名等個人資料，模擬列一律空白。</p>
+    <h2 id="h2s"><span class="step">2</span>確認各題的處理方式</h2>
+    <p class="hint" id="cols-hint"></p>
     <div class="table-scroll" id="cols-table"></div>
   </section>
 
@@ -165,16 +166,16 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <section class="panel" id="sec-gen" aria-labelledby="h3s" hidden>
     <h2 id="h3s"><span class="step">3</span>產生模擬資料</h2>
     <div class="row">
-      <label class="inline">目標總份數（含原始） <input type="number" id="target" min="2" max="5000" step="10" value="200"></label>
+      <label class="inline"><span id="target-label">目標總份數（含原始）</span> <input type="number" id="target" min="2" max="5000" step="10" value="200"></label>
       <label class="inline">近鄰數 <input type="number" id="knn" min="1" max="20" step="1" value="5"></label>
-      <label class="inline">亂數種子 <input type="number" id="seed" step="1" value="20261028"></label>
+      <label class="inline">亂數種子 <input type="number" id="seed" step="1" value="20261116"></label>
     </div>
     <div class="row">
       <label class="inline">量表題隨機微調 <input type="number" id="jit" min="0" max="30" step="5" value="10"> %</label>
       <label class="inline">量表範圍 <input type="number" id="jit-lo" step="1" style="width:4.5em"> ～ <input type="number" id="jit-hi" step="1" style="width:4.5em"></label>
       <button type="button" class="primary" id="btn-gen">產生模擬資料</button>
     </div>
-    <p class="hint small">隨機微調：每一題量表題（整數、落在量表範圍內的數值欄）有此機率上下調 1 分，不會超出量表範圍，讓原始份數很少、某些題目幾乎所有人答案相同時，模擬資料仍有足夠變異可進行因素分析；設為 0 即不微調。比例愈高，變異愈大，但題目之間的相關會略為降低，建議 5%～15%。量表範圍依上傳資料中所有量表題的最小值與最大值自動判斷，若原始作答未用到最高或最低分（例如 5 點量表沒有人選 1），請自行修正。</p>
+    <p class="hint small">隨機微調：每一題量表題（整數、落在量表範圍內的數值欄）有此機率上下調 1 分，不會超出量表範圍，讓原始份數很少、某些題目幾乎所有人答案相同時，模擬資料仍有足夠變異可進行因素分析；是非題與複選題的 0／1 欄不在量表範圍內，不會被微調。設為 0 即不微調。比例愈高，變異愈大，但題目之間的相關會略為降低，建議 5%～15%。量表範圍依上傳資料中量表題（已整理資料依「欄名對照表」中的數值／量表題）的最小值與最大值自動判斷，若原始作答未用到最高或最低分（例如 5 點量表沒有人選 1），請自行修正。</p>
     <p class="hint small">近鄰數愈小，模擬資料愈貼近個別受訪者；愈大，混合的範圍愈廣。亂數種子相同時，同一份資料每次產生的結果相同；改變種子可得到另一組模擬資料。</p>
     <div id="gen-msg"></div>
   </section>
@@ -182,18 +183,22 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
   <!-- 4 核對 -->
   <section class="panel" id="sec-check" aria-labelledby="h4s" hidden>
     <h2 id="h4s"><span class="step">4</span>核對模擬品質</h2>
-    <p class="hint">比較原始資料與模擬資料的分布。模擬資料由作答相近的受訪者混合而成，較少出現極端的作答組合，標準差通常略小於原始資料；題目之間的相關係數則應大致相近。</p>
+    <p class="hint">比較原始資料與模擬資料的分布。模擬資料由作答相近的受訪者混合而成，較少出現極端的作答組合，標準差通常略小於原始資料；量表題之間的相關係數則應大致相近。</p>
     <div class="stats" id="check-stats"></div>
     <h3>數值欄位</h3>
     <div class="table-scroll" id="check-num"></div>
-    <h3>類別欄位</h3>
-    <p class="hint small">各欄比較原始與模擬資料中各類別的比例，列出差距最大的類別。複選題以整題的作答組合計算。</p>
+    <h3 id="cat-h">單選題</h3>
+    <p class="hint small" id="cat-hint">各題比較原始與模擬資料中各類別的比例，列出差距最大的類別。</p>
     <div class="table-scroll" id="check-cat"></div>
+    <div id="mc-wrap">
+    <h3>複選題</h3>
+    <p class="hint small">各題比較原始與模擬資料中各選項的勾選率，列出差距最大的選項。</p>
+    <div class="table-scroll" id="check-mc"></div>
+    </div>
     <h3>下載</h3>
     <div class="row"><button type="button" class="primary" id="btn-dl">下載擴充後的資料 Excel</button></div>
-    <p class="hint small">檔案依序為原始資料與模擬資料，最後一欄「資料來源」標明「原始」或「模擬」；另附「模擬說明」工作表，記錄方法、份數與亂數種子。送進問卷資料整理器時，「資料來源」欄可設為「移除」，或保留作為單選題。</p>
+    <p class="hint small" id="dl-hint"></p>
   </section>
-
   <footer>所有計算都在您的瀏覽器中完成，資料不會上傳，也不使用 AI 服務。</footer>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -203,61 +208,231 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 <script src="../omv-reader.js"></script>
 <script src="../sim-core.js"></script>
 <script>
+/* ===== CLEAN-BEGIN（已整理資料的欄位分組、展開與欄名對照表更新，可單獨測試） ===== */
+const Clean=(function(){
+  const blank=v=>v===""||v===null||v===undefined;
+  const isNum=v=>typeof v==="number"||(String(v).trim()!==""&&isFinite(+v));
+  /* 欄名對照表：回傳 {aoa, hi, meta:{欄名:{type,no,q}}}；找不到標題列時 hi=-1 */
+  function parseCodebook(aoa){
+    const hi=aoa.findIndex(r=>r.some(x=>String(x).trim()==="新欄名")&&r.some(x=>String(x).trim()==="類型"));
+    const meta={};
+    if (hi>=0){
+      const h=aoa[hi].map(x=>String(x).trim()), cN=h.indexOf("新欄名"), cT=h.indexOf("類型"), cNo=h.indexOf("原欄號"), cQ=h.indexOf("原題目");
+      for (let i=hi+1;i<aoa.length;i++){ const r=aoa[i], n=String(r[cN]||"").trim(); if (!n||n==="（已移除）") continue;
+        meta[n]={type:String(r[cT]||"").trim(), no:cNo>=0?String(r[cNo]||"").trim():"", q:cQ>=0?String(r[cQ]||"").trim():""}; }
+    }
+    return {aoa,hi,meta};
+  }
+  /* 依欄名對照表與內容把欄位分成「題」：複選題的選項欄合成一題 */
+  function buildUnits(headers,rows,meta,groupNames){
+    const units=[], mcMap=new Map();
+    headers.forEach((h,j)=>{
+      const m=meta[h], vals=rows.map(r=>r[j]).filter(v=>!blank(v));
+      const all01=vals.every(v=>+v===0||+v===1);
+      if (/^id$/i.test(h)||(m&&m.type==="id")){ units.push({kind:"id",type:"id",name:h,cols:[j],nonblank:vals.length}); return; }
+      const isMc=m?m.type==="複選題選項":(/^[A-Za-z][A-Za-z0-9]{0,3}_./.test(h)&&vals.length>0&&all01);
+      if (isMc){
+        const code=h.split("_")[0], key=m&&m.no?"no:"+m.no:"code:"+code;
+        let u=mcMap.get(key);
+        if (!u){ u={kind:"multi",type:"multi",code,name:code+(groupNames[code]?"（"+groupNames[code]+"）":""),cols:[],opts:[],nonblank:0,q:m?m.q:""}; mcMap.set(key,u); units.push(u); }
+        u.cols.push(j); u.opts.push(h.slice(h.indexOf("_")+1)||h);
+        u.nonblank=Math.max(u.nonblank,vals.length);
+        return;
+      }
+      const u={kind:"single",name:h,cols:[j],nonblank:vals.length,label:m?m.type:"",min:null,max:null,int:true,levels:new Set(vals.map(String)).size};
+      if (vals.length&&vals.every(isNum)&&!(m&&(m.type==="單選題"||m.type==="文字"))){
+        const nums=vals.map(Number); u.type="num"; u.min=Math.min(...nums); u.max=Math.max(...nums); u.int=nums.every(Number.isInteger);
+      } else u.type="cat";
+      units.push(u);
+    });
+    return units;
+  }
+  /* 量表範圍：0～10 之間、非 0／1 的整數數值題；若有「字母＋題序＋名稱」的量表題（如 M1口渴），只看這些，年齡等數值題不列入 */
+  function scaleRange(units){
+    let sc=units.filter(u=>u.type==="num"&&u.int&&(!u.label||u.label==="數值／量表")&&u.min>=0&&u.max<=10&&u.max-u.min>1);
+    const named=sc.filter(u=>/^[A-Za-z]+\d+/.test(u.name)); if (named.length) sc=named;
+    return sc.length?{lo:Math.min(...sc.map(u=>u.min)),hi:Math.max(...sc.map(u=>u.max))}:null;
+  }
+  /* 把原始列轉成每題一格（複選題轉成「o0, o3」或「none」） */
+  function toVirtual(rows,units){
+    return rows.map(r=>units.map(u=>{
+      if (u.type==="multi"){
+        const v=u.cols.map(j=>r[j]); if (v.every(blank)) return "";
+        const on=[]; v.forEach((x,k)=>{ if (+x===1) on.push("o"+k); });
+        return on.length?on.join(", "):"none";
+      }
+      const x=r[u.cols[0]];
+      if (u.type==="num") return blank(x)?"":+x;
+      if (u.type==="id"||u.type==="clear") return "";
+      return blank(x)?"":x;
+    }));
+  }
+  function engineCols(units){ return units.map(u=>({type:u.type==="id"?"clear":u.type,min:u.min,max:u.max,int:u.int})); }
+  /* 模擬列展開回原欄位；id 接續 startId */
+  function expand(vrows,units,width,startId){
+    return vrows.map((vr,t)=>{
+      const out=new Array(width).fill("");
+      units.forEach((u,i)=>{
+        const v=vr[i];
+        if (u.type==="id"){ out[u.cols[0]]=startId+t; return; }
+        if (u.type==="multi"){
+          if (blank(v)) return;
+          const on=new Set(String(v).split(/,\s*/));
+          u.cols.forEach((j,k)=>{ out[j]=on.has("o"+k)?1:0; });
+          return;
+        }
+        if (u.type==="clear") return;
+        out[u.cols[0]]=blank(v)?"":v;
+      });
+      return out;
+    });
+  }
+  /* 更新欄名對照表：摘要份數、模擬資料筆數、各欄有效樣本人數；added=新增「資料來源」欄時附一列說明 */
+  function updateCodebook(cb,headers,allRows,info){
+    const aoa=cb.aoa.map(r=>r.slice());
+    let hi=cb.hi;
+    const sumIdx=k=>{ for (let i=0;i<(hi<0?aoa.length:hi);i++) if (String(aoa[i][0]||"").trim()===k) return i; return -1; };
+    const num=k=>{ const i=sumIdx(k); return i>=0?Number(aoa[i][1])||0:null; };
+    const oldN0=num("原始回覆筆數"), oldRemoved=num("篩選刪除筆數")||0;
+    const iSim=sumIdx("模擬資料筆數"), oldSim=iSim>=0?Number(aoa[iSim][1])||0:0, oldNote=iSim>=0?String(aoa[iSim][2]||""):"";
+    const oldReal=(oldNote.match(/真實資料\s*(\d+)/)||[])[1], oldSimKeep=+((oldNote.match(/有效樣本中模擬資料\s*(\d+)/)||[])[1]||0);
+    const realAll=oldReal!=null?+oldReal:(oldN0!=null?oldN0-oldSim:info.base);
+    const removedReal=Math.max(0,oldRemoved-(oldSim-oldSimKeep));
+    const N0=realAll+info.sim, valid=info.base+info.sim;
+    const set=(k,v)=>{ const i=sumIdx(k); if (i>=0) aoa[i][1]=v; };
+    set("原始回覆筆數",N0); set("篩選刪除筆數",removedReal); set("有效樣本數",valid); set("有效回收率",N0?Number((valid/N0).toFixed(4)):"");
+    const simRow=["模擬資料筆數",info.sim,"原始回覆中真實資料 "+realAll+" 筆、模擬資料 "+info.sim+" 筆；有效樣本中模擬資料 "+info.sim+" 筆（以已整理資料擴充，模擬資料僅供課堂練習）"];
+    if (iSim>=0) aoa[iSim]=simRow;
+    else {
+      let at=Math.max(sumIdx("資料蒐集期間"),sumIdx("有效回收率"),sumIdx("有效樣本數"));
+      at=at>=0?at+1:(hi>=0?hi:aoa.length);
+      aoa.splice(at,0,simRow); if (hi>=0&&at<=hi) hi++;
+    }
+    if (hi<0) return aoa;
+    const h=aoa[hi].map(x=>String(x).trim()), cN=h.indexOf("新欄名"), cT=h.indexOf("類型"), cO=h.indexOf("原始選項"), cS=h.indexOf("簡稱"), cC=h.indexOf("有效樣本中人數");
+    if (cC>=0){
+      const col=n=>headers.indexOf(n);
+      let parent=-1, ptype="";
+      for (let i=hi+1;i<aoa.length;i++){
+        const r=aoa[i], n=String(r[cN]||"").trim(), ty=String(r[cT]||"").trim();
+        if (n){
+          parent=col(n); ptype=ty; if (parent<0) continue;
+          if (ty==="複選題選項") r[cC]=allRows.reduce((a,x)=>a+(+x[parent]===1&&!blank(x[parent])?1:0),0);
+          else if (ty==="id") r[cC]=allRows.length;
+          else r[cC]=allRows.filter(x=>!blank(x[parent])).length;
+        } else if (parent>=0&&(ptype==="單選題"||ptype==="是非題")&&!blank(r[cC])){
+          const key=String(ptype==="是非題"?r[cS]:(r[cS]||r[cO])).trim();
+          if (key!=="") r[cC]=allRows.filter(x=>String(x[parent]).trim()===key).length;
+        }
+      }
+    }
+    if (info.addedSrc){
+      const row=new Array(aoa[hi].length).fill(""); row[cN]="資料來源"; if (cT>=0) row[cT]="文字";
+      const cQ=h.indexOf("原題目"), cE=h.indexOf("編碼說明"); if (cQ>=0) row[cQ]="資料來源（練習資料擴充新增）"; if (cE>=0) row[cE]="原始＝實際回收的有效樣本，模擬＝課堂練習用模擬資料"; if (cC>=0) row[cC]=allRows.length;
+      aoa.push(row);
+    }
+    return aoa;
+  }
+  return {parseCodebook,buildUnits,scaleRange,toVirtual,engineCols,expand,updateCodebook,blank};
+})();
+/* ===== CLEAN-END ===== */
 
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const blank=v=>v===""||v===null||v===undefined;
-function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
-const TYPE_NAME={num:"數值（擇一照錄）",cat:"類別（擇一照錄）",multi:"複選（整題擇一照錄）",time:"時間（範圍內隨機）",clear:"留白（個人資料）",keep:"照錄第一位"};
+const blank=Clean.blank;
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2600); }
+const TYPE_NAME={num:"數值（擇一照錄）",cat:"類別（擇一照錄）",multi:"複選（整題擇一照錄）",time:"時間（範圍內隨機）",id:"id（接續編號）",clear:"留白",keep:"照錄第一位"};
+const RAW_CLEAR="留白（個人資料）";
 const ID_RE=/學號|姓名|名字|電話|手機|e-?mail|信箱|地址|身分證|line\s*id/i;
 const TIME_RE=/時間戳記|timestamp|填答時間|提交時間/i;
-const S={wb:null,fileName:"",sheet:"",headers:[],rows:[],cols:[],sim:null};
+const DROP_LABEL="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡";
+/* mode：raw＝Google 表單原始回覆；clean＝問卷資料整理器整理後的資料 */
+const S={mode:"raw",buf:null,isCsv:false,isOmv:false,wb:null,fileName:"",sheet:"",headers:[],rows:[],srcIdx:-1,prevSim:0,cb:null,groups:{},units:[],cols:[],sim:null};
+const cut=(s,n)=>s.length>n?s.slice(0,n)+"…":s;
 
+const HINTS={
+  raw:{cols:"工具已依內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄；只有量表題會依步驟 3 的設定，以少量機率上下調 1 分。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（如李克特量表）依分數差距計算，類別欄（單選、開放題）依答案是否相同計算，複選題依選項重疊的程度計算，且整題一起照錄，選項組合不會被拆開；「時間」欄在原始資料的時間範圍內隨機產生；「留白」用於學號、姓名等個人資料，模擬列一律空白。",
+    target:"目標總份數（含原始）", catH:"類別欄位", catHint:"各欄比較原始與模擬資料中各類別的比例，列出差距最大的類別。複選題以整題的作答組合計算。",
+    dl:"檔案依序為原始資料與模擬資料，最後一欄「資料來源」標明「原始」或「模擬」；另附「模擬說明」工作表，記錄方法、份數與亂數種子。下載後請送進問卷資料整理器；整理時「資料來源」欄可設為「移除」，或保留作為單選題。"},
+  clean:{cols:"工具已依「欄名對照表」與內容自動判斷，必要時可在右側修改。每一題都從兩位受訪者中擇一照錄；只有量表題會依步驟 3 的設定，以少量機率上下調 1 分。「數值」與「類別」的差別在於判斷受訪者是否相近的方式：數值欄（量表題、是非題、0／1 欄）依分數差距計算，類別欄（單選題、文字）依答案是否相同計算，複選題依勾選選項重疊的程度計算，且整題的 0／1 欄一起照錄；「id」欄的模擬列接續原有編號；「留白」的欄位模擬列一律空白。",
+    target:"目標有效樣本數（含原始）", catH:"單選題", catHint:"各題比較原始與模擬資料中各類別的比例，列出差距最大的類別。",
+    dl:"「資料」工作表依序為原始有效樣本與模擬資料，「資料來源」欄標明「原始」或「模擬」。「欄名對照表」的摘要會更新回收份數、有效樣本數與模擬資料筆數，各欄的有效樣本人數也會重新計算，樣本結構分析會據此註明含模擬資料；「題組」與其他工作表照原樣保留；另附「模擬說明」工作表，記錄方法、份數與亂數種子。可直接送進各項分析工具。"}
+};
+
+/* ---------- 讀檔與判斷資料類型 ---------- */
 function readFile(file){
   if (!file) return;
   if (typeof XLSX==="undefined"){ toast("Excel 解析功能載入失敗，請檢查網路連線"); return; }
   const isCsv=/\.csv$/i.test(file.name), isOmv=OMV.isOmv(file), rd=new FileReader();
   rd.onload=async()=>{
     try{
-      const wb=isOmv?await OMV.toWorkbook(rd.result):(isCsv?XLSX.read(rd.result,{type:"string",cellDates:true}):XLSX.read(new Uint8Array(rd.result),{type:"array",cellDates:true}));
+      S.buf=rd.result; S.isCsv=isCsv; S.isOmv=isOmv; S.fileName=file.name;
+      const wb=await parseWb(false);
       if (!wb.SheetNames.length){ toast("這個檔案沒有工作表"); return; }
-      S.wb=wb; S.fileName=file.name;
-      $("sheet").innerHTML=wb.SheetNames.map(n=>"<option>"+esc(n)+"</option>").join("");
-      $("sheet-row").hidden=false; $("sheet").value=wb.SheetNames[0]; loadSheet(wb.SheetNames[0]);
+      S.mode=guessMode(wb);
+      $("mode").value=S.mode;
+      await openMode(true);
     }catch(e){ console.error(e); toast(isOmv?"無法解析此 jamovi 檔案":"無法解析此檔案，請確認格式"); }
   };
   if (isCsv) rd.readAsText(file,"utf-8"); else rd.readAsArrayBuffer(file);
 }
-function asDate(v){
-  if (v instanceof Date) return isNaN(v)?null:v;
-  if (typeof v==="string"&&/\d{4}[\/-]\d{1,2}[\/-]\d{1,2}/.test(v)){ const d=new Date(v.replace(/上午|下午/,"").trim()); return isNaN(d)?null:d; }
-  return null;
+/* 原始回覆版以日期讀入時間戳記；已整理資料版照原值讀入 */
+async function parseWb(dates){
+  if (S.isOmv) return OMV.toWorkbook(S.buf);
+  const o=dates?{cellDates:true}:{};
+  return S.isCsv?XLSX.read(S.buf,Object.assign({type:"string"},o)):XLSX.read(new Uint8Array(S.buf),Object.assign({type:"array"},o));
 }
-function loadSheet(name){
+function guessMode(wb){
+  if (wb.SheetNames.includes("欄名對照表")) return "clean";
+  if (/^(sim_)?clean_/i.test(S.fileName)) return "clean";
+  const first=wb.SheetNames.includes("資料")?"資料":wb.SheetNames[0];
+  const head=(XLSX.utils.sheet_to_json(wb.Sheets[first],{header:1,defval:"",blankrows:false})[0]||[]).map(h=>String(h).trim());
+  if (head.some(h=>TIME_RE.test(h))) return "raw";
+  if (head.some(h=>/^[A-Za-z][A-Za-z0-9]{0,3}_./.test(h))) return "clean";   // 代碼_選項 欄名
+  return "raw";
+}
+async function openMode(auto){
+  S.sim=null;
+  S.wb=await parseWb(S.mode==="raw");
+  const wb=S.wb, data=wb.SheetNames.filter(n=>n!=="欄名對照表"&&n!=="題組"&&n!=="模擬說明");
+  $("sheet").innerHTML=(data.length?data:wb.SheetNames).map(n=>"<option>"+esc(n)+"</option>").join("");
+  $("sheet-row").hidden=false;
+  const first=wb.SheetNames.includes("資料")?"資料":(data[0]||wb.SheetNames[0]);
+  $("sheet").value=first;
+  const H=HINTS[S.mode];
+  $("cols-hint").textContent=H.cols; $("target-label").textContent=H.target; $("cat-h").textContent=H.catH; $("cat-hint").textContent=H.catHint; $("dl-hint").textContent=H.dl;
+  $("mc-wrap").hidden=S.mode!=="clean";
+  loadSheet(first, auto);
+}
+const aoaOf=name=>XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
+function asRows(aoa,W){ return aoa.slice(1).map(r=>{ const o=[]; for (let j=0;j<W;j++){ let v=r[j]; if (typeof v==="string") v=v.trim(); o.push(v===undefined?"":v); } return o; }).filter(r=>r.some(v=>!blank(v))); }
+function loadSheet(name, auto){
   S.sheet=name; S.sim=null;
-  const aoa=XLSX.utils.sheet_to_json(S.wb.Sheets[name],{header:1,defval:"",raw:true,blankrows:false});
+  const aoa=aoaOf(name);
   S.headers=(aoa[0]||[]).map(h=>String(h).trim());
-  const W=S.headers.length;
-  S.rows=aoa.slice(1).map(r=>{ const o=[]; for (let j=0;j<W;j++){ let v=r[j]; if (typeof v==="string"){ v=v.trim(); } o.push(v===undefined?"":v); } return o; })
-         .filter(r=>r.some(v=>!blank(v)));
-  const srcIdx=S.headers.indexOf("資料來源");
-  let note="";
-  if (srcIdx>=0){ const before=S.rows.length; S.rows=S.rows.filter(r=>String(r[srcIdx])!=="模擬"); S.headers.splice(srcIdx,1); S.rows.forEach(r=>r.splice(srcIdx,1)); note="此檔已含「資料來源」欄，已排除先前產生的 "+(before-S.rows.length)+" 筆模擬資料，只以原始資料重新模擬。"; }
-  $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+" 份）";
-  S.cols=S.headers.map((h,j)=>detect(h,j));
-  { const sc=S.cols.filter(c=>c.type==="num"&&c.int&&c.min>=0&&c.max<=10&&c.max-c.min>1); /* 量表範圍：所有量表題的最小值～最大值 */
-    $("jit-lo").value=sc.length?Math.min(...sc.map(c=>c.min)):""; $("jit-hi").value=sc.length?Math.max(...sc.map(c=>c.max)):""; }
-  let m="";
-  if (S.wb.SheetNames.includes("欄名對照表")) m+='<div class="notice bad">這是問卷資料整理器產出的檔案，請改用<a href="../simulate-clean/">練習資料擴充（已整理資料）</a>。</div>';
-  if (note) m+='<div class="notice warn">'+esc(note)+'</div>';
-  if (S.rows.length<10) m+='<div class="notice bad">原始資料只有 '+S.rows.length+' 份，至少需要 10 份才能模擬。</div>';
-  else if (S.rows.length<30) m+='<div class="notice warn">原始資料只有 '+S.rows.length+' 份，模擬資料會與原始資料高度相似，練習時請留意。</div>';
+  S.rows=asRows(aoa,S.headers.length);
+  S.srcIdx=S.headers.indexOf("資料來源"); S.prevSim=0;
+  if (S.srcIdx>=0){ const before=S.rows.length; S.rows=S.rows.filter(r=>String(r[S.srcIdx]).trim()!=="模擬"); S.prevSim=before-S.rows.length; }
+  const modeName=S.mode==="clean"?"問卷資料整理器整理後的資料":"Google 表單原始回覆";
+  let m='<div class="notice ok">'+(auto?"已判斷為":"已改為")+"「"+modeName+"」"+(auto?"；若判斷錯誤，請在上方「資料類型」修改。":"。")+'</div>';
+  if (S.mode==="clean") m+=loadClean(); else m+=loadRaw();
+  $("dz-label").textContent="已上傳："+S.fileName+"（"+S.rows.length+(S.mode==="clean"?" 份有效樣本）":" 份）");
+  const unit=S.mode==="clean"?"有效樣本":"原始資料";
+  if (S.rows.length<10) m+='<div class="notice bad">'+unit+'只有 '+S.rows.length+' 份，至少需要 10 份才能模擬。</div>';
+  else if (S.rows.length<30) m+='<div class="notice warn">'+unit+'只有 '+S.rows.length+' 份，模擬資料會與原始資料高度相似，練習時請留意。</div>';
   $("load-msg").innerHTML=m;
   $("target").value=Math.max(200,Math.ceil(S.rows.length/10)*10*2);
   renderCols();
   $("sec-gen").hidden=S.rows.length<10; $("sec-check").hidden=true; $("gen-msg").innerHTML="";
+}
+
+/* ---------- 原始回覆 ---------- */
+function asDate(v){
+  if (v instanceof Date) return isNaN(v)?null:v;
+  if (typeof v==="string"&&/\d{4}[\/-]\d{1,2}[\/-]\d{1,2}/.test(v)){ const d=new Date(v.replace(/上午|下午/,"").trim()); return isNaN(d)?null:d; }
+  return null;
 }
 function detect(h,j){
   const vals=S.rows.map(r=>r[j]).filter(v=>!blank(v));
@@ -283,40 +458,92 @@ function detect(h,j){
   }
   return c;
 }
-function renderCols(){
-  $("sec-cols").hidden=false;
-  const opts=["num","cat","multi","time","clear"];
-  let t='<table><thead><tr><th class="l">#</th><th class="l">欄位（題目）</th><th>有效作答</th><th class="l">內容摘要</th><th class="l">處理方式</th></tr></thead><tbody>';
-  S.cols.forEach((c,j)=>{
-    const sum=c.type==="num"?(c.min+"～"+c.max+(c.int?"，整數":"")):(c.type==="time"?"日期時間":(c.type==="clear"?"個人資料":c.levels+" 種作答"));
-    t+='<tr><td class="l">'+(j+1)+'</td><td class="l colname">'+esc(c.name.length>60?c.name.slice(0,60)+"…":c.name)+'</td><td>'+c.nonblank+'</td><td class="l">'+esc(sum)+'</td><td class="l"><select data-j="'+j+'">'
-      +opts.filter(o=>o!=="num"||isNumCol(j)).filter(o=>o!=="time"||c.type==="time"||c.min!=null).map(o=>'<option value="'+o+'"'+(o===c.type?" selected":"")+'>'+TYPE_NAME[o]+'</option>').join("")+'</select></td></tr>';
-  });
-  $("cols-table").innerHTML=t+'</tbody></table>';
-  $("cols-table").querySelectorAll("select").forEach(s=>s.addEventListener("change",()=>{ S.cols[+s.dataset.j].type=s.value; S.sim=null; $("sec-check").hidden=true; }));
+function loadRaw(){
+  /* 原始回覆版：「資料來源」欄與先前的模擬資料一併移除，只以原始資料重新模擬 */
+  if (S.srcIdx>=0){ S.headers.splice(S.srcIdx,1); S.rows.forEach(r=>r.splice(S.srcIdx,1)); S.srcIdx=-1; }
+  S.cols=S.headers.map((h,j)=>detect(h,j));
+  const sc=S.cols.filter(c=>c.type==="num"&&c.int&&c.min>=0&&c.max<=10&&c.max-c.min>1);
+  $("jit-lo").value=sc.length?Math.min(...sc.map(c=>c.min)):""; $("jit-hi").value=sc.length?Math.max(...sc.map(c=>c.max)):"";
+  return S.prevSim?'<div class="notice warn">此檔已含「資料來源」欄，已排除先前產生的 '+S.prevSim+' 筆模擬資料，只以原始資料重新模擬。</div>':"";
 }
 function isNumCol(j){ return S.rows.every(r=>blank(r[j])||typeof r[j]==="number"||isFinite(+r[j])); }
 
+/* ---------- 已整理資料 ---------- */
+function loadClean(){
+  S.cb=S.wb.Sheets["欄名對照表"]?Clean.parseCodebook(aoaOf("欄名對照表")):null;
+  S.groups={}; if (S.wb.Sheets["題組"]) aoaOf("題組").slice(1).forEach(r=>{ const c=String(r[0]||"").trim(), n=String(r[1]||"").trim(); if (c&&n) S.groups[c]=n; });
+  S.units=Clean.buildUnits(S.headers,S.rows,S.cb?S.cb.meta:{},S.groups).filter(u=>u.name!=="資料來源");
+  const rg=Clean.scaleRange(S.units); $("jit-lo").value=rg?rg.lo:""; $("jit-hi").value=rg?rg.hi:"";
+  let m="";
+  if (!S.cb) m+='<div class="notice warn">找不到「欄名對照表」工作表，已依欄名與內容判斷欄位類型：欄名為「代碼_選項」且只有 0／1 的欄位視為複選題。請在步驟 2 確認；下載的檔案不會有更新後的份數摘要。</div>';
+  else m+='<div class="notice ok">已讀取「欄名對照表」'+(Object.keys(S.groups).length?"與「題組」":"")+'：共 '+S.units.length+' 題（其中複選題 '+S.units.filter(u=>u.type==="multi").length+' 題）。</div>';
+  if (S.prevSim) m+='<div class="notice warn">此檔已含 '+S.prevSim+' 筆模擬資料（「資料來源」為「模擬」），已排除，只以 '+S.rows.length+' 筆原始有效樣本重新模擬；下載的檔案不再包含這些舊的模擬資料。</div>';
+  return m;
+}
+
+/* ---------- 步驟 2 ---------- */
+function renderCols(){
+  $("sec-cols").hidden=false;
+  let t='<table><thead><tr><th class="l">#</th><th class="l">欄位（題目）</th><th>有效作答</th><th class="l">內容摘要</th><th class="l">處理方式</th></tr></thead><tbody>';
+  const tn=o=>S.mode==="raw"&&o==="clear"?RAW_CLEAR:TYPE_NAME[o];
+  if (S.mode==="raw"){
+    const opts=["num","cat","multi","time","clear"];
+    S.cols.forEach((c,j)=>{
+      const sum=c.type==="num"?(c.min+"～"+c.max+(c.int?"，整數":"")):(c.type==="time"?"日期時間":(c.type==="clear"?"個人資料":c.levels+" 種作答"));
+      t+='<tr><td class="l">'+(j+1)+'</td><td class="l colname">'+esc(cut(c.name,60))+'</td><td>'+c.nonblank+'</td><td class="l">'+esc(sum)+'</td><td class="l"><select data-j="'+j+'">'
+        +opts.filter(o=>o!=="num"||isNumCol(j)).filter(o=>o!=="time"||c.type==="time"||c.min!=null).map(o=>'<option value="'+o+'"'+(o===c.type?" selected":"")+'>'+tn(o)+'</option>').join("")+'</select></td></tr>';
+    });
+  } else {
+    S.units.forEach((u,i)=>{
+      let sum, opts;
+      if (u.type==="multi"){ sum=u.cols.length+" 個選項欄："+cut(u.opts.join("、"),40); opts=["multi","clear"]; }
+      else if (u.type==="id"){ sum="受訪者編號"; opts=["id","clear"]; }
+      else { sum=(u.label?u.label+"；":"")+(u.min!=null?u.min+"～"+u.max+(u.int?"，整數":""):u.levels+" 種作答"); opts=(u.min!=null?["num","cat","clear"]:["cat","clear"]); }
+      t+='<tr><td class="l">'+(i+1)+'</td><td class="l colname">'+esc(cut(u.name,60))+'</td><td>'+u.nonblank+'</td><td class="l">'+esc(sum)+'</td><td class="l"><select data-i="'+i+'">'
+        +opts.map(o=>'<option value="'+o+'"'+(o===u.type?" selected":"")+'>'+tn(o)+'</option>').join("")+'</select></td></tr>';
+    });
+  }
+  $("cols-table").innerHTML=t+'</tbody></table>';
+  $("cols-table").querySelectorAll("select").forEach(s=>s.addEventListener("change",()=>{
+    if (S.mode==="raw") S.cols[+s.dataset.j].type=s.value; else S.units[+s.dataset.i].type=s.value;
+    S.sim=null; $("sec-check").hidden=true;
+  }));
+}
+
+/* ---------- 步驟 3 ---------- */
 function generate(){
   const target=parseInt($("target").value,10), k=parseInt($("knn").value,10)||5, seed=parseInt($("seed").value,10)||0;
-  const n=S.rows.length;
-  if (!(target>n)){ $("gen-msg").innerHTML='<div class="notice warn">目標總份數須大於原始份數（'+n+' 份）。</div>'; return; }
-  if (target>5000){ $("gen-msg").innerHTML='<div class="notice warn">目標總份數上限為 5,000 份。</div>'; return; }
-  const cols=S.cols.map(c=>Object.assign({},c));
-  const rows=S.rows.map(r=>r.map((v,j)=>cols[j].type==="num"&&!blank(v)?+v:v));
-  const t0=performance.now();
+  const n=S.rows.length, what=S.mode==="clean"?"目標有效樣本數":"目標總份數";
+  if (!(target>n)){ $("gen-msg").innerHTML='<div class="notice warn">'+what+'須大於原始'+(S.mode==="clean"?"有效樣本數":"份數")+'（'+n+' 份）。</div>'; return; }
+  if (target>5000){ $("gen-msg").innerHTML='<div class="notice warn">'+what+'上限為 5,000 份。</div>'; return; }
   const jp=Math.max(0,Math.min(30,parseFloat($("jit").value)||0)), lo=parseFloat($("jit-lo").value), hi=parseFloat($("jit-hi").value);
   if (jp>0&&!(isFinite(lo)&&isFinite(hi)&&hi>lo)){ $("gen-msg").innerHTML='<div class="notice warn">請填寫量表範圍（最小值須小於最大值），或把隨機微調設為 0。</div>'; return; }
-  const jit=jp>0?{p:jp/100,lo,hi}:null;
-  const res=Sim.generate(rows,cols,target-n,Math.max(1,Math.min(k,n-1)),seed,jit);
-  S.sim={rows:res.rows,orig:rows,cols,seed,k,target,fallback:res.fallback,jit};
+  const jit=jp>0?{p:jp/100,lo,hi}:null, kk=Math.max(1,Math.min(k,n-1));
+  const t0=performance.now(); let res;
+  if (S.mode==="raw"){
+    const cols=S.cols.map(c=>Object.assign({},c));
+    const rows=S.rows.map(r=>r.map((v,j)=>cols[j].type==="num"&&!blank(v)?+v:v));
+    res=Sim.generate(rows,cols,target-n,kk,seed,jit);
+    /* 品質核對用：每題一格 */
+    const units=cols.map(c=>Object.assign({},c,{cols:null}));
+    S.sim={mode:"raw",rows:res.rows,vrows:res.rows,vOrig:rows,units,cols,seed,k:kk,target,fallback:res.fallback,jit};
+  } else {
+    const units=S.units.map(u=>Object.assign({},u));
+    const vOrig=Clean.toVirtual(S.rows,units);
+    res=Sim.generate(vOrig,Clean.engineCols(units),target-n,kk,seed,jit);
+    const idU=units.find(u=>u.type==="id");
+    let startId=1; if (idU){ const ids=S.rows.map(r=>+r[idU.cols[0]]).filter(isFinite); startId=(ids.length?Math.max(...ids):n)+1; }
+    const rows=Clean.expand(res.rows,units,S.headers.length,startId);
+    if (S.srcIdx>=0) rows.forEach(r=>{ r[S.srcIdx]="模擬"; });
+    S.sim={mode:"clean",rows,vrows:res.rows,vOrig,units,seed,k:kk,target,fallback:res.fallback,jit};
+  }
   let m='<div class="notice ok">已產生 '+res.rows.length+' 份模擬資料，連同原始 '+n+' 份，共 '+target+' 份（'+Math.round(performance.now()-t0)+' 毫秒）。</div>';
   if (res.fallback) m+='<div class="notice warn">有 '+res.fallback+' 位原始受訪者的空白題目組合是獨一無二的，以這些人為基礎的模擬資料，改由全體中最相近者配對，空白位置沿用該受訪者。</div>';
   $("gen-msg").innerHTML=m;
   renderCheck();
 }
 
-/* ---------- 品質核對 ---------- */
+/* ---------- 步驟 4：品質核對 ---------- */
 function mean(a){ return a.reduce((s,x)=>s+x,0)/a.length; }
 function sd(a){ const m=mean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/(a.length-1)); }
 function corr(x,y){ const mx=mean(x),my=mean(y); let a=0,b=0,c=0; for (let i=0;i<x.length;i++){ const dx=x[i]-mx, dy=y[i]-my; a+=dx*dy; b+=dx*dx; c+=dy*dy; } return b&&c?a/Math.sqrt(b*c):null; }
@@ -329,52 +556,70 @@ function pairCorrs(rows,idx){
   return out;
 }
 function renderCheck(){
-  const G=S.sim, cols=G.cols; $("sec-check").hidden=false;
-  const numIdx=cols.map((c,j)=>c.type==="num"?j:-1).filter(j=>j>=0);
+  const G=S.sim, U=G.units, raw=G.mode==="raw"; $("sec-check").hidden=false;
+  const numIdx=U.map((u,i)=>u.type==="num"?i:-1).filter(i=>i>=0);
   let t='<table><thead><tr><th class="l">欄位</th><th>原始平均數</th><th>模擬平均數</th><th>原始標準差</th><th>模擬標準差</th></tr></thead><tbody>';
-  numIdx.forEach(j=>{
-    const a=G.orig.map(r=>r[j]).filter(v=>!blank(v)).map(Number), b=G.rows.map(r=>r[j]).filter(v=>!blank(v)).map(Number);
+  numIdx.forEach(i=>{
+    const a=G.vOrig.map(r=>r[i]).filter(v=>!blank(v)).map(Number), b=G.vrows.map(r=>r[i]).filter(v=>!blank(v)).map(Number);
     if (a.length<2||b.length<2) return;
-    t+='<tr><td class="l colname">'+esc(cols[j].name.length>40?cols[j].name.slice(0,40)+"…":cols[j].name)+'</td><td>'+mean(a).toFixed(2)+'</td><td>'+mean(b).toFixed(2)+'</td><td>'+sd(a).toFixed(2)+'</td><td>'+sd(b).toFixed(2)+'</td></tr>';
+    t+='<tr><td class="l colname">'+esc(cut(U[i].name,40))+'</td><td>'+mean(a).toFixed(2)+'</td><td>'+mean(b).toFixed(2)+'</td><td>'+sd(a).toFixed(2)+'</td><td>'+sd(b).toFixed(2)+'</td></tr>';
   });
   $("check-num").innerHTML=numIdx.length?t+'</tbody></table>':'<p class="hint">沒有數值欄位。</p>';
-  /* 相關係數 */
+  /* 兩兩相關：原始回覆版看所有數值欄，已整理資料版只看量表題 */
   let stats="";
-  if (numIdx.length>=2&&numIdx.length<=80){
-    const ra=pairCorrs(G.orig,numIdx), rb=pairCorrs(G.rows,numIdx);
+  const lo=G.jit?G.jit.lo:parseFloat($("jit-lo").value), hi=G.jit?G.jit.hi:parseFloat($("jit-hi").value);
+  const scIdx=raw?numIdx:numIdx.filter(i=>U[i].int&&isFinite(lo)&&isFinite(hi)&&U[i].min>=lo&&U[i].max<=hi&&U[i].max>U[i].min+1);
+  const lab=raw?"數值欄位":"量表題";
+  if (scIdx.length>=2&&scIdx.length<=80){
+    const ra=pairCorrs(G.vOrig,scIdx), rb=pairCorrs(G.vrows,scIdx);
     const pairs=ra.map((x,i)=>[x,rb[i]]).filter(([x,y])=>x!=null&&y!=null);
     if (pairs.length){
       const mad=mean(pairs.map(([x,y])=>Math.abs(x-y))), r1=mean(pairs.map(p=>p[0])), r2=mean(pairs.map(p=>p[1])), rr=corr(pairs.map(p=>p[0]),pairs.map(p=>p[1]));
-      stats+='<div class="stat"><b>'+r1.toFixed(3)+' → '+r2.toFixed(3)+'</b><span>數值欄位兩兩相關係數的平均（原始 → 模擬）</span></div>';
+      stats+='<div class="stat"><b>'+r1.toFixed(3)+' → '+r2.toFixed(3)+'</b><span>'+lab+'兩兩相關係數的平均（原始 → 模擬）</span></div>';
       stats+='<div class="stat"><b>'+mad.toFixed(3)+'</b><span>兩兩相關係數差距的平均（'+pairs.length+' 組）</span></div>';
       if (rr!=null) stats+='<div class="stat"><b>'+rr.toFixed(3)+'</b><span>原始與模擬相關係數之間的相關</span></div>';
     }
   }
+  if (!raw){
+    const zero=scIdx.filter(i=>{ const b=G.vrows.map(r=>r[i]).filter(v=>!blank(v)).map(Number); return b.length>1&&sd(b)===0; }).length;
+    stats+='<div class="stat"><b>'+zero+'</b><span>模擬資料中沒有變異的量表題</span></div>';
+  }
   $("check-stats").innerHTML=stats;
-  /* 類別 */
-  const catIdx=cols.map((c,j)=>c.type==="cat"||c.type==="multi"?j:-1).filter(j=>j>=0).filter(j=>cols[j].levels<=30);
-  let ct='<table><thead><tr><th class="l">欄位</th><th>類別數</th><th class="l">差距最大的類別</th><th>原始比例</th><th>模擬比例</th></tr></thead><tbody>';
-  let anyCat=false;
-  catIdx.forEach(j=>{
-    const cnt=rows=>{ const m=new Map(); let N=0; rows.forEach(r=>{ const v=r[j]; if (blank(v)) return; const s=String(v); m.set(s,(m.get(s)||0)+1); N++; }); return {m,N}; };
-    const A=cnt(G.orig), B=cnt(G.rows); if (!A.N||!B.N) return;
+  /* 類別：原始回覆版含複選題（整題作答組合）；已整理資料版只有單選題 */
+  const catIdx=U.map((u,i)=>(u.type==="cat"||(raw&&u.type==="multi"))&&u.levels<=30?i:-1).filter(i=>i>=0);
+  let ct='<table><thead><tr><th class="l">欄位</th><th>類別數</th><th class="l">差距最大的類別</th><th>原始比例</th><th>模擬比例</th></tr></thead><tbody>', anyCat=false;
+  catIdx.forEach(i=>{
+    const cnt=rows=>{ const m=new Map(); let N=0; rows.forEach(r=>{ const v=r[i]; if (blank(v)) return; const s=String(v); m.set(s,(m.get(s)||0)+1); N++; }); return {m,N}; };
+    const A=cnt(G.vOrig), B=cnt(G.vrows); if (!A.N||!B.N) return;
     let worst=null, wd=-1;
     new Set([...A.m.keys(),...B.m.keys()]).forEach(k=>{ const pa=(A.m.get(k)||0)/A.N, pb=(B.m.get(k)||0)/B.N; if (Math.abs(pa-pb)>wd){ wd=Math.abs(pa-pb); worst=[k,pa,pb]; } });
     anyCat=true;
-    ct+='<tr><td class="l colname">'+esc(cols[j].name.length>40?cols[j].name.slice(0,40)+"…":cols[j].name)+'</td><td>'+A.m.size+'</td><td class="l">'+esc(worst[0].length>30?worst[0].slice(0,30)+"…":worst[0])+'</td><td>'+(worst[1]*100).toFixed(1)+'%</td><td>'+(worst[2]*100).toFixed(1)+'%</td></tr>';
+    ct+='<tr><td class="l colname">'+esc(cut(U[i].name,40))+'</td><td>'+A.m.size+'</td><td class="l">'+esc(cut(worst[0],30))+'</td><td>'+(worst[1]*100).toFixed(1)+'%</td><td>'+(worst[2]*100).toFixed(1)+'%</td></tr>';
   });
-  $("check-cat").innerHTML=anyCat?ct+'</tbody></table>':'<p class="hint">沒有 30 種作答以內的類別欄位。</p>';
+  $("check-cat").innerHTML=anyCat?ct+'</tbody></table>':'<p class="hint">沒有 30 種作答以內的'+(raw?"類別欄位":"單選題")+'。</p>';
+  if (raw) return;
+  /* 複選題：各選項勾選率 */
+  const mcIdx=U.map((u,i)=>u.type==="multi"?i:-1).filter(i=>i>=0);
+  let mt='<table><thead><tr><th class="l">複選題</th><th>選項數</th><th class="l">差距最大的選項</th><th>原始勾選率</th><th>模擬勾選率</th></tr></thead><tbody>', anyMc=false;
+  mcIdx.forEach(i=>{
+    const u=U[i], rate=(rows,k)=>{ let on=0,N=0; rows.forEach(r=>{ const v=r[i]; if (blank(v)) return; N++; if (String(v).split(/,\s*/).includes("o"+k)) on++; }); return N?on/N:null; };
+    let worst=null, wd=-1;
+    u.opts.forEach((o,k)=>{ const pa=rate(G.vOrig,k), pb=rate(G.vrows,k); if (pa==null||pb==null) return; if (Math.abs(pa-pb)>wd){ wd=Math.abs(pa-pb); worst=[o,pa,pb]; } });
+    if (!worst) return; anyMc=true;
+    mt+='<tr><td class="l colname">'+esc(cut(u.name,40))+'</td><td>'+u.opts.length+'</td><td class="l">'+esc(cut(worst[0],30))+'</td><td>'+(worst[1]*100).toFixed(1)+'%</td><td>'+(worst[2]*100).toFixed(1)+'%</td></tr>';
+  });
+  $("check-mc").innerHTML=anyMc?mt+'</tbody></table>':'<p class="hint">沒有複選題。</p>';
 }
 
 /* ---------- 下載 ---------- */
-function download(){
-  const G=S.sim; if (!G) return;
+const baseName=()=>S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_練習擴充\d+份$/,"").replace(/^sim_(.*)_\d+$/,"$1").replace(/^(?:sim_)+/,"");
+function downloadRaw(){
+  const G=S.sim;
   const head=S.headers.concat(["資料來源"]);
   const aoa=[head].concat(S.rows.map(r=>r.concat(["原始"]))).concat(G.rows.map(r=>r.concat(["模擬"])));
   const ws=XLSX.utils.aoa_to_sheet(aoa,{cellDates:true,dateNF:"yyyy/m/d h:mm:ss"});
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,S.sheet.slice(0,31)||"資料");
-  const typeCount={}; G.cols.forEach(c=>typeCount[c.type]=(typeCount[c.type]||0)+1);
   const info=[["項目","內容"],
     ["用途","課堂練習用模擬資料，不得作為研究結果、報告數據或論文資料"],
     ["原始檔案",S.fileName+"（工作表："+S.sheet+"）"],
@@ -383,10 +628,39 @@ function download(){
     ["距離計算","Gower 距離：數值欄以全距標準化後的差距，單選與開放題以是否相同，複選題以 Jaccard 距離"],
     ["亂數種子",G.seed],
     ["產生日期",new Date().toLocaleString("zh-TW")],
-    [],["欄位","處理方式"]].concat(G.cols.map(c=>[c.name,TYPE_NAME[c.type]]));
+    [],["欄位","處理方式"]].concat(G.cols.map(c=>[c.name,c.type==="clear"?RAW_CLEAR:TYPE_NAME[c.type]]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),"模擬說明");
-  XLSX.writeFile(wb,"sim_"+S.fileName.replace(/\.(xlsx|csv|omv)$/i,"").replace(/_練習擴充\d+份$/,"").replace(/^sim_(.*)_\d+$/,"$1").replace(/^(?:sim_)+/,"")+"_"+(S.rows.length+G.rows.length)+".xlsx");
+  XLSX.writeFile(wb,"sim_"+baseName()+"_"+(S.rows.length+G.rows.length)+".xlsx");
 }
+function downloadClean(){
+  const G=S.sim;
+  let headers=S.headers.slice(), orig=S.rows.map(r=>r.slice()), sim=G.rows.map(r=>r.slice()), addedSrc=false;
+  if (S.srcIdx<0){ headers.push("資料來源"); orig.forEach(r=>r.push("原始")); sim.forEach(r=>r.push("模擬")); addedSrc=true; }
+  const all=orig.concat(sim);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([headers].concat(all));
+  if (S.wb.Sheets[S.sheet]&&S.wb.Sheets[S.sheet]["!cols"]) ws["!cols"]=S.wb.Sheets[S.sheet]["!cols"].concat(addedSrc?[{wch:8}]:[]);
+  XLSX.utils.book_append_sheet(wb,ws,S.sheet.slice(0,31)||"資料");
+  if (S.cb){
+    const cbAoa=Clean.updateCodebook(S.cb,headers,all,{base:S.rows.length,sim:sim.length,addedSrc});
+    const ws2=XLSX.utils.aoa_to_sheet(cbAoa); if (S.wb.Sheets["欄名對照表"]["!cols"]) ws2["!cols"]=S.wb.Sheets["欄名對照表"]["!cols"];
+    XLSX.utils.book_append_sheet(wb,ws2,"欄名對照表");
+  }
+  S.wb.SheetNames.forEach(nm=>{ if (nm===S.sheet||nm==="欄名對照表"||nm==="模擬說明") return; XLSX.utils.book_append_sheet(wb,S.wb.Sheets[nm],nm); });
+  const info=[["項目","內容"],
+    ["用途","課堂練習用模擬資料，不得作為研究結果、報告數據或論文資料"],
+    ["原始檔案",S.fileName+"（工作表："+S.sheet+"）"],
+    ["原始有效樣本數",S.rows.length],["模擬份數",sim.length],["總份數",all.length],
+    ["模擬基礎","問卷資料整理器整理後的有效樣本"+(S.prevSim?"（已排除檔案中原有的 "+S.prevSim+" 筆模擬資料）":"")],
+    ["模擬方法","近鄰合成：隨機選取一位原始受訪者，再從空白題目相同、作答最相近的 "+G.k+" 位中選取一位；每一題依 0.2～0.8 之間的隨機比例從兩人中擇一照錄（數值欄不內插，以免墊高題目之間的相關），複選題的 0／1 欄整題一起照錄，空白位置沿用第一位受訪者"+(G.jit?"；量表題（"+G.jit.lo+"～"+G.jit.hi+" 的整數）另以 "+Math.round(G.jit.p*100)+"% 的機率上下調 1 分，不超出量表範圍":"")],
+    ["距離計算","Gower 距離：數值欄以全距標準化後的差距，單選題與文字以是否相同，複選題以勾選選項的 Jaccard 距離"],
+    ["亂數種子",G.seed],
+    ["產生日期",new Date().toLocaleString("zh-TW")],
+    [],["題目","處理方式","包含的欄位"]].concat(G.units.map(u=>[u.name,TYPE_NAME[u.type],u.cols.map(j=>S.headers[j]).join("、")]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),"模擬說明");
+  XLSX.writeFile(wb,"sim_"+baseName()+"_"+all.length+".xlsx");
+}
+function download(){ if (!S.sim) return; if (S.sim.mode==="raw") downloadRaw(); else downloadClean(); }
 
 /* ---------- 事件 ---------- */
 $("file").addEventListener("change",e=>readFile(e.target.files[0]));
@@ -394,8 +668,9 @@ const dz=$("dropzone");
 ["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
 ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
 dz.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if (f) readFile(f); });
-$("sheet").addEventListener("change",e=>loadSheet(e.target.value));
-$("btn-remove").addEventListener("click",()=>{ S.wb=null; S.rows=[]; S.sim=null; $("file").value=""; $("dz-label").textContent="選擇或拖曳 Excel／CSV／jamovi (.omv) 檔案到這裡"; $("sheet-row").hidden=true; ["sec-cols","sec-gen","sec-check"].forEach(s=>$(s).hidden=true); $("load-msg").innerHTML=""; });
+$("sheet").addEventListener("change",e=>loadSheet(e.target.value,false));
+$("mode").addEventListener("change",async e=>{ if (!S.buf) return; S.mode=e.target.value; try { await openMode(false); } catch(err){ console.error(err); toast("無法以此資料類型讀取"); } });
+$("btn-remove").addEventListener("click",()=>{ S.wb=null; S.buf=null; S.rows=[]; S.sim=null; $("file").value=""; $("dz-label").textContent=DROP_LABEL; $("sheet-row").hidden=true; ["sec-cols","sec-gen","sec-check"].forEach(s=>$(s).hidden=true); $("load-msg").innerHTML=""; });
 $("btn-gen").addEventListener("click",generate);
 $("btn-dl").addEventListener("click",download);
 })();
@@ -403,6 +678,6 @@ $("btn-dl").addEventListener("click",download);
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
 <nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>
 <script src="../store.js"></script>
-<script src="../newver.js" data-note="（畫面上的資料與分析結果會清空，需要重新上傳或貼上；已設定資料夾時，資料檔與填寫內容（含 AI 回覆）會自動帶回）"></script>
+<script src="../newver.js" data-note="（畫面上的資料與模擬結果會清空，需要重新上傳；已設定資料夾時，資料檔與填寫內容（含 AI 回覆）會自動帶回）"></script>
 </body>
 </html>

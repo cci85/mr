@@ -1,4 +1,4 @@
-// 練習資料擴充共用的模擬引擎（原始回覆版 simulate/ 與已整理資料版 simulate-clean/ 共用）
+// 練習資料擴充（simulate/）的模擬引擎：原始回覆與已整理資料兩種模式共用
 /* ===== SIM-BEGIN（純計算函式，可單獨測試） ===== */
 const Sim=(function(){
   function rng(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=a; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; }

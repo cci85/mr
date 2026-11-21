@@ -33,8 +33,7 @@
   /* 各頁要自動載入的檔案：kinds 依序為可接受的類型；prefer／avoid 是檔名關鍵字（加分／減分） */
   const PAGES = {
     "organizer":       { input: "input-csv", kinds: ["raw", "simraw"] },
-    "simulate":        { input: "file", kinds: ["raw"] },
-    "simulate-clean":  { input: "file", kinds: ["clean"] },
+    "simulate":        { input: "file", kinds: ["raw", "clean"] },
     "sample":          { input: "file", kinds: ["clean", "simclean"] },
     "group-pca":       { input: "input-csv", kinds: ["clean", "simclean"], prefer: /前測|pick|市場定義|市場範圍/i, avoid: /定位/ },
     "chisq":           { input: "input-csv", kinds: ["clean", "simclean", "seg"] },
