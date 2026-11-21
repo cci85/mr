@@ -119,6 +119,8 @@ ol.steps{margin:0 0 12px;padding-left:22px;font-size:14px}
 @media (max-width:620px){.fname{grid-template-columns:minmax(0,1fr)}}
 input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 9px;width:100%}
 textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;min-height:64px;resize:vertical}
+.replybox{margin:14px 0 0;padding:10px 13px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+.replybox textarea{display:block;margin:8px 0 4px;min-height:260px;line-height:1.7}
 .kpick{display:flex;flex-wrap:wrap;gap:8px}
 .kpick label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border-strong);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px}
 .kpick label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:700}
@@ -209,6 +211,11 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
       <span class="hint small" id="prompt-len" style="margin:0"></span>
     </div>
     <details><summary>檢視指令內容</summary><pre class="prompt" id="prompt-out"></pre></details>
+    <div class="replybox">
+      <b>貼上 AI 回覆</b>　把 AI 的完整回覆貼在下方，可直接在框內檢視與修改報告文字；按「下載 Word 報告」即取得含表1 與各圖的 .docx 檔（表格與圖由本工具產生，放在「〔插入表N〕」「〔插入圖N〕」的位置）。已設定資料夾時，Word 報告與這裡的回覆內容會同時存進資料夾，下次開啟自動帶回。
+      <textarea id="ai-reply" rows="14" placeholder="貼上 AI 的完整回覆"></textarea>
+      <div class="row"><button type="button" class="primary" id="btn-docx">下載 Word 報告（.docx）</button><span class="small" id="ai-reply-msg"></span></div>
+    </div>
   </section>
 
   <footer>所有計算都在您的瀏覽器中完成，資料不會上傳。本工具不使用 AI 服務；報告由您把指令貼到自己的 AI 對話中產生。</footer>
@@ -216,6 +223,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="../docx-report.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -475,16 +483,15 @@ function renderAll(){
   $("collect-out").innerHTML='<div class="notice ok">'+esc(collectText())+'</div>';
   let th="";
   if (tableModel().length) th+='<h3>'+esc(t1Cap())+'</h3><div class="table-scroll">'+t1HTML(false)+'</div><p class="hint small">'+esc(t1Note())+'</p><div class="row"><button type="button" class="primary" data-copy="t1">複製表1（貼到 Word）</button></div>';
-  mcModel().forEach(x=>{ th+='<h3>'+esc(mcCap(x))+'</h3><div class="table-scroll chartbox">'+mcSVG(x)+'</div><p class="hint small">'+esc(mcNote(x))+'</p><div class="row"><button type="button" data-img="'+x.no+'">複製圖'+x.no+'（貼到 Word）</button><button type="button" data-png="'+x.no+'">下載 PNG</button></div>'; });
+  mcModel().forEach(x=>{ th+='<h3>'+esc(mcCap(x))+'</h3><div class="table-scroll chartbox">'+mcSVG(x)+'</div><p class="hint small">'+esc(mcNote(x))+'</p><div class="row"><button type="button" data-img="'+x.no+'">複製圖'+x.no+'（貼到 Word）</button></div>'; });
   $("tables-out").innerHTML=th||'<p class="hint">請在步驟 3 至少勾選一個變數。</p>';
   $("tables-out").querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",()=>{ const fs="font-family:'Times New Roman','新細明體',serif;", k=b.dataset.copy;
     if (k==="t1") copyHTML('<p style="'+fs+'font-size:12pt;">'+t1Cap()+'</p>'+t1HTML(true)+'<p style="'+fs+'font-size:10pt;">'+t1Note()+'</p>',"表1");
     else { const x=mcModel().find(z=>"mc"+z.no===k); copyHTML('<p style="'+fs+'font-size:12pt;">'+esc(mcCap(x))+'</p>'+mcHTML(x,true)+'<p style="'+fs+'font-size:10pt;">'+mcNote(x)+'</p>',"表"+x.no); } }));
-  $("tables-out").querySelectorAll("[data-img],[data-png]").forEach(b=>b.addEventListener("click",()=>{
-    const x=mcModel().find(z=>String(z.no)===(b.dataset.img||b.dataset.png));
+  $("tables-out").querySelectorAll("[data-img]").forEach(b=>b.addEventListener("click",()=>{
+    const x=mcModel().find(z=>String(z.no)===b.dataset.img);
     svgToPng(mcSVG(x),async blob=>{
-      if (b.dataset.png){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=mcCap(x).replace(/\s+/g,"_")+".png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); return; }
-      try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); toast("已複製圖"+x.no+"，可直接貼到 Word"); }catch(e){ toast("此瀏覽器無法複製圖片，請改用「下載 PNG」"); }
+      try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]); toast("已複製圖"+x.no+"，可直接貼到 Word"); }catch(e){ toast("此瀏覽器無法複製圖片，請改用步驟 5 的「下載 Word 報告」，圖會直接放進報告"); }
     });
   }));
   $("tables-out").querySelectorAll("[data-up],[data-down]").forEach(b=>b.addEventListener("click",()=>{
@@ -590,6 +597,10 @@ document.addEventListener("change",e=>{
   else if (t.dataset&&t.dataset.key){ t.checked?S.sel.add(t.dataset.key):S.sel.delete(t.dataset.key); renderAll(); }
 });
 ["in-period","in-target","in-chan-other"].forEach(id=>$(id).addEventListener("input",renderAll));
+DocxReport.bind({ textarea:"ai-reply", button:"btn-docx", msg:"ai-reply-msg", toast, filename:"樣本結構分析報告", title:"樣本結構分析",
+  ready:()=>S.rows.length>0, notReady:"請先上傳資料並完成樣本結構表",
+  tables:()=>tableModel().length?{1:{cap:t1Cap(),html:t1HTML(true),note:t1Note()}}:{},
+  figures:()=>{ const F={}; mcModel().forEach(x=>{ F[x.no]={cap:mcCap(x),note:mcNote(x),svg:mcSVG(x)}; }); return F; } });
 </script>
 <style>.toolbox-back.bottom{border-bottom:0;border-top:1px solid #ddd7c9;margin-top:24px}@media (prefers-color-scheme:dark){.toolbox-back.bottom{border-top-color:#373d33}}</style>
 <nav class="toolbox-back bottom"><a href="../">← 回行銷研究工具箱</a></nav>

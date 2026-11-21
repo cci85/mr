@@ -1,7 +1,8 @@
 // AI 回覆 → Word 報告（.docx）：各工具頁共用。
 // 把貼上的 AI 回覆整理成段落與標題，「〔插入表N〕」換成工具產生的表格（保留合併儲存格、粗體、底線、斜體），
 // 不經任何外部程式庫，直接在瀏覽器內組成 .docx 檔下載。
-// 用法：DocxReport.bind({ textarea, button, msg, title, nameLine, onNames, tables, ready, filename, toast })
+// 「〔插入圖N〕」換成工具產生的圖（PNG），下一行的圖稱置中，再接工具的圖註。
+// 用法：DocxReport.bind({ textarea, button, msg, title, nameLine, onNames, tables, figures, ready, filename, toast })
 (() => {
   const RFONT = '<w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:eastAsia="新細明體" w:cs="Times New Roman"/>';
   const xesc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -12,6 +13,7 @@
   /* ---------- 解析 AI 回覆 ---------- */
   const cleanMd = t => t.replace(/^\s*#{1,6}\s*/, "").replace(/^\s*>\s?/, "").replace(/^\s*[-*•]\s+/, "")
     .replace(/\*\*(.+?)\*\*/g, "$1").replace(/__(.+?)__/g, "$1").trim();
+  const FIG_RE = /^[〔\[［【]\s*插入圖\s*(\d+)\s*[〕\]］】]$/;
   function parse(txt, o) {
     let lines = String(txt || "").replace(/\r/g, "").split("\n").map(cleanMd);
     const ti = lines.findIndex(l => l === o.title);
@@ -20,6 +22,9 @@
     const B = lines.map((l, i) => {
       const m = l.match(/^[〔\[［【]\s*插入表\s*(\d+)\s*[〕\]］】]$/);
       if (m) return { t: "table", n: +m[1] };
+      const g = l.match(FIG_RE);
+      if (g) return { t: "fig", n: +g[1] };
+      if (i > 0 && FIG_RE.test(lines[i - 1]) && /^圖\s*\d+/.test(l) && l.length <= 40) return { t: "figcap", x: l };   // 緊接在〔插入圖N〕之後的圖稱
       if (i === 0 && l === o.title) return { t: "h0", x: l };
       if (l.length <= 30 && !/[。；]$/.test(l)) {
         if (/^（[一二三四五六七八九十]+）\S/.test(l)) return { t: "h1", x: l };
@@ -139,9 +144,24 @@
       + (o.indent ? '<w:ind w:firstLineChars="200" w:firstLine="480"/>' : o.side ? '<w:ind w:left="' + o.side + '" w:right="' + o.side + '"/>' : '')
       + '<w:jc w:val="' + (o.jc || "both") + '"/></w:pPr>' + (text ? run(text, { b: o.b, sz: o.sz }) : '') + '</w:p>';
   }
-  function bodyXml(blocks, tables) {
+  // 圖：寬度依 PNG 的顯示尺寸（px，96 dpi），超過版心時等比縮小
+  const EMU = 9525, MAXW = PAGE_W * 635;
+  function figXml(F, id) {
+    let cx = Math.round(F.w * EMU), cy = Math.round(F.h * EMU);
+    if (cx > MAXW) { cy = Math.round(cy * MAXW / cx); cx = MAXW; }
+    return '<w:p><w:pPr><w:keepNext/><w:spacing w:before="120" w:after="60" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:r><w:drawing>'
+      + '<wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:docPr id="' + id + '" name="' + xesc(F.cap || ("圖" + id)) + '"/>'
+      + '<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
+      + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>'
+      + '<pic:nvPicPr><pic:cNvPr id="' + id + '" name="fig' + id + '.png"/><pic:cNvPicPr/></pic:nvPicPr>'
+      + '<pic:blipFill><a:blip r:embed="rIdFig' + id + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+      + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
+      + '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
+  }
+  function bodyXml(blocks, tables, figures) {
+    figures = figures || {};
     let b = "";
-    blocks.forEach(k => {
+    blocks.forEach((k, i) => {
       if (k.t === "table") {
         const T = tables[k.n]; if (!T) return;
         // 表格置中；表號與註對齊表格左緣（寬度與表格相同）
@@ -151,13 +171,30 @@
           + (T.note ? para(T.note, { sz: 20, line: 240, before: 40, side }) : '')
           + para("", { line: 240 });
       }
+      else if (k.t === "fig") {
+        const F = figures[k.n]; if (!F || !F.png) return;
+        b += figXml(F, k.n);
+        // 圖稱：沿用回覆中緊接的圖稱；沒有時用工具的圖稱
+        const nx = blocks[i + 1];
+        if (!(nx && nx.t === "figcap")) b += figCap(F.cap, F.note);
+      }
+      else if (k.t === "figcap") {
+        const pv = blocks[i - 1], F = pv && pv.t === "fig" ? figures[pv.n] : null;
+        b += figCap(k.x, F ? F.note : "");
+      }
       else if (k.t === "h0") b += para(k.x, { b: true, sz: 28, jc: "center", after: 240 });
       else if (k.t === "h1") b += para(k.x, { b: true, jc: "left", keepNext: true, before: 240, after: 60 });
       else if (k.t === "h2") b += para(k.x, { b: true, jc: "left", keepNext: true, before: 120 });
       else b += para(k.x, { indent: true });
     });
-    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + b
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>' + b
       + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="851" w:footer="992" w:gutter="0"/></w:sectPr></w:body></w:document>';
+  }
+
+  function figCap(cap, note) {
+    return para(cap || "", { jc: "center", line: 240, after: note ? 40 : 0 })
+      + (note ? para(note, { sz: 20, line: 240, jc: "left" }) : '')
+      + para("", { line: 240 });
   }
 
   /* ---------- 最小 zip（不壓縮）＋ CRC32 ---------- */
@@ -167,7 +204,7 @@
     const enc = new TextEncoder(), parts = [], central = []; let off = 0;
     const d = new Date(), dt = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate(), tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
     files.forEach(f => {
-      const name = enc.encode(f.name), data = enc.encode(f.data), crc = crc32(data);
+      const name = enc.encode(f.name), data = f.data instanceof Uint8Array ? f.data : enc.encode(f.data), crc = crc32(data);
       const h = new DataView(new ArrayBuffer(30));
       h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(10, tm, true); h.setUint16(12, dt, true);
       h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true);
@@ -183,17 +220,22 @@
     return new Blob(parts.concat(central, [new Uint8Array(e.buffer)]), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
   }
   const X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-  function docx(blocks, tables) {
+  function docx(blocks, tables, figures) {
+    figures = figures || {};
+    const used = [...new Set(blocks.filter(b => b.t === "fig" && figures[b.n] && figures[b.n].png).map(b => b.n))];
     return zip([
-      { name: "[Content_Types].xml", data: X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
+      { name: "[Content_Types].xml", data: X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' + (used.length ? '<Default Extension="png" ContentType="image/png"/>' : '') + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>' },
       { name: "_rels/.rels", data: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
-      { name: "word/_rels/document.xml.rels", data: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
-      { name: "word/document.xml", data: bodyXml(blocks, tables) },
+      { name: "word/_rels/document.xml.rels", data: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        + used.map(n => '<Relationship Id="rIdFig' + n + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/fig' + n + '.png"/>').join("") + '</Relationships>' },
+      { name: "word/document.xml", data: bodyXml(blocks, tables, figures) },
+      ...used.map(n => ({ name: "word/media/fig" + n + ".png", data: figures[n].png })),
       { name: "word/styles.xml", data: X + '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>' + RFONT + '<w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="en-US" w:eastAsia="zh-TW"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="0"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/></w:style></w:styles>' }
     ]);
   }
 
   /* ---------- 介面綁定 ---------- */
+  // o.figures()（選用）：回傳 {1:{cap,note,svg}, …}，svg 為含 width／height 的 SVG 字串，下載時轉成 PNG 放進報告；
   // o.tables()：回傳 {1:{cap,html,note}, 2:…}；html 用各頁「複製表格」的 Word 版 HTML（表格一律 10 pt、欄寬依內容自動計算，舊的 sz／widths 不再使用）
   function bind(o) {
     const ta = document.getElementById(o.textarea), btn = document.getElementById(o.button), msg = document.getElementById(o.msg);
@@ -209,6 +251,16 @@
       });
       return B;
     };
+    // 找不到位置標記的圖，同樣放在第一次提到「圖N」的段落之後；都沒提到就放在最後
+    const placeFig = (B, F) => {
+      Object.keys(F).map(Number).sort((a, b) => a - b).forEach(n => {
+        if (B.some(b => b.t === "fig" && b.n === n)) return;
+        let i = B.findIndex(b => b.t === "p" && new RegExp("圖\\s*" + n + "(?!\\d)").test(b.x));
+        B.splice(i < 0 ? B.length : i + 1, 0, { t: "fig", n });
+      });
+      return B;
+    };
+    const figs = () => (o.figures && !(o.ready && !o.ready()) ? o.figures() : {}) || {};
     const status = () => {
       const v = ta.value; if (!v.trim()) { msg.textContent = ""; return; }
       names(v);
@@ -220,18 +272,39 @@
         + (found.length ? "；表格位置：" + found.map(n => "表" + n).join("、") : "")
         + (miss.length ? "；找不到" + miss.map(n => "「〔插入表" + n + "〕」").join("") + "，該表會放在第一次提到它的段落之後" : "")
         + (noTbl.length ? "；" + noTbl.join("、") + "目前沒有表格可放，會略過" : "")
+        + figMsg(B)
         + (o.extraMsg ? o.extraMsg() : "");
     };
+    function figMsg(B) {
+      if (!o.figures) return "";
+      const F = figs(), keys = Object.keys(F).map(Number), found = keys.filter(n => B.some(b => b.t === "fig" && b.n === n)), miss = keys.filter(n => !found.includes(n));
+      const none = B.filter(b => b.t === "fig" && !F[b.n]).map(b => "圖" + b.n);
+      return (found.length ? "；圖的位置：" + found.map(n => "圖" + n).join("、") : "")
+        + (miss.length ? "；找不到" + miss.map(n => "「〔插入圖" + n + "〕」").join("") + "，該圖會放在第一次提到它的段落之後" : "")
+        + (none.length ? "；" + none.join("、") + "目前沒有圖可放，會略過" : "");
+    }
+    const toPng = svg => new Promise(res => {
+      const m = /width="([\d.]+)" height="([\d.]+)"/.exec(svg || ""); if (!m) { res(null); return; }
+      const w = +m[1], h = +m[2], k = 3, img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas"); c.width = w * k; c.height = h * k;
+        const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(b => { if (!b) { res(null); return; } b.arrayBuffer().then(ab => res({ png: new Uint8Array(ab), w, h })); }, "image/png");
+      };
+      img.onerror = () => res(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
     ta.addEventListener("input", status);
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       if (o.ready && !o.ready()) { toast(o.notReady || "尚未完成分析"); return; }
       const v = ta.value;
       if (!v.trim()) { toast("請先貼上 AI 回覆"); ta.focus(); return; }
       names(v);
-      const T = o.tables(), B = place(parse(v, o), T);
+      const T = o.tables(), F0 = figs(), B = placeFig(place(parse(v, o), T), F0), F = {};
+      for (const n of Object.keys(F0)) { const r = await toPng(F0[n].svg); if (r) F[n] = Object.assign({}, F0[n], r); }
       if (!B.some(b => b.t === "p")) { toast("回覆中沒有可放入報告的段落"); return; }
       const d = new Date(), ds = d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-      const a = document.createElement("a"); a.href = URL.createObjectURL(docx(B, T)); a.download = o.filename + "_" + ds + ".docx";
+      const a = document.createElement("a"); a.href = URL.createObjectURL(docx(B, T, F)); a.download = o.filename + "_" + ds + ".docx";
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       status();
       toast("已下載 Word 報告" + (o.extraMsg ? o.extraMsg() : ""));
