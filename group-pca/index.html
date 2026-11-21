@@ -560,6 +560,10 @@
   .rep-inc{display:inline-flex;align-items:center;gap:6px;margin:2px 0 6px;font-size:13px;color:var(--ink-soft);cursor:pointer}
   .rep-inc input{accent-color:var(--accent)}
   .full-report-bar{align-items:center;margin:0 0 14px}
+  .cfg-backup{ margin-top:10px; border:1px solid var(--border); border-radius:10px; background:var(--surface); padding:0 14px; }
+  .cfg-backup summary{ cursor:pointer; padding:10px 0; font-weight:600; font-size:14px; color:var(--ink-soft, var(--ink)); }
+  .cfg-backup[open]{ padding-bottom:10px; }
+  .cfg-backup .hint{ margin-top:0; }
 </style>
 
 </head>
@@ -570,7 +574,7 @@
   <header class="hero">
     <p class="eyebrow">複選題組 · 主成分分析 · 競爭圖</p>
     <h1>複選題組分析：定義市場範圍</h1>
-    <p class="lede">本工具用於前測問卷，界定市場範圍（前測樣本的回收概況、基本資料與勾選率，請先以<a href="../sample/">樣本結構分析</a>整理）。上傳問卷回覆後，把複選題整理成 (0,1) 資料，挑選選項組成題組，著重分析選項之間的關係。工具會為每個題組計算勾選率與 Pearson 相關係數矩陣，以未轉軸主成分分析萃取前兩個主成分，輸出特徵值、負荷量與競爭圖，也可依區隔變數篩選或並排比較。</p>
+    <p class="lede">本工具用於 Pick-any 問卷，界定市場範圍（樣本的回收概況、基本資料與勾選率，請先以<a href="../sample/">樣本結構分析</a>整理）。上傳問卷回覆後，把複選題整理成 (0,1) 資料，挑選選項組成題組，著重分析選項之間的關係。工具會為每個題組計算勾選率與 Pearson 相關係數矩陣，以未轉軸主成分分析萃取前兩個主成分，輸出特徵值、負荷量與競爭圖，也可依區隔變數篩選或並排比較。</p>
   </header>
 
   <section class="card" id="section-upload">
@@ -667,14 +671,20 @@
     <h3 class="list-h">題組</h3>
     <div id="group-list"></div>
     <div class="row-actions">
-      <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
-      <label class="btn btn-text file-btn">
-        匯入設定（JSON）
-        <input type="file" id="input-import-config" accept="application/json" hidden>
-      </label>
       <button class="btn btn-text danger" id="btn-clear-config" type="button">重設題組名稱、代碼與勾選</button>
     </div>
     <p class="hint small">題組名稱、代碼與勾選會自動保存在此瀏覽器，同一份資料下次上傳時直接套用，也可匯出存檔。</p>
+    <details class="cfg-backup">
+      <summary>設定備份（進階）</summary>
+      <p class="hint small">同一台電腦、同一個瀏覽器不必使用。換電腦或換瀏覽器、清除過瀏覽資料，或要把設定給別人沿用時，才需要匯出或匯入設定。</p>
+      <div class="row-actions">
+        <button class="btn btn-text" id="btn-export-config" type="button">匯出設定（JSON）</button>
+        <label class="btn btn-text file-btn">
+          匯入設定（JSON）
+          <input type="file" id="input-import-config" accept="application/json" hidden>
+        </label>
+      </div>
+    </details>
   </section>
 
   <section class="card" id="section-dummy" hidden>

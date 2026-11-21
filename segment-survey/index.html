@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>市場區隔問卷產生器</title>
-<meta name="description" content="輸入前測決定的品牌、通路、消費情境與消費動機選項，產生可貼給 AI 製作市場區隔問卷的指令。">
+<meta name="description" content="輸入複選題組分析決定的品牌、通路、消費情境與消費動機選項，產生可貼給 AI 製作市場區隔問卷的指令。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
@@ -80,7 +80,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
 <header>
   <h1>市場區隔問卷產生器</h1>
   <p class="sub">行銷研究方法 · 市場區隔問卷設計</p>
-  <p class="intro">請將前測問卷決定的品牌、通路、消費情境與消費動機選項填入下方步驟 1（未填的部分由 AI 生成），步驟 2 會即時組成一段指令。複製後貼到 Gemini、ChatGPT 或 Claude，即可產生 Word 問卷。個人特質、基本資料等固定題目已內建在指令中，不需要另外填寫。</p>
+  <p class="intro">請將複選題組分析決定的品牌、通路、消費情境與消費動機選項填入下方步驟 1（未填的部分由 AI 生成），步驟 2 會即時組成一段指令。複製後貼到 Gemini、ChatGPT 或 Claude，即可產生 Word 問卷。個人特質、基本資料等固定題目已內建在指令中，不需要另外填寫。</p>
 </header>
 
 <main>
@@ -130,7 +130,7 @@ footer{max-width:1280px;margin:0 auto;padding:8px 16px 32px;color:var(--muted);f
   </div>
 
   <div class="group">
-    <p class="group-title">前測決定的選項</p>
+    <p class="group-title">複選題組分析決定的選項</p>
     <div class="field">
       <label for="brands"><span id="brandLabel">品牌</span>選項<span class="opt">選填，未填時由 AI 生成</span></label>
       <textarea id="brands" placeholder="一行一項；品牌名稱也可用頓號或逗號分隔"></textarea>
@@ -481,7 +481,7 @@ function build(){
   const list = (key) => { const x=SPEC.find(s=>s.key===key); return R[key].items.length ? box(R[key].items) : ph(x.name); };
 
   const rules = [];
-  if (given.length) rules.push("【問卷內容】中的"+given.map(x=>x.name).join("、")+"，已由研究者透過前測問卷決定。請逐字照錄，不得增加、刪減、合併、改寫或調整順序。");
+  if (given.length) rules.push("【問卷內容】中的"+given.map(x=>x.name).join("、")+"，已由研究者透過複選題組分析決定。請逐字照錄，不得增加、刪減、合併、改寫或調整順序。");
   rules.push("其餘題目、選項與說明文字為固定內容，亦請逐字照錄。只有標示「〔　〕」之處，須依下列規則由你填入。");
   rules.push("〔簡稱〕：研究標的為「"+T+"」。若此名稱已相當簡短，請以原名稱取代所有〔簡稱〕，並刪除問候語中的「（以下簡稱〔簡稱〕）」；若名稱較長，請訂定一個簡短且不失原意的簡稱，取代所有〔簡稱〕。");
   rules.push("〔資訊類別〕：第一部份第 6 題的題目，請把研究標的提升為消費者實際搜尋資訊時所對應的更一般化產品或服務類別，取代〔資訊類別〕（例如「手搖飲料」提升為「美食」，「洗髮精」提升為「個人清潔用品」），因為消費者取得資訊的管道通常針對較大的類別，而非單一細分產品。");
