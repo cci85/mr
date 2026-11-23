@@ -190,7 +190,7 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <h2 id="h4s"><span class="step">4</span>因素個數</h2>
     <p class="hint">預設保留特徵值大於 1 的因素（Kaiser 準則）。若陡坡圖顯示其他轉折，或理論上另有依據，可直接修改因素個數。社會科學研究通常以累積解釋變異量達 60% 左右為參考標準（Hair et al.），可與特徵值、陡坡圖一併考量。</p>
     <div class="row">
-      <label class="inline">因素個數 <input type="number" id="nf" min="1" step="1"></label>
+      <label class="inline">因素個數 <input type="number" id="nf" min="1" step="1" data-nosave></label>
       <button type="button" class="ghost" id="btn-kaiser">恢復特徵值大於 1</button>
       <span class="small" id="nf-note"></span>
     </div>
@@ -205,13 +205,13 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint">萃取方法為主成分分析，轉軸方法為 Varimax（Kaiser 常態化）。題項依主要負荷所在的因素排列，同一因素內依負荷量由高到低。</p>
     <div class="row">
       <label class="inline">門檻值
-        <select id="cut" autocomplete="off">
+        <select id="cut" autocomplete="off" data-nosave>
           <option value="0.3">0.3</option>
           <option value="0.4">0.4</option>
           <option value="0.5" selected>0.5</option>
         </select>
       </label>
-      <label class="inline">交叉負荷量差距 <input type="number" id="xgap" min="0" max="0.5" step="0.05" value="0.1" style="width:5em" title="主要負荷量與另一因素負荷量（皆取絕對值）的差距小於此值時，視為交叉負荷量"></label>
+      <label class="inline">交叉負荷量差距 <input type="number" id="xgap" data-nosave min="0" max="0.5" step="0.05" value="0.1" style="width:5em" title="主要負荷量與另一因素負荷量（皆取絕對值）的差距小於此值時，視為交叉負荷量"></label>
       <label class="inline"><input type="checkbox" id="hide-low">隱藏低於門檻值的負荷量</label>
       <span class="small" id="cut-note"></span>
     </div>
@@ -843,7 +843,7 @@ function renderGroups(){
     const kind=cols.every(c=>c.binary)?"0／1 二元":(cols.some(c=>c.binary)?"混合":"連續數值");
     html+='<div class="grp"><div class="grp-head"><strong>'+esc(title)+'</strong><span class="tag">'+cols.length+' 欄 · '+kind+'</span>'
       +'<button type="button" class="ghost" data-all="'+esc(key)+'">全選</button><button type="button" class="ghost" data-none="'+esc(key)+'">全不選</button></div><div class="items">';
-    cols.forEach(c=>{ html+='<label title="'+esc(c.stem)+'"><input type="checkbox" data-ci="'+c.ci+'"'+(S.selected.has(c.ci)?" checked":"")+'><span>'+esc(c.name)+(S.excluded.has(c.ci)?' <span class="tag">已剔除</span>':'')+(c.stem&&c.stem!==c.name?'<br><span class="stem">'+esc(c.stem.length>40?c.stem.slice(0,40)+"…":c.stem)+'</span>':'')+'</span></label>'; });
+    cols.forEach(c=>{ html+='<label title="'+esc(c.stem)+'"><input type="checkbox" data-nosave data-ci="'+c.ci+'"'+(S.selected.has(c.ci)?" checked":"")+'><span>'+esc(c.name)+(S.excluded.has(c.ci)?' <span class="tag">已剔除</span>':'')+(c.stem&&c.stem!==c.name?'<br><span class="stem">'+esc(c.stem.length>40?c.stem.slice(0,40)+"…":c.stem)+'</span>':'')+'</span></label>'; });
     html+='</div></div>';
   }
   box.innerHTML=html;
@@ -1288,7 +1288,7 @@ function renderNames(){
     const dom=r.items.filter(it=>it.dom&&it.best===j).sort((a,b)=>Math.abs(b.row[j])-Math.abs(a.row[j]));
     const hint=dom.length?dom.slice(0,3).map(it=>it.c.name+"（"+f2(it.row[j])+"）").join("、")+(dom.length>3?"⋯⋯":""):"沒有主導變數";
     h+='<div class="fname"><label for="fn'+j+'"><b>因素'+(j+1)+'</b><span>'+esc(hint)+'</span></label>'
-      +'<input type="text" id="fn'+j+'" data-f="'+j+'" placeholder="因素名稱，例：日常作息習慣" value="'+esc(S.fnames[j]||"")+'"></div>';
+      +'<input type="text" id="fn'+j+'" data-nosave data-f="'+j+'" placeholder="因素名稱，例：日常作息習慣" value="'+esc(S.fnames[j]||"")+'"></div>';
   }
   box.innerHTML=h;
   box.querySelectorAll("input[data-f]").forEach(i=>i.addEventListener("input",()=>{

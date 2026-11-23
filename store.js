@@ -520,6 +520,7 @@
   const fieldEls = () => [...document.querySelectorAll("textarea,select,input")].filter(stEligible);
   function stSnapshot() {
     const out = Object.assign({}, stFields);
+    Object.keys(out).forEach(k => { const e = stFind(k)[0]; if (e && !stEligible(e)) delete out[k]; });
     fieldEls().forEach(e => {
       const k = stKeyOf(e); if (!k) return;
       if (e.type === "radio") { if (e.checked) out[k] = e.value; return; }
@@ -638,6 +639,7 @@
   function stApply(k, v) {
     const els = stFind(k); if (!els.length) return false;
     let e = els[0];
+    if (!stEligible(e)) return false;     // 標示 data-nosave 的欄位（例如由資料檔設定決定者）不從研究紀錄帶回
     if (k.startsWith("r:")) { e = els.find(x => x.value === v); if (!e || e.checked) return false; e.checked = true; }
     else if (e.type === "checkbox") { if (e.checked === !!v) return false; e.checked = !!v; }
     else { if (e.value === v) return false; e.value = v; if (e.tagName === "SELECT" && e.value !== v) return false; }
