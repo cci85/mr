@@ -282,16 +282,6 @@ footer{margin-top:28px;color:var(--ink-faint);font-size:13px}
     <p class="hint small">手動：列出目前採用群數中低於門檻的群，按「排除此群並重新集群」才執行，可多輪排除。自動：只要 3、4、5 群任一種有低於門檻的群，就排除其中人數最少的一群並重新集群，重複到都沒有低於門檻的群為止（最多 10 輪，累計排除超過有效樣本 20% 時停止）。各輪紀錄都可以復原。</p>
     <div id="ex-box"></div>
     <div hidden><input type="text" id="ex-state" aria-label="排除人數過少的群（紀錄）"></div>
-    <h3>AI 報告指令：群數決定（比較 3、4、5 群）</h3>
-    <p class="hint">指令已自動填入 3、4、5 群的各群人數與群中心值。複製後貼到 AI 對話中，AI 會依群數決定的三項準則與條紋現象，比較各群數的優缺點並建議群數；請依建議在上方選擇採用的群數，再於步驟 3 為各區隔命名。因素名稱沿用因素分析工具的命名結果。</p>
-    <div class="row">
-      <button type="button" class="primary" id="btn-copy-k">複製群數決定指令</button>
-      <span class="small" id="k-prompt-len"></span>
-    </div>
-    <details>
-      <summary>檢視指令內容</summary>
-      <pre class="prompt" id="k-prompt"></pre>
-    </details>
   </section>
 
   <!-- 8 區隔結果 -->
@@ -2336,7 +2326,7 @@ DocxReport.bind({ textarea:"seg-reply", button:"btn-docx-seg", msg:"seg-reply-ms
   tables:()=>{ const T={1:caT(), 3:{cap:KIT_T3_CAP, html:kitT3HTML(true), note:KIT_T3_NOTE(), sz:20}};
     if (kitSig().length||kitNumSig().length) T[2]={cap:KIT_T2_CAP, html:kitT2HTML(true), note:KIT_T2_NOTE(), sz:20};
     return T; } });
-$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製群數決定指令"));
+$("btn-copy-k")&&$("btn-copy-k").addEventListener("click",()=>copyText($("k-prompt").textContent,"已複製群數決定指令"));
 $("btn-copy").addEventListener("click",()=>copyText($("prompt").textContent,"已複製因素分析報告指令"));
 $("btn-copy-shot").addEventListener("click",()=>copyText(SHOT_PROMPT,"已複製截圖版指令，請連同截圖貼到 AI 對話"));
 })();
