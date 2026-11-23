@@ -1373,7 +1373,7 @@ function excludeGroup(g){
   S.segEx.push({k:c.k,g,n:rows.length,rows,auto:false}); S.exNote="";
   recluster(); toast("已排除 "+rows.length+" 人並重新集群");
 }
-function undoEx(i){ S.segEx=S.segEx.slice(0,i); S.exNote=""; if (exMode()==="auto"){ document.querySelector('input[name="exmode"][value="manual"]').checked=true; toast("已復原，並改為手動排除"); } recluster(); }
+function undoEx(i,all){ S.segEx=S.segEx.slice(0,i); S.exNote=""; const w=all?"已取消所有排除":"已復原"; if (exMode()==="auto"){ document.querySelector('input[name="exmode"][value="manual"]').checked=true; toast(w+"，並改為手動排除"); } else if (all) toast(w); recluster(); }
 /* 排除紀錄存在隱藏欄位，研究紀錄 .md 會一併保存並帶回 */
 function saveExState(){
   const v=S.segEx&&S.segEx.length?JSON.stringify(S.segEx.map(x=>({k:x.k,g:x.g,n:x.n,auto:!!x.auto,rows:x.rows}))):"";
@@ -1422,10 +1422,12 @@ function renderExBox(){
     const tot=S.segEx.reduce((a,x)=>a+x.rows.length,0);
     h+='<p class="small"><b>排除紀錄</b>（累計排除 '+tot+' 人，有效樣本由 '+G.nAll+' 筆減為 '+G.n+' 筆）</p><ol class="exlog">'
       +S.segEx.map((x,i)=>'<li>'+(x.auto?"自動":"手動")+'：'+x.k+' 群之集群'+(x.g+1)+'，'+x.rows.length+' 人<button type="button" class="ghost" data-undo="'+i+'">'+(i<S.segEx.length-1?"復原此輪及之後各輪":"復原此輪")+'</button></li>').join("")+'</ol>';
+    h+='<div class="row"><button type="button" class="ghost" id="btn-undo-all">取消所有排除（以全部 '+G.nAll+' 筆重新集群）</button></div>';
   }
   $("ex-box").innerHTML=h;
   $("ex-box").querySelectorAll("button[data-exg]").forEach(b=>b.addEventListener("click",()=>excludeGroup(+b.dataset.exg)));
   $("ex-box").querySelectorAll("button[data-undo]").forEach(b=>b.addEventListener("click",()=>undoEx(+b.dataset.undo)));
+  if ($("btn-undo-all")) $("btn-undo-all").addEventListener("click",()=>undoEx(0,true));
 }
 /* 給報告指令用：集群變數與排除說明 */
 function segVarTxt(){ const use=SF(), fl=j=>flabel(j); return use.length===S.nf?"":"（因素分析共萃取 "+S.nf+" 個因素，本研究選取其中 "+use.length+" 個為集群變數："+use.map(fl).join("、")+"；未參與分群的因素："+Array.from({length:S.nf},(_,j)=>j).filter(j=>!use.includes(j)).map(fl).join("、")+"，改列為輪廓變數）"; }
